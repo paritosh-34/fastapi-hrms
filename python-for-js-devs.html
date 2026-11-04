@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python for JS devs — the lookup sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 12% 6%,#fff4ea 0,transparent 38%),radial-gradient(circle at 88% 3%,#ffe6dd 0,transparent 30%),var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));z-index:200;transition:width .1s linear}
+
+/* permanent header — this is a lookup page, the search must never scroll away */
+#deck{position:sticky;top:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.9);border-bottom:1px solid var(--line)}
+#deck .wrap{display:flex;align-items:center;gap:14px;min-height:62px;padding-top:9px;padding-bottom:9px;flex-wrap:wrap}
+#deck .brand{font-family:'Fraunces';font-weight:600;font-size:16px;white-space:nowrap}
+#deck .brand b{color:var(--orange)}
+#deck .grow{flex:1;min-width:190px;position:relative}
+#deck input{width:100%;font-family:'Manrope';font-weight:600;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px 9px 34px;background:var(--card);color:var(--ink)}
+#deck input:focus{outline:none;border-color:var(--orange)}
+#deck .mag{position:absolute;left:11px;top:9px;font-size:14px;opacity:.5}
+#deck .kbd{position:absolute;right:9px;top:9px;font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--paper-2)}
+#deck select{font-family:'Manrope';font-weight:700;font-size:13px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--card);color:var(--ink-soft)}
+#hits{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);white-space:nowrap}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:56px 0 34px}
+.hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--line) 1.1px,transparent 1.1px);background-size:22px 22px;opacity:.5;mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.hero .orb{position:absolute;left:-140px;top:-150px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(43,74,139,.16),transparent 65%);animation:float 10s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(24px) scale(1.05)}}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.2fr .9fr;gap:36px;align-items:center}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-tint);border:1px solid #ffd2c5;padding:7px 14px;border-radius:100px}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd2c5;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px #ffd2c5}50%{box-shadow:0 0 0 7px rgba(255,210,197,.4)}}
+h1.title{font-family:'Fraunces';font-weight:900;font-size:clamp(34px,5.4vw,56px);line-height:1.04;letter-spacing:-.02em;margin:18px 0 0}
+h1.title em{font-style:italic;color:var(--orange)}
+.lede{font-size:18.5px;color:var(--ink-soft);max-width:640px;margin:16px 0 0;line-height:1.55}
+.hero-meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 15px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
+.signature{margin-top:22px;font-family:'JetBrains Mono';font-size:13px;color:var(--ink-faint);border-top:1px dashed var(--line);padding-top:14px}
+.signature b{color:var(--ink)}
+
+/* hero flip card */
+.vmap{background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:var(--shadow-lift);overflow:hidden;transform:rotate(-1.2deg)}
+.vmap .vbar{background:var(--ink);color:var(--paper);padding:11px 16px;font-weight:700;font-size:13.5px;display:flex;gap:8px;align-items:center}
+.vmap .vbar .live{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;background:var(--orange);padding:2px 7px;border-radius:5px;text-transform:uppercase;margin-left:auto}
+.flip{display:grid;grid-template-columns:1fr;background:var(--code-bg)}
+.flip .fl{padding:13px 16px;font-family:'JetBrains Mono';font-size:12.5px;line-height:1.6;color:var(--code-ink);white-space:pre-wrap;min-height:58px;transition:opacity .3s}
+.flip .fl .who{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}
+.flip .fl.j{border-bottom:1px dashed #3a2f26}
+.flip .fl.j .who{color:#f2c97d}
+.flip .fl.p .who{color:#7fc7e8}
+.vmap .vfoot{padding:9px 14px;font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);background:var(--paper-2);border-top:1px solid var(--line);text-align:center}
+
+/* sections */
+section.block{padding:46px 0 10px;border-top:1px solid var(--line);scroll-margin-top:74px}
+.sec-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:12px}
+.sec-num{flex:none;width:54px;height:54px;border-radius:14px;background:var(--ink);color:var(--paper);font-family:'Fraunces';font-weight:700;font-size:22px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.sec-head.accent .sec-num{background:var(--orange)}
+.sec-time{font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep)}
+h2{font-family:'Fraunces';font-weight:700;font-size:clamp(26px,3.6vw,36px);line-height:1.08;letter-spacing:-.015em;margin:4px 0 0}
+h2 em{font-style:italic;color:var(--orange)}
+h3{font-family:'Fraunces';font-weight:600;font-size:23px;letter-spacing:-.01em;margin:30px 0 10px}
+h3 em{font-style:italic;color:var(--orange)}
+p{margin:0 0 16px}
+.big-p{font-size:18.5px;color:var(--ink-soft);max-width:760px}
+strong{color:var(--ink);font-weight:700}
+code{font-family:'JetBrains Mono';font-size:.88em;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:5px}
+a.link{color:var(--orange-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* callouts */
+.def{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--orange);border-radius:14px;padding:20px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.def .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-deep);font-weight:500;margin-bottom:6px}
+.def p:last-child{margin-bottom:0}
+.wow{background:linear-gradient(135deg,#fff3ec,#ffe9e1);border:1px solid #ffd2c5;border-radius:16px;padding:20px 24px;margin:24px 0;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow)}
+.wow .star{flex:none;font-size:26px;filter:drop-shadow(0 2px 4px rgba(216,60,24,.3))}
+.wow b{color:var(--orange-deep)}
+.wow p{margin:0;font-size:16px}
+.analogy{border-radius:14px;padding:18px 22px;margin:20px 0;border:1px solid;display:flex;gap:14px;align-items:flex-start}
+.analogy .ico{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px}
+.analogy.teal{background:var(--teal-tint);border-color:#a9ddd2}.analogy.teal .ico{background:var(--teal);color:#fff}
+.analogy.blue{background:var(--blue-tint);border-color:#b8c8ee}.analogy.blue .ico{background:var(--blue);color:#fff}
+.analogy.gold{background:var(--gold-tint);border-color:#ecd49b}.analogy.gold .ico{background:var(--gold);color:#fff}
+.analogy.purple{background:var(--purple-tint);border-color:#d4bce8}.analogy.purple .ico{background:var(--purple);color:#fff}
+.analogy.pink{background:var(--pink-tint);border-color:#f2bcd4}.analogy.pink .ico{background:var(--pink);color:#fff}
+.analogy b{display:block;font-size:15px;margin-bottom:2px}
+.analogy p{margin:0;font-size:15.5px;color:var(--ink-soft)}
+.analogy em{color:var(--ink);font-style:italic}
+.note{background:var(--purple-tint);border:1px solid #d4bce8;border-radius:14px;padding:16px 20px;margin:22px 0;display:flex;gap:12px;align-items:flex-start}
+.note .ico{flex:none;font-size:20px}.note b{color:var(--purple)}.note p{margin:0;font-size:15px;color:#5a4566}
+.industry{position:relative;background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:18px;padding:26px 28px;margin:26px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.industry:before{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.4}
+.industry .tag{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb39e;margin-bottom:10px;display:inline-flex;font-weight:500}
+.industry h4{color:#fff;text-transform:none;font-family:'Fraunces';font-size:21px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.industry p{margin:0 0 10px;color:#d8ccbf;font-size:15.5px}
+.industry p:last-child{margin-bottom:0}
+.industry code{background:rgba(255,255,255,.12);color:#ffd9cc}
+.industry .cos{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.industry .cos span{font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:5px 11px;border-radius:6px;color:#fff;font-family:'JetBrains Mono'}
+
+/* code + terminal */
+.code{background:var(--code-bg);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:20px 0}
+.code .bar{background:#171411;padding:9px 16px;display:flex;align-items:center;gap:7px}
+.code .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.code .bar .r{background:#ff5f56}.code .bar .y{background:#ffbd2e}.code .bar .g{background:#27c93f}
+.code .bar span{margin-left:8px;font-family:'JetBrains Mono';font-size:12px;color:#9a8a78}
+.code pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono';font-size:13.5px;line-height:1.7;color:var(--code-ink)}
+.cm{color:#7f9c6a;font-style:italic}.kw{color:#ff9d7a}.st{color:#f2c97d}.fn{color:#7fc7e8}.nm{color:#c8a8e8}.op{color:#9a8a78}
+.term{background:#0e0c0a;color:#d8ccbf;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:18px 0}
+.term .tbar{background:#181513;padding:9px 14px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono';font-size:12px;color:#7a6e62}
+.term .tbar i{width:10px;height:10px;border-radius:50%;background:#5a4f47;display:inline-block}
+.term pre{margin:0;padding:14px 18px;font-family:'JetBrains Mono';font-size:13px;line-height:1.65;white-space:pre-wrap}
+.term .pr{color:#ff9d7a}.term .cmt{color:#7f9c6a;font-style:italic}.term .ok{color:#7fc7a8}
+
+/* ===== the cheatsheet row — the whole point of this page ===== */
+.crow{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:14px 0;box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:80px}
+.crow:target{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint),var(--shadow)}
+.crow .chead{display:flex;align-items:center;gap:10px;background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.crow .chead b{font-family:'Fraunces';font-size:17.5px;font-weight:600}
+.crow .chead .kw-tags{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint)}
+.crow .chead .anchor{margin-left:auto;font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.crow .chead .anchor:hover{color:var(--orange-deep);border-color:#ffd2c5;background:var(--orange-tint)}
+.cpair{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:800px){.cpair{grid-template-columns:1fr}}
+.cside{display:flex;flex-direction:column;min-width:0}
+.cside.js{border-right:1px solid #3a2f26}
+@media(max-width:800px){.cside.js{border-right:none}}
+.cside .ctag{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border-bottom:1px solid var(--line)}
+.cside.js .ctag{background:var(--gold-tint);color:#a8761a}
+.cside.py .ctag{background:var(--blue-tint);color:var(--blue)}
+.cside pre{margin:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font-family:'JetBrains Mono';font-size:12.8px;line-height:1.72;overflow-x:auto;flex:1}
+.cnote{padding:12px 16px;border-top:1px solid var(--line);font-size:14.5px;color:var(--ink-soft);background:#fffdfa}
+.cnote b{color:var(--ink)}
+.cnote code{font-size:12.8px}
+.cnote p{margin:0}
+.cnote p+p{margin-top:8px}
+.crow.hide{display:none}
+#nohits{display:none;background:var(--card);border:1.5px dashed var(--ink-faint);border-radius:14px;padding:18px 22px;margin:16px 0;color:var(--ink-soft);font-size:15px}
+#nohits.on{display:block}
+
+/* gotcha grid */
+.probs{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:14px;margin:20px 0}
+.prob{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.prob .head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prob .head .e{font-size:22px}
+.prob .head b{font-family:'Fraunces';font-size:16.5px}
+.prob p{margin:0;font-size:14.5px;color:var(--ink-soft)}
+.prob code{font-size:12.6px}
+.prob .fix{margin-top:10px;font-size:13px;color:var(--teal);font-weight:700;background:var(--teal-tint);border-radius:8px;padding:6px 10px;display:inline-block}
+
+/* roadmap */
+.road{display:grid;gap:10px;margin:18px 0 30px}
+.road a{display:grid;grid-template-columns:104px 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.road a:hover{transform:translateX(3px);border-color:var(--orange)}
+.road .cl{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--orange-deep)}
+.road b{font-size:15px}.road p{margin:2px 0 0;font-size:13px;color:var(--ink-faint)}
+.road .sk{font-family:'JetBrains Mono';font-size:10.5px;background:var(--teal-tint);color:var(--teal);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.road a.here{border-color:var(--orange);background:linear-gradient(180deg,#fff,#fff8f3)}
+@media(max-width:640px){.road a{grid-template-columns:1fr}.road .sk{justify-self:start}}
+
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.reveal.in{opacity:1;transform:none}
+footer{border-top:1px solid var(--line);padding:30px 0 60px;color:var(--ink-faint);font-family:'JetBrains Mono';font-size:12.5px}
+/* ===== contents sidebar ===== */
+#sbToggle{position:fixed;left:14px;bottom:16px;z-index:180;font-family:'Manrope';font-weight:700;font-size:13px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;cursor:pointer;box-shadow:var(--shadow-lift)}
+#sbToggle:hover{background:var(--orange-tint);color:var(--orange-deep);border-color:var(--orange)}
+#sbScrim{position:fixed;inset:0;z-index:155;background:rgba(28,23,20,.38);opacity:0;pointer-events:none;transition:opacity .25s}
+#sbScrim.on{opacity:1;pointer-events:auto}
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;z-index:170;background:var(--paper-2);border-right:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain;padding:16px 0 70px;transform:translateX(-101%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#sidebar.open{transform:none;box-shadow:var(--shadow-lift)}
+#sidebar .sb-head{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:4px 18px 10px}
+#sidebar a{display:block;text-decoration:none;color:var(--ink-soft);border-left:3px solid transparent}
+#sidebar a.sb-sec{font-weight:700;font-size:13.5px;padding:7px 16px 7px 15px;color:var(--ink);display:flex;gap:9px;align-items:baseline;line-height:1.3}
+#sidebar a.sb-sec .n{font-family:'JetBrains Mono';font-size:11px;color:var(--orange-deep);flex:none;min-width:14px}
+#sidebar a.sb-sub{font-size:12.5px;padding:4px 16px 4px 40px;font-family:'JetBrains Mono';color:var(--ink-faint);line-height:1.35}
+#sidebar a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+#sidebar a.cur{border-left-color:var(--orange);background:#fff;color:var(--orange-deep)}
+#sidebar a.hide{display:none}
+@media(min-width:1400px){
+  #sidebar{transform:none;box-shadow:none}
+  #sbToggle,#sbScrim{display:none}
+  body{padding-left:250px}
+  #progress{left:250px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="sbToggle" aria-label="Contents">&#9776; Contents</button>
+<div id="sbScrim"></div>
+<aside id="sidebar"><div class="sb-head">Contents</div><nav class="sb-nav"></nav></aside>
+
+<div id="deck"><div class="wrap">
+  <div class="brand">Python&nbsp;<b>for JS devs</b></div>
+  <div class="grow">
+    <span class="mag">⌕</span>
+    <input id="q" type="search" placeholder="Filter rows — try “dict”, “optional”, “async”, “KeyError”…" autocomplete="off">
+    <span class="kbd">/</span>
+  </div>
+  <span id="hits"></span>
+</div></div>
+
+<!-- HERO -->
+<header class="hero"><div class="orb"></div><div class="wrap">
+  <div>
+    <span class="kicker"><span class="dot"></span> Companion sheet · keep this tab open</span>
+    <h1 class="title">You know this<br>language already.<br>It just <em>looks</em> wrong.</h1>
+    <p class="lede">This is not a Python course. It is a <strong>lookup sheet</strong>: JavaScript on the left, the same idea in Python on the right, one row per thing. The tutorial links straight into these rows, so when you hit <code># new: f-string</code> in a code block you land here, read four lines, and go back. Nothing here is theory you need up front — <strong>skim it once, then use it as a dictionary.</strong></p>
+    <div class="hero-meta">
+      <span class="chip">🔤 Syntax, side by side</span>
+      <span class="chip">🧱 Only what the API build uses</span>
+      <span class="chip">🏷️ Type annotations in depth</span>
+      <span class="chip">🪤 The traps that actually bite</span>
+    </div>
+    <div class="signature"><b>Written for</b>: a React/TS developer who has barely touched Python. Every row assumes you are fluent in the left column.</div>
+  </div>
+  <div>
+    <div class="vmap">
+      <div class="vbar">🔁 same idea, two languages <span class="live">live</span></div>
+      <div class="flip">
+        <div class="fl j" id="flJS"><span class="who">javascript</span><span id="flJSb"></span></div>
+        <div class="fl p" id="flPY"><span class="who">python</span><span id="flPYb"></span></div>
+      </div>
+      <div class="vfoot">different punctuation · same program</div>
+    </div>
+  </div>
+</div></header>
+
+<!-- 0 · HOW TO READ -->
+<section class="block reveal" id="read"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">0</div><div>
+    <div class="sec-time">30 seconds · then start building</div>
+    <h2>How to read this page</h2></div></div>
+  <p class="big-p">Each row has a <strong>JS pane</strong>, a <strong>Python pane</strong>, and one line telling you what differs. Click the <code>#anchor</code> on the right of any row to copy a deep link. The filter box at the top searches titles, keywords and code, so you can type <code>KeyError</code> and land on the row that explains it.</p>
+
+  <div class="def">
+    <div class="lab">The one thing worth reading before you start</div>
+    <p>Python's type annotations are, almost everywhere, <strong>exactly as real as TypeScript's</strong>: erased, unchecked, decoration for your editor. <code>def f(x: int)</code> happily accepts <code>"nope"</code> and nothing complains.</p>
+    <p><strong>FastAPI and Pydantic break that rule on purpose.</strong> They read your annotations <em>at runtime</em> with <code>typing.get_type_hints</code> and use them to parse, coerce and reject incoming data. So in the tutorial, a type hint is not a comment — it is the validator, the parser, and the OpenAPI schema all at once. That one inversion is why FastAPI feels different from Express, and it is the reason this sheet spends more space on <a class="link" href="#types">section 9</a> than on anything else.</p>
+  </div>
+
+  <div class="analogy gold"><div class="ico">🗺️</div><div>
+    <b>Mental model for the whole sheet</b>
+    <p>Python is JavaScript with <em>significant whitespace</em>, <em>no <code>this</code> weirdness</em>, <em>one loop construct</em>, and a standard library that already contains the thirty npm packages you were about to install.</p>
+  </div></div>
+</div></section>
+
+<!-- 1 · VALUES -->
+<section class="block reveal" id="values"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">1</div><div>
+    <div class="sec-time">Section 1</div>
+    <h2>Values and <em>collections</em></h2></div></div>
+  <p class="big-p">Four container types do all the work: <code>dict</code>, <code>list</code>, <code>tuple</code>, <code>set</code>. The first two are your object and array; the other two you will meet in passing.</p>
+
+  <div class="crow" id="dicts" data-kw="dict object literal keys spread merge destructure get access">
+    <div class="chead"><b>Objects → <code>dict</code></b> <span class="kw-tags">keys · access · merge · spread</span> <a class="anchor" href="#dicts">#dicts</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">const</span> emp = {
+  <span class="nm">name</span>: <span class="st">"Priya"</span>,
+  <span class="nm">role</span>: <span class="st">"manager"</span>,
+};
+
+emp.name;          <span class="cm">// "Priya"</span>
+emp[<span class="st">"role"</span>];      <span class="cm">// "manager"</span>
+emp.missing;       <span class="cm">// undefined</span>
+emp.title ?? <span class="st">"—"</span>;  <span class="cm">// fallback</span>
+
+<span class="kw">const</span> merged = { ...emp, <span class="nm">role</span>: <span class="st">"hr_admin"</span> };
+<span class="nm">Object</span>.<span class="fn">keys</span>(emp);
+<span class="st">"name"</span> <span class="kw">in</span> emp;      <span class="cm">// true</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>emp = {
+    <span class="st">"name"</span>: <span class="st">"Priya"</span>,
+    <span class="st">"role"</span>: <span class="st">"manager"</span>,
+}
+
+emp[<span class="st">"name"</span>]            <span class="cm"># "Priya"</span>
+emp[<span class="st">"role"</span>]            <span class="cm"># "manager"</span>
+emp[<span class="st">"missing"</span>]         <span class="cm"># 💥 KeyError</span>
+emp.<span class="fn">get</span>(<span class="st">"title"</span>, <span class="st">"—"</span>)   <span class="cm"># fallback</span>
+
+merged = {**emp, <span class="st">"role"</span>: <span class="st">"hr_admin"</span>}
+<span class="fn">list</span>(emp.<span class="fn">keys</span>())
+<span class="st">"name"</span> <span class="kw">in</span> emp           <span class="cm"># True</span></pre></div>
+    </div>
+    <div class="cnote"><p><b>The one that will bite you:</b> there is no <code>undefined</code>. Reading a key that is not there <strong>raises <code>KeyError</code></strong> instead of returning a blank. Use <code>.get(key)</code> for <code>None</code>, or <code>.get(key, default)</code> for a fallback. Also: keys are quoted strings, so there is no dot access — <code>emp.name</code> on a dict is an <code>AttributeError</code>.</p></div>
+  </div>
+
+  <div class="crow" id="lists" data-kw="list array push map filter slice length spread concat sort">
+    <div class="chead"><b>Arrays → <code>list</code></b> <span class="kw-tags">push · slice · len · sort</span> <a class="anchor" href="#lists">#lists</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">const</span> ids = [<span class="nm">3</span>, <span class="nm">1</span>, <span class="nm">2</span>];
+
+ids.<span class="fn">push</span>(<span class="nm">4</span>);
+ids.<span class="nm">length</span>;        <span class="cm">// 4</span>
+ids[<span class="nm">0</span>];
+ids.<span class="fn">at</span>(-<span class="nm">1</span>);         <span class="cm">// last</span>
+ids.<span class="fn">slice</span>(<span class="nm">0</span>, <span class="nm">2</span>);
+[...ids, <span class="nm">9</span>];
+ids.<span class="fn">includes</span>(<span class="nm">2</span>);
+ids.<span class="fn">sort</span>((a,b) => a-b);
+ids.<span class="fn">join</span>(<span class="st">","</span>);</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>ids = [<span class="nm">3</span>, <span class="nm">1</span>, <span class="nm">2</span>]
+
+ids.<span class="fn">append</span>(<span class="nm">4</span>)
+<span class="fn">len</span>(ids)             <span class="cm"># 4</span>
+ids[<span class="nm">0</span>]
+ids[-<span class="nm">1</span>]              <span class="cm"># last — negative index!</span>
+ids[<span class="nm">0</span>:<span class="nm">2</span>]
+[*ids, <span class="nm">9</span>]
+<span class="nm">2</span> <span class="kw">in</span> ids
+ids.<span class="fn">sort</span>()           <span class="cm"># in place, numeric by default</span>
+<span class="st">","</span>.<span class="fn">join</span>(<span class="fn">str</span>(i) <span class="kw">for</span> i <span class="kw">in</span> ids)</pre></div>
+    </div>
+    <div class="cnote"><p><b>Three differences worth memorising:</b> <code>len(x)</code> is a function, not a property, and it works on lists, dicts, strings and sets alike. Negative indexing is built in, so <code>ids[-1]</code> is the last item. And <code>.sort()</code> sorts numbers correctly out of the box — none of the <code>[1,10,2]</code> lexicographic nonsense — but it mutates and returns <code>None</code>; use <code>sorted(ids)</code> for a new list.</p></div>
+  </div>
+
+  <div class="crow" id="tuples" data-kw="tuple frozen array immutable unpack destructure swap return multiple">
+    <div class="chead"><b><code>tuple</code> — a fixed-length, immutable list</b> <span class="kw-tags">unpacking · multiple return</span> <a class="anchor" href="#tuples">#tuples</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="cm">// no real equivalent — an array you</span>
+<span class="cm">// promise not to mutate</span>
+<span class="kw">const</span> pair = [<span class="st">"start"</span>, <span class="st">"end"</span>];
+<span class="kw">const</span> [a, b] = pair;
+
+<span class="cm">// returning two things</span>
+<span class="kw">function</span> <span class="fn">range</span>() { <span class="kw">return</span> [<span class="nm">1</span>, <span class="nm">30</span>]; }
+<span class="kw">const</span> [lo, hi] = <span class="fn">range</span>();
+
+<span class="cm">// TS: readonly [string, string]</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>pair = (<span class="st">"start"</span>, <span class="st">"end"</span>)
+a, b = pair          <span class="cm"># unpacking</span>
+
+<span class="cm"># returning two things</span>
+<span class="kw">def</span> <span class="fn">date_range</span>() -> <span class="fn">tuple</span>[<span class="fn">int</span>, <span class="fn">int</span>]:
+    <span class="kw">return</span> <span class="nm">1</span>, <span class="nm">30</span>      <span class="cm"># parens optional</span>
+
+lo, hi = <span class="fn">date_range</span>()
+
+pair[<span class="nm">0</span>] = <span class="st">"x"</span>        <span class="cm"># 💥 TypeError</span></pre></div>
+    </div>
+    <div class="cnote"><p>You will mostly meet tuples as <strong>“this function returns two values”</strong> and as the thing <code>a, b = ...</code> unpacks. In the API build they show up as the return of a service function (<code>return request, balance</code>) and as the type <code>tuple[int, int]</code>.</p></div>
+  </div>
+
+  <div class="crow" id="sets" data-kw="set unique dedupe membership intersection difference">
+    <div class="chead"><b><code>set</code> — unique membership</b> <span class="kw-tags">dedupe · overlap · in</span> <a class="anchor" href="#sets">#sets</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">const</span> roles = <span class="kw">new</span> <span class="nm">Set</span>([<span class="st">"hr"</span>, <span class="st">"hr"</span>, <span class="st">"mgr"</span>]);
+roles.<span class="fn">has</span>(<span class="st">"hr"</span>);
+roles.<span class="nm">size</span>;
+
+<span class="cm">// intersection: by hand</span>
+[...a].<span class="fn">filter</span>(x => b.<span class="fn">has</span>(x));</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>roles = {<span class="st">"hr"</span>, <span class="st">"hr"</span>, <span class="st">"mgr"</span>}   <span class="cm"># 2 items</span>
+<span class="st">"hr"</span> <span class="kw">in</span> roles
+<span class="fn">len</span>(roles)
+
+<span class="cm"># set algebra is built in</span>
+a &amp; b   <span class="cm"># intersection</span>
+a | b   <span class="cm"># union</span>
+a - b   <span class="cm"># difference</span></pre></div>
+    </div>
+    <div class="cnote"><p>Note the collision: <code>{}</code> is an <strong>empty dict</strong>, not an empty set. An empty set is <code>set()</code>. In the build, sets appear when we check whether a requested leave range overlaps the days already booked.</p></div>
+  </div>
+
+  <div class="crow" id="none" data-kw="None null undefined nullish optional">
+    <div class="chead"><b><code>None</code> — the only empty value</b> <span class="kw-tags">null · undefined · is None</span> <a class="anchor" href="#none">#none</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="cm">// two empties, and you check for both</span>
+<span class="kw">let</span> x = <span class="kw">null</span>;
+<span class="kw">let</span> y;              <span class="cm">// undefined</span>
+
+<span class="kw">if</span> (x == <span class="kw">null</span>) {}    <span class="cm">// catches both</span>
+x ?? <span class="st">"fallback"</span>;
+obj?.deep?.key;</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="cm"># one empty value, full stop</span>
+x = <span class="kw">None</span>
+
+<span class="kw">if</span> x <span class="kw">is None</span>: ...      <span class="cm"># always `is`, not ==</span>
+<span class="kw">if</span> x <span class="kw">is not None</span>: ...
+
+x <span class="kw">or</span> <span class="st">"fallback"</span>        <span class="cm"># ⚠️ also fires on 0 and ""</span>
+<span class="cm"># no ?. operator — guard explicitly</span>
+dept.name <span class="kw">if</span> dept <span class="kw">is not None</span> <span class="kw">else</span> <span class="kw">None</span></pre></div>
+    </div>
+    <div class="cnote"><p><b>No optional chaining.</b> There is no <code>?.</code> and no <code>??</code>. The idiom is an explicit <code>if ... is None</code> guard, or the inline conditional shown above. And always compare with <code>is None</code> rather than <code>== None</code> — for ordinary values they agree, but <code>==</code> can be overridden by a class, and SQLAlchemy in particular overloads it to build SQL, where <code>column == None</code> produces <code>IS NULL</code> rather than a boolean.</p></div>
+  </div>
+</div></section>
+
+<!-- 2 · STRINGS -->
+<section class="block reveal" id="strings"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">2</div><div>
+    <div class="sec-time">Section 2</div>
+    <h2>Strings</h2></div></div>
+
+  <div class="crow" id="fstrings" data-kw="f-string template literal interpolation format backtick">
+    <div class="chead"><b>Template literals → <code>f"..."</code></b> <span class="kw-tags">f-string · interpolation</span> <a class="anchor" href="#fstrings">#fstrings</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">const</span> name = <span class="st">"Priya"</span>, days = <span class="nm">3</span>;
+
+<span class="st">`</span><span class="st">${name} booked ${days} day</span><span class="st">`</span>;
+<span class="st">`</span><span class="st">total: ${(d * 1.5).toFixed(2)}</span><span class="st">`</span>;
+
+<span class="cm">// multi-line: backticks</span>
+<span class="st">`</span><span class="st">line one
+line two</span><span class="st">`</span>;</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>name, days = <span class="st">"Priya"</span>, <span class="nm">3</span>
+
+<span class="st">f"{name} booked {days} day"</span>
+<span class="st">f"total: {d * 1.5:.2f}"</span>   <span class="cm"># format spec</span>
+
+<span class="cm"># multi-line: triple quotes</span>
+<span class="st">"""line one
+line two"""</span>
+
+<span class="st">f"{emp[<span class="st">'name'</span>]}"</span>   <span class="cm"># inner quotes must differ</span></pre></div>
+    </div>
+    <div class="cnote"><p>The <code>f</code> prefix is mandatory — without it you get the literal text <code>{name}</code>, which is the single most common Python typo for a JS developer. Bonus: the colon format spec (<code>:.2f</code>, <code>:,</code>, <code>:&gt;8</code>) replaces <code>toFixed</code> and <code>padStart</code>.</p></div>
+  </div>
+
+  <div class="crow" id="strops" data-kw="string methods split trim toLowerCase startsWith replace includes">
+    <div class="chead"><b>String methods, renamed</b> <span class="kw-tags">trim · split · lower · in</span> <a class="anchor" href="#strops">#strops</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre>s.<span class="fn">trim</span>()
+s.<span class="fn">toLowerCase</span>()
+s.<span class="fn">toUpperCase</span>()
+s.<span class="fn">includes</span>(<span class="st">"@"</span>)
+s.<span class="fn">startsWith</span>(<span class="st">"HR-"</span>)
+s.<span class="fn">split</span>(<span class="st">","</span>)
+s.<span class="fn">replaceAll</span>(<span class="st">"-"</span>, <span class="st">"_"</span>)
+s.<span class="nm">length</span>
+<span class="nm">Number</span>(s)  <span class="cm">// may give NaN</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>s.<span class="fn">strip</span>()
+s.<span class="fn">lower</span>()
+s.<span class="fn">upper</span>()
+<span class="st">"@"</span> <span class="kw">in</span> s           <span class="cm"># operator, not method</span>
+s.<span class="fn">startswith</span>(<span class="st">"HR-"</span>)  <span class="cm"># all lowercase</span>
+s.<span class="fn">split</span>(<span class="st">","</span>)
+s.<span class="fn">replace</span>(<span class="st">"-"</span>, <span class="st">"_"</span>)  <span class="cm"># replaces ALL</span>
+<span class="fn">len</span>(s)
+<span class="fn">int</span>(s)            <span class="cm"># 💥 ValueError if not a number</span></pre></div>
+    </div>
+    <div class="cnote"><p>Method names are <code>snake_case</code> or just squashed (<code>startswith</code>, not <code>startsWith</code>). There is no <code>NaN</code> escape hatch: <code>int("abc")</code> raises instead of producing a poisoned value — which is a big part of why Pydantic can give you a clean 422 instead of a <code>NaN</code> leaking into your database.</p></div>
+  </div>
+</div></section>
+
+<!-- 3 · LOOPS -->
+<section class="block reveal" id="loops"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">3</div><div>
+    <div class="sec-time">Section 3</div>
+    <h2>Loops and <em>comprehensions</em></h2></div></div>
+  <p class="big-p">Python has one loop you will ever write: <code>for x in thing</code>. What replaces <code>.map()</code> and <code>.filter()</code> is a comprehension — the same operation with the brackets on the outside.</p>
+
+  <div class="crow" id="comprehensions" data-kw="comprehension map filter list comprehension dict comprehension generator">
+    <div class="chead"><b><code>.map</code> / <code>.filter</code> → comprehensions</b> <span class="kw-tags">list · dict · generator</span> <a class="anchor" href="#comprehensions">#comprehensions</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre>emps.<span class="fn">map</span>(e => e.name)
+
+emps.<span class="fn">filter</span>(e => e.active)
+
+emps.<span class="fn">filter</span>(e => e.active)
+    .<span class="fn">map</span>(e => e.name)
+
+<span class="nm">Object</span>.<span class="fn">fromEntries</span>(
+  emps.<span class="fn">map</span>(e => [e.id, e])
+)
+
+emps.<span class="fn">some</span>(e => e.active)
+emps.<span class="fn">every</span>(e => e.active)
+emps.<span class="fn">reduce</span>((a,e) => a+e.days, <span class="nm">0</span>)</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>[e.name <span class="kw">for</span> e <span class="kw">in</span> emps]
+
+[e <span class="kw">for</span> e <span class="kw">in</span> emps <span class="kw">if</span> e.active]
+
+[e.name <span class="kw">for</span> e <span class="kw">in</span> emps <span class="kw">if</span> e.active]
+
+
+{e.id: e <span class="kw">for</span> e <span class="kw">in</span> emps}   <span class="cm"># dict comprehension</span>
+
+
+
+<span class="fn">any</span>(e.active <span class="kw">for</span> e <span class="kw">in</span> emps)
+<span class="fn">all</span>(e.active <span class="kw">for</span> e <span class="kw">in</span> emps)
+<span class="fn">sum</span>(e.days <span class="kw">for</span> e <span class="kw">in</span> emps)</pre></div>
+    </div>
+    <div class="cnote"><p><b>Read it right-to-left-ish:</b> <code>[ <em>what I want</em> for <em>each item</em> if <em>condition</em> ]</code>. The square brackets make a list; curly braces with a <code>key: value</code> make a dict; plain parentheses (or no brackets at all, inside a function call) make a lazy generator.</p>
+    <p>Chaining is flat rather than nested — one comprehension with both a <code>for</code> and an <code>if</code> replaces <code>.filter().map()</code>. And <code>any</code>, <code>all</code>, <code>sum</code>, <code>min</code>, <code>max</code> are built-ins that take a generator, which covers almost every <code>reduce</code> you have ever written.</p></div>
+  </div>
+
+  <div class="crow" id="forloops" data-kw="for loop enumerate index items zip range iterate">
+    <div class="chead"><b>Iterating with an index or over a dict</b> <span class="kw-tags">enumerate · items · range · zip</span> <a class="anchor" href="#forloops">#forloops</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">for</span> (<span class="kw">const</span> e <span class="kw">of</span> emps) {}
+
+emps.<span class="fn">forEach</span>((e, i) => {});
+
+<span class="kw">for</span> (<span class="kw">const</span> [k, v] <span class="kw">of</span> <span class="nm">Object</span>.<span class="fn">entries</span>(o)) {}
+
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="nm">0</span>; i &lt; <span class="nm">5</span>; i++) {}
+
+a.<span class="fn">map</span>((x, i) => [x, b[i]]);</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">for</span> e <span class="kw">in</span> emps:
+    ...
+
+<span class="kw">for</span> i, e <span class="kw">in</span> <span class="fn">enumerate</span>(emps):
+    ...
+
+<span class="kw">for</span> k, v <span class="kw">in</span> o.<span class="fn">items</span>():
+    ...
+
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">5</span>):   <span class="cm"># 0,1,2,3,4</span>
+    ...
+
+<span class="kw">for</span> x, y <span class="kw">in</span> <span class="fn">zip</span>(a, b):
+    ...</pre></div>
+    </div>
+    <div class="cnote"><p>Looping over a dict gives you its <strong>keys</strong>, not its values — use <code>.items()</code> for pairs and <code>.values()</code> for values. <code>range(start, stop)</code> excludes <code>stop</code>, exactly like <code>Array.slice</code>. In chapter 7 we use <code>range</code> plus a date step to count working days in a leave request.</p></div>
+  </div>
+
+  <div class="crow" id="rangeloop" data-kw="classic for loop counter i++ three part header range index indexed access len print IndexError">
+    <div class="chead"><b>The classic counting loop</b> <span class="kw-tags">range · i++ · ids[i] · len</span> <a class="anchor" href="#rangeloop">#rangeloop</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">const</span> ids = [<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>, <span class="nm">40</span>];
+
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="nm">0</span>; i &lt; <span class="nm">4</span>; i++) {
+  <span class="nm">console</span>.<span class="fn">log</span>(<span class="st">`</span><span class="st">Element at ${i} is ${ids[i]}</span><span class="st">`</span>);
+}
+
+<span class="cm">// bound by length, not a magic number</span>
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="nm">0</span>; i &lt; ids.<span class="nm">length</span>; i++) {
+  <span class="nm">console</span>.<span class="fn">log</span>(ids[i]);
+}</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>ids = [<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>, <span class="nm">40</span>]
+
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">0</span>, <span class="nm">4</span>):
+    <span class="fn">print</span>(<span class="st">f"Element at {i} is {ids[i]}"</span>)
+
+
+<span class="cm"># bound by length, not a magic number</span>
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(ids)):
+    <span class="fn">print</span>(ids[i])
+
+<span class="cm"># but this is what you actually want:</span>
+<span class="kw">for</span> i, v <span class="kw">in</span> <span class="fn">enumerate</span>(ids):
+    <span class="fn">print</span>(<span class="st">f"Element at {i} is {v}"</span>)</pre></div>
+    </div>
+    <div class="cnote"><p><b>There is no three-part loop header and no <code>i++</code>.</b> <code>range</code> carries all three parts instead: <code>range(stop)</code>, <code>range(start, stop)</code>, <code>range(start, stop, step)</code>. <code>stop</code> is always excluded, so <code>range(0, 4)</code> gives <code>0, 1, 2, 3</code> — and because <code>start</code> defaults to <code>0</code>, <code>range(0, 4)</code> and <code>range(4)</code> are the same thing.</p>
+    <p>The hardcoded <code>4</code> is the usual bug: shrink <code>ids</code> and you get an <code>IndexError</code> rather than JS's <code>undefined</code>, which fails loudly in a request handler. <code>range(len(ids))</code> is the literal translation, but reach for <a class="link" href="#forloops"><code>enumerate</code></a> whenever you want the index <em>and</em> the value — you only really need a bare <code>range</code> when you are counting something other than list positions, like stepping a date forward one day at a time.</p>
+    <p>One formatting note, since this is probably your first hand-typed Python block: indent the body with <strong>4 spaces, not a tab</strong>. Mixing the two is an <code>IndentationError</code> — see <a class="link" href="#gotchas">#gotchas</a>.</p></div>
+  </div>
+</div></section>
+
+<!-- 4 · TRUTHINESS -->
+<section class="block reveal" id="truth"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">4</div><div>
+    <div class="sec-time">Section 4</div>
+    <h2>Truthiness, booleans and <em>equality</em></h2></div></div>
+
+  <div class="crow" id="truthiness" data-kw="truthy falsy boolean True False equality triple equals and or not">
+    <div class="chead"><b>Truthiness and the logical operators</b> <span class="kw-tags">True · and · or · not · ===</span> <a class="anchor" href="#truthiness">#truthiness</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">true</span> / <span class="kw">false</span>
+a &amp;&amp; b
+a || b
+!a
+
+a === b        <span class="cm">// strict</span>
+a == b         <span class="cm">// coercing — avoid</span>
+
+<span class="cm">// falsy: 0 "" null undefined NaN</span>
+<span class="kw">if</span> (list.<span class="nm">length</span> === <span class="nm">0</span>) {}
+<span class="kw">if</span> (<span class="nm">Object</span>.<span class="fn">keys</span>(o).<span class="nm">length</span> === <span class="nm">0</span>) {}
+<span class="cm">// [] and {} are TRUTHY</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">True</span> / <span class="kw">False</span>        <span class="cm"># capitalised!</span>
+a <span class="kw">and</span> b
+a <span class="kw">or</span> b
+<span class="kw">not</span> a
+
+a == b         <span class="cm"># there is no ===</span>
+a <span class="kw">is</span> b         <span class="cm"># same object, not same value</span>
+
+<span class="cm"># falsy: 0 "" None [] {} set() 0.0</span>
+<span class="kw">if not</span> my_list: ...
+<span class="kw">if not</span> my_dict: ...
+<span class="cm"># empty containers ARE falsy</span></pre></div>
+    </div>
+    <div class="cnote"><p><b>Two flips to internalise.</b> First, <code>==</code> is the safe one here — Python does not coerce across types, so <code>1 == "1"</code> is simply <code>False</code> and there is no <code>===</code> to reach for. <code>is</code> means identity, and using it for value comparison is a real bug (<code>x is 300</code> can be <code>False</code>); reserve it for <code>None</code>, <code>True</code> and <code>False</code>.</p>
+    <p>Second, <strong>empty lists and dicts are falsy</strong>, which is the opposite of JS. So <code>if not results:</code> is the idiomatic “nothing came back” check, and you no longer need <code>.length === 0</code>.</p></div>
+  </div>
+</div></section>
+
+<!-- 5 · FUNCTIONS -->
+<section class="block reveal" id="funcs"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">5</div><div>
+    <div class="sec-time">Section 5</div>
+    <h2>Functions</h2></div></div>
+
+  <div class="crow" id="functions" data-kw="function def arrow lambda return annotate signature">
+    <div class="chead"><b><code>function</code> → <code>def</code></b> <span class="kw-tags">def · lambda · return type</span> <a class="anchor" href="#functions">#functions</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="kw">function</span> <span class="fn">raise</span>(salary: <span class="nm">number</span>,
+               pct: <span class="nm">number</span>): <span class="nm">number</span> {
+  <span class="kw">return</span> salary * (<span class="nm">1</span> + pct / <span class="nm">100</span>);
+}
+
+<span class="kw">const</span> <span class="fn">double</span> = (x: <span class="nm">number</span>) => x * <span class="nm">2</span>;
+
+<span class="cm">// no explicit return -> undefined</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">def</span> <span class="fn">raise_salary</span>(salary: <span class="fn">float</span>,
+                 pct: <span class="fn">float</span>) -> <span class="fn">float</span>:
+    <span class="kw">return</span> salary * (<span class="nm">1</span> + pct / <span class="nm">100</span>)
+
+
+<span class="fn">double</span> = <span class="kw">lambda</span> x: x * <span class="nm">2</span>   <span class="cm"># rarely used</span>
+
+<span class="cm"># no explicit return -> None</span>
+<span class="kw">def</span> <span class="fn">log</span>(msg: <span class="fn">str</span>) -> <span class="kw">None</span>:
+    <span class="fn">print</span>(msg)</pre></div>
+    </div>
+    <div class="cnote"><p>The return type goes after <code>-&gt;</code>. A function that returns nothing is annotated <code>-&gt; None</code>. <code>lambda</code> is a crippled arrow function — single expression only, no statements — so idiomatic Python uses a named <code>def</code> almost everywhere, and you will barely see <code>lambda</code> in this tutorial outside of a <code>sort(key=...)</code>.</p></div>
+  </div>
+
+  <div class="crow" id="kwargs" data-kw="keyword arguments named parameters default options object kwargs destructuring">
+    <div class="chead"><b>The options object → keyword arguments</b> <span class="kw-tags">named args · defaults · *args **kwargs</span> <a class="anchor" href="#kwargs">#kwargs</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="cm">// you fake named args with an object</span>
+<span class="kw">function</span> <span class="fn">list</span>({ limit = <span class="nm">20</span>, offset = <span class="nm">0</span>,
+                search }: <span class="nm">Opts</span>) {}
+
+<span class="fn">list</span>({ <span class="nm">search</span>: <span class="st">"pri"</span>, <span class="nm">limit</span>: <span class="nm">5</span> });
+
+<span class="cm">// rest params</span>
+<span class="kw">function</span> <span class="fn">tag</span>(...names: <span class="nm">string</span>[]) {}</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="cm"># named args are native</span>
+<span class="kw">def</span> <span class="fn">list_employees</span>(limit: <span class="fn">int</span> = <span class="nm">20</span>,
+                   offset: <span class="fn">int</span> = <span class="nm">0</span>,
+                   search: <span class="fn">str</span> | <span class="kw">None</span> = <span class="kw">None</span>): ...
+
+<span class="fn">list_employees</span>(search=<span class="st">"pri"</span>, limit=<span class="nm">5</span>)  <span class="cm"># any order</span>
+
+<span class="cm"># *args = rest, **kwargs = rest-of-object</span>
+<span class="kw">def</span> <span class="fn">tag</span>(*names: <span class="fn">str</span>, **extra: <span class="fn">str</span>): ...</pre></div>
+    </div>
+    <div class="cnote"><p>This is the feature FastAPI is built on. Because <strong>every parameter is independently named, typed and defaultable</strong>, FastAPI can look at a function signature and decide for itself which arguments come from the path, which from the query string, which from the body, and which are dependencies — no options object, no <code>req.query</code> digging. Keep this row in mind when you reach <code>Depends</code>.</p></div>
+  </div>
+</div></section>
+
+<!-- 6 · MODULES -->
+<section class="block reveal" id="modules"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">6</div><div>
+    <div class="sec-time">Section 6</div>
+    <h2>Modules and <em>imports</em></h2></div></div>
+
+  <div class="crow" id="imports" data-kw="import export module from default named require package __init__">
+    <div class="chead"><b>ESM imports → Python imports</b> <span class="kw-tags">from · import · no export</span> <a class="anchor" href="#imports">#imports</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">import</span> express <span class="kw">from</span> <span class="st">"express"</span>;
+<span class="kw">import</span> { Router } <span class="kw">from</span> <span class="st">"express"</span>;
+<span class="kw">import</span> { Router <span class="kw">as</span> R } <span class="kw">from</span> <span class="st">"express"</span>;
+<span class="kw">import</span> { db } <span class="kw">from</span> <span class="st">"./db.js"</span>;
+<span class="kw">import</span> { x } <span class="kw">from</span> <span class="st">"../core/x.js"</span>;
+
+<span class="cm">// and you must export</span>
+<span class="kw">export const</span> db = ...;</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">import</span> fastapi
+<span class="kw">from</span> fastapi <span class="kw">import</span> APIRouter
+<span class="kw">from</span> fastapi <span class="kw">import</span> APIRouter <span class="kw">as</span> R
+<span class="kw">from</span> app.db <span class="kw">import</span> get_db     <span class="cm"># no ./ no .py</span>
+<span class="kw">from</span> app.core.config <span class="kw">import</span> settings
+
+<span class="cm"># nothing to export — every top-level</span>
+<span class="cm"># name in the file is importable</span>
+db = ...</pre></div>
+    </div>
+    <div class="cnote"><p><b>No <code>export</code> keyword.</b> Every module-level name is public by convention; a leading underscore (<code>_internal</code>) is the only privacy marker and it is advisory. Paths use dots instead of slashes, never include <code>.py</code>, and are resolved from where you launched the process — which is why the tutorial always runs <code>uvicorn app.main:app</code> from the project root, and why a folder becomes a package once it contains an <code>__init__.py</code> (empty is fine).</p>
+    <p>One real trap: <strong>circular imports are a runtime crash</strong>, not a warning. Chapter 5 lays the package out specifically to avoid them — models never import routers.</p></div>
+  </div>
+</div></section>
+
+<!-- 7 · CLASSES -->
+<section class="block reveal" id="classes-sec"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">7</div><div>
+    <div class="sec-time">Section 7</div>
+    <h2>Classes, <em>just enough</em></h2></div></div>
+  <p class="big-p">You will not write much OO in this build, but you will <em>read</em> classes constantly: every Pydantic schema and every SQLAlchemy model is a class body full of annotated attributes.</p>
+
+  <div class="crow" id="classes" data-kw="class constructor self this init method inheritance extends super">
+    <div class="chead"><b><code>class</code>, <code>constructor</code> and <code>this</code></b> <span class="kw-tags">__init__ · self · inheritance</span> <a class="anchor" href="#classes">#classes</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="kw">class</span> <span class="nm">Employee</span> {
+  name: <span class="nm">string</span>;
+  <span class="fn">constructor</span>(name: <span class="nm">string</span>) {
+    <span class="kw">this</span>.name = name;
+  }
+  <span class="fn">greet</span>() {
+    <span class="kw">return</span> <span class="st">`hi </span><span class="st">${</span><span class="kw">this</span><span class="st">.name}</span><span class="st">`</span>;
+  }
+}
+
+<span class="kw">class</span> <span class="nm">Manager</span> <span class="kw">extends</span> <span class="nm">Employee</span> {}
+<span class="kw">new</span> <span class="nm">Employee</span>(<span class="st">"Priya"</span>);</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">class</span> <span class="nm">Employee</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, name: <span class="fn">str</span>) -> <span class="kw">None</span>:
+        <span class="kw">self</span>.name = name
+
+    <span class="kw">def</span> <span class="fn">greet</span>(<span class="kw">self</span>) -> <span class="fn">str</span>:
+        <span class="kw">return</span> <span class="st">f"hi {self.name}"</span>
+
+
+<span class="kw">class</span> <span class="nm">Manager</span>(<span class="nm">Employee</span>):      <span class="cm"># inheritance</span>
+    <span class="kw">pass</span>
+
+<span class="nm">Employee</span>(<span class="st">"Priya"</span>)                <span class="cm"># no `new`</span></pre></div>
+    </div>
+    <div class="cnote"><p><code>self</code> is <code>this</code>, except it is an <strong>explicit first parameter on every method</strong> — which is verbose but means <code>self</code> can never be rebound by how you call the function, so none of JS's <code>this</code>-binding puzzles exist. There is no <code>new</code>. <code>pass</code> is the “empty block” placeholder, since whitespace alone cannot express an empty body.</p></div>
+  </div>
+
+  <div class="crow" id="dataclass" data-kw="interface type dataclass pydantic model BaseModel attributes shape struct">
+    <div class="chead"><b>A <code>type</code>/<code>interface</code> → a model class</b> <span class="kw-tags">BaseModel · dataclass · Mapped</span> <a class="anchor" href="#dataclass">#dataclass</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="kw">interface</span> <span class="nm">EmployeeCreate</span> {
+  name: <span class="nm">string</span>;
+  email: <span class="nm">string</span>;
+  salary?: <span class="nm">number</span>;
+}
+
+<span class="cm">// to validate at runtime you reach</span>
+<span class="cm">// for a second tool:</span>
+<span class="kw">const</span> Schema = z.<span class="fn">object</span>({
+  <span class="nm">name</span>: z.<span class="fn">string</span>().<span class="fn">min</span>(<span class="nm">1</span>),
+  <span class="nm">email</span>: z.<span class="fn">string</span>().<span class="fn">email</span>(),
+});</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, EmailStr, Field
+
+<span class="kw">class</span> <span class="nm">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
+    name: <span class="fn">str</span> = <span class="fn">Field</span>(min_length=<span class="nm">1</span>)
+    email: EmailStr
+    salary: <span class="fn">float</span> | <span class="kw">None</span> = <span class="kw">None</span>
+
+<span class="cm"># the class IS the validator.</span>
+<span class="cm"># no second schema to keep in sync.</span>
+<span class="nm">EmployeeCreate</span>(name=<span class="st">""</span>, email=<span class="st">"x"</span>)
+<span class="cm"># 💥 ValidationError, 2 problems</span></pre></div>
+    </div>
+    <div class="cnote"><p>This is the row the whole tutorial leans on. In TypeScript, your <code>interface</code> and your Zod schema are two declarations of the same shape that drift apart. In Python, <strong>a Pydantic class is both at once</strong>: the editor reads it for autocompletion and Pydantic reads it at runtime to validate. You will also see plain <code>@dataclass</code> (no validation, just a shape) and SQLAlchemy's <code>Mapped[str]</code> (a shape that maps to a database column) — same idea, three flavours.</p></div>
+  </div>
+</div></section>
+
+<!-- 8 · ERRORS -->
+<section class="block reveal" id="errors"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">8</div><div>
+    <div class="sec-time">Section 8</div>
+    <h2>Errors</h2></div></div>
+
+  <div class="crow" id="tryexcept" data-kw="try catch except finally throw raise custom error exception class">
+    <div class="chead"><b><code>try/catch</code> → <code>try/except</code></b> <span class="kw-tags">raise · except · finally · custom</span> <a class="anchor" href="#tryexcept">#tryexcept</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">try</span> {
+  <span class="fn">risky</span>();
+} <span class="kw">catch</span> (err) {
+  <span class="kw">if</span> (err <span class="kw">instanceof</span> <span class="nm">TypeError</span>) {}
+  <span class="kw">throw</span> <span class="kw">new</span> <span class="nm">Error</span>(<span class="st">"wrapped"</span>);
+} <span class="kw">finally</span> {
+  <span class="fn">cleanup</span>();
+}
+
+<span class="kw">class</span> <span class="nm">NotFound</span> <span class="kw">extends</span> <span class="nm">Error</span> {}</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">try</span>:
+    <span class="fn">risky</span>()
+<span class="kw">except</span> <span class="nm">ValueError</span> <span class="kw">as</span> err:        <span class="cm"># typed catch</span>
+    <span class="kw">raise</span> <span class="nm">RuntimeError</span>(<span class="st">"wrapped"</span>) <span class="kw">from</span> err
+<span class="kw">except</span> (<span class="nm">KeyError</span>, <span class="nm">IndexError</span>):
+    ...
+<span class="kw">finally</span>:
+    <span class="fn">cleanup</span>()
+
+<span class="kw">class</span> <span class="nm">NotFound</span>(<span class="nm">Exception</span>):
+    <span class="kw">pass</span></pre></div>
+    </div>
+    <div class="cnote"><p><b>You can catch by type directly</b> — <code>except ValueError:</code> instead of catching everything and then testing with <code>instanceof</code>. Several <code>except</code> clauses are tried in order, so put the specific ones first. <code>raise X from err</code> preserves the original cause in the traceback.</p>
+    <p>Bare <code>except:</code> swallows absolutely everything including <kbd>Ctrl-C</kbd>; if you must catch broadly, write <code>except Exception:</code>. Chapter 9 defines domain exceptions this way (<code>LeaveOverlap</code>, <code>InsufficientBalance</code>) and maps each to an HTTP status in one place.</p></div>
+  </div>
+</div></section>
+
+<!-- 9 · TYPES -->
+<section class="block reveal" id="types"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">9</div><div>
+    <div class="sec-time">Section 9 · the one to actually read</div>
+    <h2>The annotations <em>you'll type</em></h2></div></div>
+  <p class="big-p">Everything in this section has a TypeScript twin you already use daily. The difference is not the syntax, it is that <strong>FastAPI reads these at runtime</strong>.</p>
+
+  <div class="crow" id="optional" data-kw="optional union nullable string undefined pipe None Optional">
+    <div class="chead"><b>Unions and nullables: <code>str | None</code></b> <span class="kw-tags">union · optional · Optional</span> <a class="anchor" href="#optional">#optional</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre>name: <span class="nm">string</span> | <span class="kw">null</span>
+id: <span class="nm">string</span> | <span class="nm">number</span>
+dept?: <span class="nm">string</span>      <span class="cm">// optional key</span>
+
+<span class="cm">// optional ≠ nullable in TS</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>name: <span class="fn">str</span> | <span class="kw">None</span>
+id: <span class="fn">str</span> | <span class="fn">int</span>
+dept: <span class="fn">str</span> | <span class="kw">None</span> = <span class="kw">None</span>   <span class="cm"># optional ⇒ has a default</span>
+
+<span class="cm"># older style, same meaning:</span>
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+name: <span class="nm">Optional</span>[<span class="fn">str</span>]</pre></div>
+    </div>
+    <div class="cnote"><p><code>X | None</code> is the modern spelling and what the tutorial uses; <code>Optional[X]</code> is the identical older one you will meet in blog posts. <b>Important for FastAPI:</b> the annotation alone makes a field <em>nullable</em>; what makes it <em>optional in the request</em> is the <code>= None</code> default. A field annotated <code>str | None</code> with no default is still <strong>required</strong> — you just have to pass <code>null</code> explicitly.</p></div>
+  </div>
+
+  <div class="crow" id="generics" data-kw="list dict generics array record type parameter nested collection">
+    <div class="chead"><b>Collections: <code>list[int]</code>, <code>dict[str, float]</code></b> <span class="kw-tags">generics · Array&lt;T&gt; · Record</span> <a class="anchor" href="#generics">#generics</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre>ids: <span class="nm">number</span>[]
+ids: <span class="nm">Array</span>&lt;<span class="nm">number</span>&gt;
+byId: <span class="nm">Record</span>&lt;<span class="nm">string</span>, <span class="nm">Employee</span>&gt;
+pair: [<span class="nm">number</span>, <span class="nm">number</span>]
+rows: <span class="nm">Employee</span>[][]</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>ids: <span class="fn">list</span>[<span class="fn">int</span>]
+<span class="cm"># (same thing — one spelling only)</span>
+by_id: <span class="fn">dict</span>[<span class="fn">str</span>, Employee]
+pair: <span class="fn">tuple</span>[<span class="fn">int</span>, <span class="fn">int</span>]
+rows: <span class="fn">list</span>[<span class="fn">list</span>[Employee]]</pre></div>
+    </div>
+    <div class="cnote"><p>Square brackets do what angle brackets do in TS. Lowercase <code>list</code>/<code>dict</code>/<code>tuple</code> are correct on modern Python; the capitalised <code>List</code>/<code>Dict</code> from <code>typing</code> are the deprecated old spelling. When a route is annotated <code>-&gt; list[EmployeeRead]</code>, FastAPI both serialises each item through that schema <em>and</em> publishes an array schema in <code>/openapi.json</code>.</p></div>
+  </div>
+
+  <div class="crow" id="literal" data-kw="Literal union of strings string literal type enum values status role">
+    <div class="chead"><b>String-literal unions: <code>Literal[...]</code></b> <span class="kw-tags">Literal · "a" | "b"</span> <a class="anchor" href="#literal">#literal</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="kw">type</span> <span class="nm">Role</span> = <span class="st">"employee"</span> | <span class="st">"manager"</span>
+            | <span class="st">"hr_admin"</span>;
+
+<span class="kw">function</span> <span class="fn">f</span>(sort: <span class="st">"asc"</span> | <span class="st">"desc"</span>) {}</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">from</span> typing <span class="kw">import</span> Literal
+
+Role = <span class="nm">Literal</span>[<span class="st">"employee"</span>, <span class="st">"manager"</span>, <span class="st">"hr_admin"</span>]
+
+<span class="kw">def</span> <span class="fn">f</span>(sort: <span class="nm">Literal</span>[<span class="st">"asc"</span>, <span class="st">"desc"</span>] = <span class="st">"asc"</span>): ...</pre></div>
+    </div>
+    <div class="cnote"><p>Identical idea, comma instead of pipe. Annotate a query parameter with a <code>Literal</code> and you get three things for free: editor autocompletion, a <strong>422 rejection of anything else</strong>, and a dropdown of the valid values in <code>/docs</code>. This is the cheapest validation in the whole framework.</p></div>
+  </div>
+
+  <div class="crow" id="enums" data-kw="enum Enum StrEnum class constants role status values">
+    <div class="chead"><b>Real enums: <code>class Role(str, Enum)</code></b> <span class="kw-tags">Enum · StrEnum</span> <a class="anchor" href="#enums">#enums</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="kw">enum</span> <span class="nm">Role</span> {
+  Employee = <span class="st">"employee"</span>,
+  Manager  = <span class="st">"manager"</span>,
+  HrAdmin  = <span class="st">"hr_admin"</span>,
+}
+
+<span class="nm">Role</span>.Manager;         <span class="cm">// "manager"</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">from</span> enum <span class="kw">import</span> Enum
+
+<span class="kw">class</span> <span class="nm">Role</span>(<span class="fn">str</span>, <span class="nm">Enum</span>):
+    EMPLOYEE = <span class="st">"employee"</span>
+    MANAGER  = <span class="st">"manager"</span>
+    HR_ADMIN = <span class="st">"hr_admin"</span>
+
+<span class="nm">Role</span>.MANAGER.value    <span class="cm"># "manager"</span>
+<span class="nm">Role</span>(<span class="st">"manager"</span>)       <span class="cm"># parse from string</span></pre></div>
+    </div>
+    <div class="cnote"><p><b>Why inherit from <code>str</code> as well as <code>Enum</code>?</b> Because then a <code>Role</code> member <em>is</em> a string: it compares equal to <code>"manager"</code>, serialises to JSON as <code>"manager"</code>, and goes into a SQLite column without conversion. Without the <code>str</code> base you get <code>&lt;Role.MANAGER: 'manager'&gt;</code> leaking into your responses.</p>
+    <p>Use <code>Literal</code> for a throwaway set of query-parameter values; use an <code>Enum</code> when the same set is referenced in models, services and tests — as <code>Role</code> and <code>LeaveStatus</code> are throughout this build.</p></div>
+  </div>
+
+  <div class="crow" id="annotated" data-kw="Annotated metadata Depends Query Path Field attach constraints branded type">
+    <div class="chead"><b><code>Annotated[T, ...]</code> — a type plus instructions</b> <span class="kw-tags">Annotated · Depends · Query</span> <a class="anchor" href="#annotated">#annotated</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="cm">// no equivalent. The closest thing is</span>
+<span class="cm">// a branded type plus a decorator, or</span>
+<span class="cm">// metadata you keep somewhere else:</span>
+
+<span class="kw">type</span> <span class="nm">PageSize</span> = <span class="nm">number</span>;  <span class="cm">// 1..100?</span>
+<span class="cm">// …enforced in a separate Zod schema</span>
+<span class="cm">// …documented in a separate comment</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">from</span> typing <span class="kw">import</span> Annotated
+<span class="kw">from</span> fastapi <span class="kw">import</span> Query, Depends
+
+<span class="cm"># "an int, AND here is what to do with it"</span>
+PageSize = <span class="nm">Annotated</span>[<span class="fn">int</span>, <span class="fn">Query</span>(ge=<span class="nm">1</span>, le=<span class="nm">100</span>)]
+
+<span class="kw">def</span> <span class="fn">list_employees</span>(
+    limit: PageSize = <span class="nm">20</span>,
+    db: <span class="nm">Annotated</span>[AsyncSession, <span class="fn">Depends</span>(get_db)],
+): ...</pre></div>
+    </div>
+    <div class="cnote"><p><code>Annotated[T, extra]</code> means “the type is <code>T</code>, and here is extra baggage for whoever cares”. Type checkers ignore the baggage; <strong>FastAPI reads it</strong>. That one mechanism is how a parameter gets constraints (<code>Query(ge=1)</code>), a description for the OpenAPI schema, or an injected dependency (<code>Depends(get_db)</code>) without inventing new syntax.</p>
+    <p>It is also how you give a named alias to a repeated dependency — <code>CurrentUser = Annotated[Employee, Depends(get_current_user)]</code> — so a route signature reads <code>user: CurrentUser</code> instead of twenty characters of plumbing. Chapter 6 does exactly this.</p></div>
+  </div>
+
+  <div class="crow" id="typing-erased" data-kw="runtime erased type checking mypy validation get_type_hints enforce">
+    <div class="chead"><b>Are these checked at runtime? Mostly no.</b> <span class="kw-tags">erased · mypy · the exception</span> <a class="anchor" href="#typing-erased">#typing-erased</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="cm">// erased at build time</span>
+<span class="kw">function</span> <span class="fn">f</span>(x: <span class="nm">number</span>) { <span class="kw">return</span> x; }
+<span class="fn">f</span>(<span class="st">"nope"</span> <span class="kw">as</span> <span class="kw">any</span>);   <span class="cm">// runs fine</span>
+
+<span class="cm">// so you add Zod at the boundary</span>
+Schema.<span class="fn">parse</span>(req.body);</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="cm"># also erased — nothing enforces this</span>
+<span class="kw">def</span> <span class="fn">f</span>(x: <span class="fn">int</span>) -> <span class="fn">int</span>: <span class="kw">return</span> x
+<span class="fn">f</span>(<span class="st">"nope"</span>)        <span class="cm"># runs fine, returns "nope"</span>
+
+<span class="cm"># EXCEPT where a library reads them:</span>
+<span class="nm">EmployeeCreate</span>(**payload)   <span class="cm"># validates</span>
+<span class="nm">@app</span>.<span class="fn">post</span>(<span class="st">"/employees"</span>)        <span class="cm"># validates</span></pre></div>
+    </div>
+    <div class="cnote"><p>Treat annotations as documentation that your editor and <code>mypy</code> enforce <em>before</em> you run, exactly like TS. The exception is the entire reason this tutorial exists: <strong>at the HTTP boundary, FastAPI and Pydantic promote your annotations to real runtime validation</strong>, so the Zod step disappears and the schema can never drift from the handler.</p></div>
+  </div>
+</div></section>
+
+<!-- 10 · ASYNC -->
+<section class="block reveal" id="async-sec"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">10</div><div>
+    <div class="sec-time">Section 10</div>
+    <h2><em>async</em> — nearly identical, one real trap</h2></div></div>
+
+  <div class="crow" id="asyncawait" data-kw="async await promise coroutine gather event loop asyncio Promise.all">
+    <div class="chead"><b><code>async</code>/<code>await</code> and <code>Promise.all</code></b> <span class="kw-tags">coroutine · gather · event loop</span> <a class="anchor" href="#asyncawait">#asyncawait</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="kw">async function</span> <span class="fn">load</span>(id) {
+  <span class="kw">const</span> e = <span class="kw">await</span> db.<span class="fn">find</span>(id);
+  <span class="kw">return</span> e;
+}
+
+<span class="kw">await</span> <span class="nm">Promise</span>.<span class="fn">all</span>([<span class="fn">a</span>(), <span class="fn">b</span>()]);
+
+<span class="cm">// calling it without await gives</span>
+<span class="cm">// you a pending Promise</span>
+<span class="kw">const</span> p = <span class="fn">load</span>(<span class="nm">1</span>);</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="kw">async def</span> <span class="fn">load</span>(id: <span class="fn">int</span>) -> Employee:
+    e = <span class="kw">await</span> db.<span class="fn">get</span>(Employee, id)
+    <span class="kw">return</span> e
+
+
+<span class="kw">await</span> asyncio.<span class="fn">gather</span>(<span class="fn">a</span>(), <span class="fn">b</span>())
+
+<span class="cm"># calling it without await gives you a</span>
+<span class="cm"># coroutine that never runs (+ a warning)</span>
+c = <span class="fn">load</span>(<span class="nm">1</span>)</pre></div>
+    </div>
+    <div class="cnote"><p>Same keywords, same single-threaded event loop, same rule that <code>await</code> only works inside an <code>async def</code>. <code>asyncio.gather</code> is <code>Promise.all</code>. The one behavioural difference: a Python coroutine is <strong>lazy</strong> — it does nothing at all until awaited, whereas a JS promise starts executing the moment you create it.</p></div>
+  </div>
+
+  <div class="crow" id="blocking" data-kw="blocking sync requests time.sleep event loop starvation thread pool def async def">
+    <div class="chead"><b>⚠️ The trap: a blocking call inside <code>async def</code></b> <span class="kw-tags">blocking · requests · time.sleep</span> <a class="anchor" href="#blocking">#blocking</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre><span class="cm">// you can barely do this by accident:</span>
+<span class="cm">// the whole ecosystem is async, and</span>
+<span class="cm">// there is no sync HTTP client to</span>
+<span class="cm">// reach for in the first place.</span>
+
+<span class="cm">// fs.readFileSync is the rare case —</span>
+<span class="cm">// and you already know it's bad.</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="cm"># every library has a sync version, and</span>
+<span class="cm"># pip install will happily give it to you</span>
+
+<span class="kw">async def</span> <span class="fn">handler</span>():
+    r = requests.<span class="fn">get</span>(url)    <span class="cm"># 💥 blocks EVERY request</span>
+    time.<span class="fn">sleep</span>(<span class="nm">1</span>)            <span class="cm"># 💥 freezes the server</span>
+
+<span class="kw">async def</span> <span class="fn">handler</span>():
+    <span class="kw">async with</span> httpx.<span class="nm">AsyncClient</span>() <span class="kw">as</span> c:
+        r = <span class="kw">await</span> c.<span class="fn">get</span>(url)   <span class="cm"># ✅</span>
+    <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="nm">1</span>)        <span class="cm"># ✅</span></pre></div>
+    </div>
+    <div class="cnote"><p><b>This is the single most expensive mistake in a FastAPI codebase</b>, and chapter 3 gets a full callout for it. Because Python's libraries all have a synchronous flavour, it is easy to <code>pip install requests</code> and drop it into an <code>async def</code> — where it blocks the event loop and serialises every concurrent request behind it.</p>
+    <p>The rule: inside <code>async def</code>, every I/O call must be awaited (<code>httpx</code>, not <code>requests</code>; <code>aiosqlite</code>, not <code>sqlite3</code>; <code>asyncio.sleep</code>, not <code>time.sleep</code>). If you are stuck with a blocking library, the escape hatch is to declare the route as plain <code>def</code> instead of <code>async def</code> — FastAPI then runs it in a worker thread, which is safe, just not concurrent in the same way.</p></div>
+  </div>
+</div></section>
+
+<!-- 11 · MISC -->
+<section class="block reveal" id="misc"><div class="wrap">
+  <div class="sec-head"><div class="sec-num">11</div><div>
+    <div class="sec-time">Section 11</div>
+    <h2>Decorators and the <em>shell</em></h2></div></div>
+
+  <div class="crow" id="decorators" data-kw="decorator at sign @ wrapper higher order route app.get">
+    <div class="chead"><b><code>@decorator</code></b> <span class="kw-tags">@app.get · wrapper</span> <a class="anchor" href="#decorators">#decorators</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">TypeScript</div><pre><span class="cm">// you've seen these in TS</span>
+<span class="nm">@Component</span>({ ... })
+<span class="kw">class</span> <span class="nm">Thing</span> {}
+
+<span class="cm">// a decorator is a function that</span>
+<span class="cm">// receives what's below it</span></pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre><span class="nm">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>)
+<span class="kw">async def</span> <span class="fn">list_employees</span>(): ...
+
+<span class="cm"># identical to:</span>
+<span class="kw">async def</span> <span class="fn">list_employees</span>(): ...
+list_employees = app.<span class="fn">get</span>(<span class="st">"/employees"</span>)(list_employees)</pre></div>
+    </div>
+    <div class="cnote"><p>Exactly what you expect from TS decorators: a function that takes the thing below it and registers or wraps it. <code>@app.get("/path")</code> is Express's <code>app.get("/path", handler)</code> with the handler moved to the next line. Nothing more to learn here.</p></div>
+  </div>
+
+  <div class="crow" id="venv" data-kw="venv pip requirements npm install node_modules package.json virtualenv uv activate">
+    <div class="chead"><b><code>npm</code> → <code>pip</code>, <code>node_modules</code> → <code>venv</code></b> <span class="kw-tags">venv · pip · requirements.txt · uv</span> <a class="anchor" href="#venv">#venv</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">Terminal · Node</div><pre>npm init -y
+npm install express
+<span class="cm"># deps land in ./node_modules</span>
+<span class="cm"># listed in package.json</span>
+
+npm run dev</pre></div>
+      <div class="cside py"><div class="ctag">Terminal · Python</div><pre>python3 -m venv .venv
+<span class="kw">source</span> .venv/bin/activate   <span class="cm"># ⚠️ every new shell</span>
+pip install fastapi
+<span class="cm"># deps land in ./.venv/lib/...</span>
+pip freeze &gt; requirements.txt
+
+uvicorn app.main:app --reload</pre></div>
+    </div>
+    <div class="cnote"><p><b>The shape is the same, with one extra step.</b> A <code>venv</code> is a per-project <code>node_modules</code>, but it is not automatic — you must <code>activate</code> it in each new terminal, and the giveaway that you forgot is <code>ModuleNotFoundError: No module named 'fastapi'</code> on a machine where you definitely installed FastAPI. Your prompt shows <code>(.venv)</code> when it is active.</p>
+    <p><code>requirements.txt</code> is a flat <code>dependencies</code> block with no lockfile. Chapter 0 pins exact versions for that reason, and mentions <code>uv</code> — a single fast tool that replaces <code>venv</code> + <code>pip</code> and does have a lockfile.</p></div>
+  </div>
+
+  <div class="crow" id="misc-ops" data-kw="operators division floor modulo power increment ternary swap chained comparison">
+    <div class="chead"><b>Operators and small syntax</b> <span class="kw-tags">ternary · // · no ++ · chaining</span> <a class="anchor" href="#misc-ops">#misc-ops</a></div>
+    <div class="cpair">
+      <div class="cside js"><div class="ctag">JavaScript</div><pre>a ? b : c
+<span class="nm">Math</span>.<span class="fn">floor</span>(a / b)
+a ** b
+i++ / i += <span class="nm">1</span>
+<span class="cm">// comments</span>
+a &gt; <span class="nm">0</span> &amp;&amp; a &lt; <span class="nm">10</span>
+<span class="kw">let</span> [a, b] = [b, a];</pre></div>
+      <div class="cside py"><div class="ctag">Python</div><pre>b <span class="kw">if</span> a <span class="kw">else</span> c      <span class="cm"># value first!</span>
+a // b             <span class="cm"># floor division</span>
+a ** b
+i += <span class="nm">1</span>             <span class="cm"># there is no ++</span>
+<span class="cm"># comments</span>
+<span class="nm">0</span> &lt; a &lt; <span class="nm">10</span>         <span class="cm"># chained, like maths</span>
+a, b = b, a        <span class="cm"># swap</span></pre></div>
+    </div>
+    <div class="cnote"><p>The ternary reads in a different order — <strong>value, condition, fallback</strong> — which looks wrong for about a week and then reads better than <code>?:</code>. Chained comparison (<code>0 &lt; days &lt;= 30</code>) is real and we use it when validating leave ranges.</p></div>
+  </div>
+</div></section>
+
+<!-- 12 · GOTCHAS -->
+<section class="block reveal" id="gotchas"><div class="wrap">
+  <div class="sec-head accent"><div class="sec-num">12</div><div>
+    <div class="sec-time">Section 12 · come back when something breaks</div>
+    <h2>The gotchas that <em>actually</em> bite</h2></div></div>
+  <p class="big-p">Not a list of trivia. These are the six errors a JS developer hits in their first week of Python, with the fix.</p>
+
+  <div class="probs">
+    <div class="prob">
+      <div class="head"><span class="e">␣</span><b>Indentation is the syntax</b></div>
+      <p>There are no braces. A block is whatever is indented under the <code>:</code>, and mixing tabs with spaces is an <code>IndentationError</code>. Nothing is optional about it.</p>
+      <div class="fix">Fix: 4 spaces, let your editor insert them, never tabs</div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">🔑</span><b><code>dict["k"]</code> raises</b></div>
+      <p>Missing keys do not give you <code>undefined</code> — they raise <code>KeyError</code> and return a 500. The same goes for <code>list[9]</code> on a short list (<code>IndexError</code>).</p>
+      <div class="fix">Fix: <code>d.get("k")</code>, or <code>d.get("k", default)</code></div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">🧨</span><b>Mutable default arguments</b></div>
+      <p><code>def f(items: list = [])</code> creates that list <strong>once, at import</strong>, and every call shares it. Append in one request, see it in the next. A genuinely confusing bug.</p>
+      <div class="fix">Fix: <code>items: list | None = None</code>, then <code>items = items or []</code></div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">🅣</span><b><code>True</code>, not <code>true</code></b></div>
+      <p><code>True</code>, <code>False</code>, <code>None</code> are capitalised. Lowercase <code>true</code> is just an undefined variable name, so you get <code>NameError</code> rather than a syntax error.</p>
+      <div class="fix">Fix: muscle memory. The error message is clear.</div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">≡</span><b>No <code>===</code>, and <code>is</code> isn't it</b></div>
+      <p><code>==</code> is already strict. <code>is</code> compares identity and <em>appears</em> to work on small numbers and short strings because of interning, then fails on bigger ones.</p>
+      <div class="fix">Fix: <code>==</code> for values, <code>is</code> only for <code>None</code>/<code>True</code>/<code>False</code></div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">🧵</span><b>Blocking I/O in <code>async def</code></b></div>
+      <p>The expensive one. A sync library inside an async route stalls the entire server, and nothing warns you — the app just stops scaling.</p>
+      <div class="fix">Fix: see <a class="link" href="#blocking">#blocking</a></div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">🐚</span><b>Forgetting to activate the venv</b></div>
+      <p><code>ModuleNotFoundError</code> for a package you are certain you installed. You installed it — into a different environment, or globally.</p>
+      <div class="fix">Fix: <code>source .venv/bin/activate</code>, check for <code>(.venv)</code></div>
+    </div>
+    <div class="prob">
+      <div class="head"><span class="e">🔁</span><b>Circular imports crash</b></div>
+      <p>Two modules importing each other is a hard <code>ImportError</code> at startup, not a resolved cycle. Common once you split routers from models.</p>
+      <div class="fix">Fix: one-way layering — routers → services → models</div>
+    </div>
+  </div>
+
+  <div class="industry">
+    <span class="tag">worth knowing</span>
+    <h4>What you are <em>not</em> going to need</h4>
+    <p>Skip, until something forces you back: metaclasses, multiple inheritance and the MRO, <code>__slots__</code>, generators and <code>yield</code> beyond the one-line generator expressions above, context-manager authoring (you will <em>use</em> <code>async with</code>, not write one), the GIL as anything other than a reason async exists, and the entire <code>typing</code> module beyond this page.</p>
+    <p>FastAPI is a small surface area. Nine tenths of this build is <code>def</code>, type annotations, dicts and <code>await</code>.</p>
+    <div class="cos"><span>def</span><span>annotations</span><span>dict / list</span><span>await</span><span>class (to read)</span></div>
+  </div>
+
+  <div class="wow"><span class="star">🚀</span><div><p><b>That's the sheet.</b> Keep it open in a second tab and go build. Every <code># new: …</code> comment in the tutorial is a link back to one of these rows — you are not expected to have memorised any of it.</p></div></div>
+
+  <h3>Where to go</h3>
+  <div class="road">
+    <a href="part-1-employees-api.html"><span class="cl">PART 1</span><div><b>The employees API</b><p>Chapters 0–5 · a running endpoint in chapter 0, a DB-backed employees and departments API by chapter 5</p></div><span class="sk">12 endpoints</span></a>
+    <a href="part-2-auth-leave-tests.html"><span class="cl">PART 2</span><div><b>Auth, leave and tests</b><p>Chapters 6–11 · three roles, leave approvals, the balance race condition, pytest, agent-ready OpenAPI</p></div><span class="sk">12 endpoints</span></a>
+    <a class="here" href="#read"><span class="cl">THIS PAGE</span><div><b>Python for JS devs</b><p>The lookup sheet · back to the top</p></div><span class="sk">reference</span></a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Python for JS devs · companion sheet to the FastAPI HR build · JS left, Python right, one row per idea.</div></footer>
+
+<script>
+/* ---------- progress ---------- */
+const prog=document.getElementById('progress');
+addEventListener('scroll',()=>{const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;prog.style.width=(max>0?sc/max*100:0)+'%';});
+
+/* ---------- reveal ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- hero flipper ---------- */
+(function(){
+  const PAIRS=[
+    ['emps.filter(e => e.active)\n    .map(e => e.name)','[e.name for e in emps if e.active]'],
+    ['`${name} booked ${days}d`','f"{name} booked {days}d"'],
+    ['emp.title ?? "—"','emp.get("title", "—")'],
+    ['type Role = "manager" | "hr_admin"','Role = Literal["manager", "hr_admin"]'],
+    ['if (list.length === 0) {}','if not my_list:'],
+    ['await Promise.all([a(), b()])','await asyncio.gather(a(), b())'],
+    ['const [lo, hi] = range();','lo, hi = date_range()'],
+    ['interface Body { name: string }\n+ a separate Zod schema','class Body(BaseModel):\n    name: str   # ← also the validator']
+  ];
+  const j=document.getElementById('flJSb'),p=document.getElementById('flPYb'),
+        jw=document.getElementById('flJS'),pw=document.getElementById('flPY');
+  let i=0;
+  function tick(){
+    jw.style.opacity=pw.style.opacity=0;
+    setTimeout(()=>{
+      j.textContent=PAIRS[i][0];p.textContent=PAIRS[i][1];
+      jw.style.opacity=pw.style.opacity=1;
+      i=(i+1)%PAIRS.length;
+    },300);
+    setTimeout(tick,3400);
+  }
+  j.textContent=PAIRS[0][0];p.textContent=PAIRS[0][1];i=1;setTimeout(tick,3400);
+})();
+
+/* ---------- filter ---------- */
+(function(){
+  const q=document.getElementById('q'),hits=document.getElementById('hits'),
+        nohits=document.createElement('div'),rows=[...document.querySelectorAll('.crow')];
+  nohits.id='nohits';
+  nohits.innerHTML='Nothing matches that. Try a shorter word — the filter searches row titles, keywords and the code itself.';
+  document.querySelector('#gotchas .wrap').appendChild(nohits);
+  const idx=rows.map(r=>({el:r,
+    text:(r.id+' '+(r.dataset.kw||'')+' '+r.textContent).toLowerCase()}));
+  function run(){
+    const t=q.value.trim().toLowerCase();
+    let shown=0;
+    idx.forEach(({el,text})=>{
+      const ok=!t||text.includes(t);
+      el.classList.toggle('hide',!ok);
+      if(ok)shown++;
+    });
+    // hide a section whose every row is filtered out
+    document.querySelectorAll('section.block').forEach(sec=>{
+      const rs=sec.querySelectorAll('.crow');
+      if(!rs.length)return;
+      const anyShown=[...rs].some(r=>!r.classList.contains('hide'));
+      sec.style.display=(t&&!anyShown)?'none':'';
+    });
+    hits.textContent=t?shown+' / '+rows.length+' rows':rows.length+' rows';
+    nohits.classList.toggle('on',!!t&&shown===0);
+    if(window.__sbSyncFilter)window.__sbSyncFilter();
+  }
+  q.addEventListener('input',run);
+  addEventListener('keydown',e=>{
+    if(e.key==='/'&&document.activeElement!==q){e.preventDefault();q.focus();q.select();}
+    if(e.key==='Escape'&&document.activeElement===q){q.value='';run();q.blur();}
+  });
+  run();
+})();
+
+/* ---------- copy-anchor ---------- */
+document.querySelectorAll('.crow .anchor').forEach(a=>{
+  a.addEventListener('click',ev=>{
+    const url=location.href.split('#')[0]+a.getAttribute('href');
+    if(navigator.clipboard){
+      ev.preventDefault();
+      navigator.clipboard.writeText(url).then(()=>{
+        const old=a.textContent;a.textContent='copied ✓';
+        location.hash=a.getAttribute('href');
+        setTimeout(()=>a.textContent=old,1100);
+      },()=>{location.hash=a.getAttribute('href');});
+    }
+  });
+});
+/* ---------- contents sidebar ---------- */
+(function(){
+  const sb=document.getElementById('sidebar'),nav=sb.querySelector('.sb-nav'),
+        tog=document.getElementById('sbToggle'),scrim=document.getElementById('sbScrim');
+  const targets=[];
+  document.querySelectorAll('section.block[id]').forEach(sec=>{
+    const h2=sec.querySelector('h2'); if(!h2)return;
+    const badge=sec.querySelector('.sec-num');
+    const a=document.createElement('a');
+    a.className='sb-sec'; a.href='#'+sec.id; a.dataset.sec=sec.id;
+    a.innerHTML='<span class="n">'+(badge?badge.textContent.trim():'')+'</span><span>'+h2.textContent.trim()+'</span>';
+    nav.appendChild(a); targets.push({a,el:sec});
+    sec.querySelectorAll('.crow[id]').forEach(sub=>{
+      const t=sub.querySelector('.chead b');
+      const b=document.createElement('a');
+      b.className='sb-sub'; b.href='#'+sub.id;
+      b.textContent=(t?t.textContent:sub.id).trim().replace(/\s+/g,' ');
+      b.dataset.row=sub.id;
+      nav.appendChild(b); targets.push({a:b,el:sub});
+    });
+  });
+  function close(){sb.classList.remove('open');scrim.classList.remove('on');}
+  tog.addEventListener('click',()=>{const o=sb.classList.toggle('open');scrim.classList.toggle('on',o);});
+  scrim.addEventListener('click',close);
+  nav.addEventListener('click',e=>{if(e.target.closest('a')&&innerWidth<1400)close();});
+  addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  const spy=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const hit=targets.find(t=>t.el===e.target); if(!hit)return;
+      targets.forEach(t=>t.a.classList.remove('cur'));
+      hit.a.classList.add('cur');
+      const top=hit.a.offsetTop;
+      if(top<sb.scrollTop||top>sb.scrollTop+sb.clientHeight-50)sb.scrollTop=top-120;
+    });
+  },{rootMargin:'-18% 0px -70% 0px'});
+  targets.forEach(t=>spy.observe(t.el));
+  window.__sbSyncFilter=function(){
+    nav.querySelectorAll('a.sb-sub').forEach(a=>{
+      const row=document.getElementById(a.dataset.row);
+      a.classList.toggle('hide',!!row&&row.classList.contains('hide'));
+    });
+    nav.querySelectorAll('a.sb-sec').forEach(a=>{
+      const sec=document.getElementById(a.dataset.sec);
+      a.classList.toggle('hide',!!sec&&sec.style.display==='none');
+    });
+  };
+  window.__sbSyncFilter();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* Extracted from /Users/paritoshbatish/Downloads/AI infused learning/class 1-2 foundations.html
+   on 2026-11-04. The three tutorial pages must look like siblings of that page.
+   This file is reference only — it is never linked; each page inlines its own CSS. */
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+/* Border companions for the tint backgrounds (used on .analogy, .cmp-card):
+   teal #a9ddd2 · blue #b8c8ee · gold #ecd49b · purple #d4bce8 · pink #f2bcd4 · orange #ffd2c5 */
+
+/* Fonts (the only external resource on every page):
+   Fraunces  — headings, .sec-num, .meter .val      (400,500,600,700,900 + italic via opsz axis)
+   Manrope   — body, buttons, labels                (400,500,600,700,800)
+   JetBrains Mono — code, kickers, eyebrow labels   (400,500,700)
+   https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap */
+
+/* Body: 17px Manrope, line-height 1.65, two radial highlights over --paper.
+   .wrap: max-width 1080px, padding 0 26px. */
+
+/* Required components, carried across all three pages:
+   #progress   fixed 4px orange->gold scroll bar, z-index 200
+   #topnav     fixed, translateY(-110%) until .show is toggled past ~620px scroll
+   .hero       dotted-mask background, floating .orb, 1.2fr/.9fr grid collapsing at 860px
+   .kicker     mono uppercase pill with pulsing .dot
+   h1.title    Fraunces 900, clamp(38px,6.2vw,66px); em -> italic orange
+   section.block + .sec-head > .sec-num (54px dark rounded square; .accent -> orange)
+   .sec-time   mono uppercase eyebrow
+   Callouts:   .def (orange left rule) · .wow (orange gradient) ·
+               .analogy.teal|blue|gold|purple|pink · .note (purple) · .industry (dark)
+   Code:       .code > .bar (3 dots + filename) + pre, spans .cm .kw .st .fn .nm .op
+   Terminal:   .term > .tbar + pre, spans .pr .cmt .ok
+   Other:      .decode, .takeaways, .recap, .pieces, .cmp-pair, .btn, .chip, .road
+   Reveal:     .reveal -> .in via IntersectionObserver */

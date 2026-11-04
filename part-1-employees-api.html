@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FastAPI Part 1 — the employees API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 12% 6%,#fff4ea 0,transparent 38%),radial-gradient(circle at 88% 3%,#ffe6dd 0,transparent 30%),var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));z-index:200;transition:width .1s linear}
+
+/* permanent header — this is a lookup page, the search must never scroll away */
+#deck{position:sticky;top:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.9);border-bottom:1px solid var(--line)}
+#deck .wrap{display:flex;align-items:center;gap:14px;min-height:62px;padding-top:9px;padding-bottom:9px;flex-wrap:wrap}
+#deck .brand{font-family:'Fraunces';font-weight:600;font-size:16px;white-space:nowrap}
+#deck .brand b{color:var(--orange)}
+#deck .grow{flex:1;min-width:190px;position:relative}
+#deck input{width:100%;font-family:'Manrope';font-weight:600;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px 9px 34px;background:var(--card);color:var(--ink)}
+#deck input:focus{outline:none;border-color:var(--orange)}
+#deck .mag{position:absolute;left:11px;top:9px;font-size:14px;opacity:.5}
+#deck .kbd{position:absolute;right:9px;top:9px;font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--paper-2)}
+#deck select{font-family:'Manrope';font-weight:700;font-size:13px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--card);color:var(--ink-soft)}
+#hits{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);white-space:nowrap}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:56px 0 34px}
+.hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--line) 1.1px,transparent 1.1px);background-size:22px 22px;opacity:.5;mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.hero .orb{position:absolute;left:-140px;top:-150px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(43,74,139,.16),transparent 65%);animation:float 10s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(24px) scale(1.05)}}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.2fr .9fr;gap:36px;align-items:center}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-tint);border:1px solid #ffd2c5;padding:7px 14px;border-radius:100px}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd2c5;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px #ffd2c5}50%{box-shadow:0 0 0 7px rgba(255,210,197,.4)}}
+h1.title{font-family:'Fraunces';font-weight:900;font-size:clamp(34px,5.4vw,56px);line-height:1.04;letter-spacing:-.02em;margin:18px 0 0}
+h1.title em{font-style:italic;color:var(--orange)}
+.lede{font-size:18.5px;color:var(--ink-soft);max-width:640px;margin:16px 0 0;line-height:1.55}
+.hero-meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 15px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
+.signature{margin-top:22px;font-family:'JetBrains Mono';font-size:13px;color:var(--ink-faint);border-top:1px dashed var(--line);padding-top:14px}
+.signature b{color:var(--ink)}
+
+/* hero flip card */
+.vmap{background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:var(--shadow-lift);overflow:hidden;transform:rotate(-1.2deg)}
+.vmap .vbar{background:var(--ink);color:var(--paper);padding:11px 16px;font-weight:700;font-size:13.5px;display:flex;gap:8px;align-items:center}
+.vmap .vbar .live{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;background:var(--orange);padding:2px 7px;border-radius:5px;text-transform:uppercase;margin-left:auto}
+.flip{display:grid;grid-template-columns:1fr;background:var(--code-bg)}
+.flip .fl{padding:13px 16px;font-family:'JetBrains Mono';font-size:12.5px;line-height:1.6;color:var(--code-ink);white-space:pre-wrap;min-height:58px;transition:opacity .3s}
+.flip .fl .who{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}
+.flip .fl.j{border-bottom:1px dashed #3a2f26}
+.flip .fl.j .who{color:#f2c97d}
+.flip .fl.p .who{color:#7fc7e8}
+.vmap .vfoot{padding:9px 14px;font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);background:var(--paper-2);border-top:1px solid var(--line);text-align:center}
+
+/* sections */
+section.block{padding:46px 0 10px;border-top:1px solid var(--line);scroll-margin-top:74px}
+.sec-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:12px}
+.sec-num{flex:none;width:54px;height:54px;border-radius:14px;background:var(--ink);color:var(--paper);font-family:'Fraunces';font-weight:700;font-size:22px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.sec-head.accent .sec-num{background:var(--orange)}
+.sec-time{font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep)}
+h2{font-family:'Fraunces';font-weight:700;font-size:clamp(26px,3.6vw,36px);line-height:1.08;letter-spacing:-.015em;margin:4px 0 0}
+h2 em{font-style:italic;color:var(--orange)}
+h3{font-family:'Fraunces';font-weight:600;font-size:23px;letter-spacing:-.01em;margin:30px 0 10px}
+h3 em{font-style:italic;color:var(--orange)}
+p{margin:0 0 16px}
+.big-p{font-size:18.5px;color:var(--ink-soft);max-width:760px}
+strong{color:var(--ink);font-weight:700}
+code{font-family:'JetBrains Mono';font-size:.88em;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:5px}
+a.link{color:var(--orange-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* callouts */
+.def{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--orange);border-radius:14px;padding:20px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.def .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-deep);font-weight:500;margin-bottom:6px}
+.def p:last-child{margin-bottom:0}
+.wow{background:linear-gradient(135deg,#fff3ec,#ffe9e1);border:1px solid #ffd2c5;border-radius:16px;padding:20px 24px;margin:24px 0;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow)}
+.wow .star{flex:none;font-size:26px;filter:drop-shadow(0 2px 4px rgba(216,60,24,.3))}
+.wow b{color:var(--orange-deep)}
+.wow p{margin:0;font-size:16px}
+.analogy{border-radius:14px;padding:18px 22px;margin:20px 0;border:1px solid;display:flex;gap:14px;align-items:flex-start}
+.analogy .ico{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px}
+.analogy.teal{background:var(--teal-tint);border-color:#a9ddd2}.analogy.teal .ico{background:var(--teal);color:#fff}
+.analogy.blue{background:var(--blue-tint);border-color:#b8c8ee}.analogy.blue .ico{background:var(--blue);color:#fff}
+.analogy.gold{background:var(--gold-tint);border-color:#ecd49b}.analogy.gold .ico{background:var(--gold);color:#fff}
+.analogy.purple{background:var(--purple-tint);border-color:#d4bce8}.analogy.purple .ico{background:var(--purple);color:#fff}
+.analogy.pink{background:var(--pink-tint);border-color:#f2bcd4}.analogy.pink .ico{background:var(--pink);color:#fff}
+.analogy b{display:block;font-size:15px;margin-bottom:2px}
+.analogy p{margin:0;font-size:15.5px;color:var(--ink-soft)}
+.analogy em{color:var(--ink);font-style:italic}
+.note{background:var(--purple-tint);border:1px solid #d4bce8;border-radius:14px;padding:16px 20px;margin:22px 0;display:flex;gap:12px;align-items:flex-start}
+.note .ico{flex:none;font-size:20px}.note b{color:var(--purple)}.note p{margin:0;font-size:15px;color:#5a4566}
+.industry{position:relative;background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:18px;padding:26px 28px;margin:26px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.industry:before{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.4}
+.industry .tag{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb39e;margin-bottom:10px;display:inline-flex;font-weight:500}
+.industry h4{color:#fff;text-transform:none;font-family:'Fraunces';font-size:21px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.industry p{margin:0 0 10px;color:#d8ccbf;font-size:15.5px}
+.industry p:last-child{margin-bottom:0}
+.industry code{background:rgba(255,255,255,.12);color:#ffd9cc}
+.industry .cos{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.industry .cos span{font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:5px 11px;border-radius:6px;color:#fff;font-family:'JetBrains Mono'}
+
+/* code + terminal */
+.code{background:var(--code-bg);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:20px 0}
+.code .bar{background:#171411;padding:9px 16px;display:flex;align-items:center;gap:7px}
+.code .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.code .bar .r{background:#ff5f56}.code .bar .y{background:#ffbd2e}.code .bar .g{background:#27c93f}
+.code .bar span{margin-left:8px;font-family:'JetBrains Mono';font-size:12px;color:#9a8a78}
+.code pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono';font-size:13.5px;line-height:1.7;color:var(--code-ink)}
+.cm{color:#7f9c6a;font-style:italic}.kw{color:#ff9d7a}.st{color:#f2c97d}.fn{color:#7fc7e8}.nm{color:#c8a8e8}.op{color:#9a8a78}
+.term{background:#0e0c0a;color:#d8ccbf;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:18px 0}
+.term .tbar{background:#181513;padding:9px 14px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono';font-size:12px;color:#7a6e62}
+.term .tbar i{width:10px;height:10px;border-radius:50%;background:#5a4f47;display:inline-block}
+.term pre{margin:0;padding:14px 18px;font-family:'JetBrains Mono';font-size:13px;line-height:1.65;white-space:pre-wrap}
+.term .pr{color:#ff9d7a}.term .cmt{color:#7f9c6a;font-style:italic}.term .ok{color:#7fc7a8}
+
+/* ===== the cheatsheet row — the whole point of this page ===== */
+.crow{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:14px 0;box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:80px}
+.crow:target{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint),var(--shadow)}
+.crow .chead{display:flex;align-items:center;gap:10px;background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.crow .chead b{font-family:'Fraunces';font-size:17.5px;font-weight:600}
+.crow .chead .kw-tags{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint)}
+.crow .chead .anchor{margin-left:auto;font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.crow .chead .anchor:hover{color:var(--orange-deep);border-color:#ffd2c5;background:var(--orange-tint)}
+.cpair{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:800px){.cpair{grid-template-columns:1fr}}
+.cside{display:flex;flex-direction:column;min-width:0}
+.cside.js{border-right:1px solid #3a2f26}
+@media(max-width:800px){.cside.js{border-right:none}}
+.cside .ctag{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border-bottom:1px solid var(--line)}
+.cside.js .ctag{background:var(--gold-tint);color:#a8761a}
+.cside.py .ctag{background:var(--blue-tint);color:var(--blue)}
+.cside pre{margin:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font-family:'JetBrains Mono';font-size:12.8px;line-height:1.72;overflow-x:auto;flex:1}
+.cnote{padding:12px 16px;border-top:1px solid var(--line);font-size:14.5px;color:var(--ink-soft);background:#fffdfa}
+.cnote b{color:var(--ink)}
+.cnote code{font-size:12.8px}
+.cnote p{margin:0}
+.cnote p+p{margin-top:8px}
+.crow.hide{display:none}
+#nohits{display:none;background:var(--card);border:1.5px dashed var(--ink-faint);border-radius:14px;padding:18px 22px;margin:16px 0;color:var(--ink-soft);font-size:15px}
+#nohits.on{display:block}
+
+/* gotcha grid */
+.probs{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:14px;margin:20px 0}
+.prob{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.prob .head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prob .head .e{font-size:22px}
+.prob .head b{font-family:'Fraunces';font-size:16.5px}
+.prob p{margin:0;font-size:14.5px;color:var(--ink-soft)}
+.prob code{font-size:12.6px}
+.prob .fix{margin-top:10px;font-size:13px;color:var(--teal);font-weight:700;background:var(--teal-tint);border-radius:8px;padding:6px 10px;display:inline-block}
+
+/* roadmap */
+.road{display:grid;gap:10px;margin:18px 0 30px}
+.road a{display:grid;grid-template-columns:104px 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.road a:hover{transform:translateX(3px);border-color:var(--orange)}
+.road .cl{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--orange-deep)}
+.road b{font-size:15px}.road p{margin:2px 0 0;font-size:13px;color:var(--ink-faint)}
+.road .sk{font-family:'JetBrains Mono';font-size:10.5px;background:var(--teal-tint);color:var(--teal);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.road a.here{border-color:var(--orange);background:linear-gradient(180deg,#fff,#fff8f3)}
+@media(max-width:640px){.road a{grid-template-columns:1fr}.road .sk{justify-self:start}}
+
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.reveal.in{opacity:1;transform:none}
+footer{border-top:1px solid var(--line);padding:30px 0 60px;color:var(--ink-faint);font-family:'JetBrains Mono';font-size:12.5px}
+
+/* ===== part-1 page-specific ===== */
+h3[id]{scroll-margin-top:80px}
+#topnav{position:fixed;top:0;left:0;right:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.92);border-bottom:1px solid var(--line);transform:translateY(-110%);transition:transform .3s}
+#topnav.show{transform:none}
+#topnav .wrap{display:flex;align-items:center;gap:6px;min-height:52px;padding-top:6px;padding-bottom:6px;overflow-x:auto}
+#topnav .brand{font-family:'Fraunces';font-weight:600;font-size:16px;white-space:nowrap;margin-right:10px}
+#topnav .brand b{color:var(--orange)}
+#topnav a{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--ink-soft);text-decoration:none;padding:6px 10px;border-radius:8px;white-space:nowrap}
+#topnav a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+.hero .try{padding:14px 16px;background:var(--code-bg);color:var(--code-ink)}
+.hero .try .btns{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.hero .try button{font-family:'JetBrains Mono';font-size:11.5px;font-weight:700;border:1px solid #4a3d33;background:#2e2620;color:#f2c97d;border-radius:8px;padding:6px 10px;cursor:pointer}
+.hero .try button.on,.hero .try button:hover{background:var(--orange);border-color:var(--orange);color:#fff}
+.hero .try pre{margin:0;font-family:'JetBrains Mono';font-size:12.5px;line-height:1.6;white-space:pre-wrap;min-height:150px}
+.hero .try .stat{font-family:'JetBrains Mono';font-size:12px;margin-bottom:6px}
+.chip-syn{display:inline-block;font-family:'JetBrains Mono';font-size:11.5px;font-weight:500;background:var(--gold-tint);color:#8a5a0c;border:1px solid #ecd49b;border-radius:100px;padding:3px 11px;margin:2px 6px 8px 0;text-decoration:none;line-height:1.5}
+.chip-syn:hover{background:var(--gold);color:#fff;border-color:var(--gold)}
+.whydiff{background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:24px 26px;margin:30px 0;box-shadow:6px 6px 0 var(--ink)}
+.whydiff .wtag{display:inline-block;font-family:'JetBrains Mono';font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);background:var(--orange-tint);border:1px solid #ffd2c5;padding:4px 11px;border-radius:6px;margin-bottom:10px}
+.whydiff h4{font-family:'Fraunces';font-weight:700;font-size:25px;line-height:1.15;letter-spacing:-.01em;margin:0 0 10px}
+.whydiff>p{font-size:16px;color:var(--ink-soft)}
+.whydiff .after{margin-top:16px}
+.whydiff .after p:last-child{margin-bottom:0}
+.wd-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0 4px}
+@media(max-width:800px){.wd-cols{grid-template-columns:1fr}}
+.wd{min-width:0;display:flex;flex-direction:column}
+.wd.js{border-right:1px solid #3a2f26}
+.wd .ct,.cmp-card .ct{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px}
+.wd.js .ct,.cmp-card.js .ct{background:var(--gold-tint);color:#a8761a}
+.wd.py .ct,.cmp-card.py .ct{background:var(--blue-tint);color:var(--blue)}
+.wd pre,.cmp-card pre{margin:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font-family:'JetBrains Mono';font-size:12.8px;line-height:1.7;overflow-x:auto;flex:1}
+.cmp-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+@media(max-width:800px){.cmp-pair{grid-template-columns:1fr}}
+.cmp-card{border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);min-width:0;display:flex;flex-direction:column}
+.decode{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 20px;margin:20px 0;box-shadow:var(--shadow)}
+.decode .dl{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line);font-size:15.5px;color:var(--ink-soft)}
+.decode .dl:last-child{border-bottom:none}
+.decode .dl b{flex:none;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:'JetBrains Mono';font-size:12px;margin-top:1px}
+.decode .dl>div{min-width:0}
+.ships{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--teal-tint);border:1px solid #a9ddd2;border-radius:14px;padding:14px 18px;margin:30px 0 20px}
+.ships .lab{font-family:'JetBrains Mono';font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);width:100%}
+.ships .ep{background:#fff;border:1px solid #a9ddd2;border-radius:8px;padding:4px 10px;font-size:13px}
+.ships .ep code{background:none;padding:0;font-size:12.5px}
+.m{font-family:'JetBrains Mono';font-size:10.5px;padding:2px 6px;border-radius:5px;color:#fff}
+.m.get{background:var(--teal)}.m.post{background:var(--orange-deep)}.m.patch{background:var(--purple)}.m.delete{background:var(--pink)}
+.recap{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.recap span{background:var(--card);border:1px solid var(--line);border-radius:100px;padding:6px 14px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
+.takeaways{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--teal);border-radius:14px;padding:18px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.takeaways .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:6px}
+.takeaways ul{margin:0;padding-left:20px}.takeaways li{margin:4px 0;font-size:15.5px;color:var(--ink-soft)}
+.eptable{width:100%;border-collapse:collapse;margin:18px 0;font-size:14.5px;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.eptable th{background:var(--paper-2);font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:9px 14px;color:var(--ink-faint)}
+.eptable td{padding:8px 14px;border-top:1px solid var(--line)}
+.eptable td code{background:none;padding:0}
+.wrapx{overflow-x:auto}
+#tracker{position:fixed;right:14px;bottom:16px;z-index:180;background:var(--ink);color:var(--paper);border-radius:12px;padding:9px 14px 10px;font-family:'JetBrains Mono';font-size:12px;font-weight:700;box-shadow:var(--shadow-lift);min-width:150px}
+#tracker .bar{height:4px;border-radius:3px;background:#4a3d33;margin-top:7px;overflow:hidden}
+#tracker .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .4s}
+#tracker b{color:#ffb39e}
+footer .wrap{padding-top:0}
+/* ===== contents sidebar ===== */
+#sbToggle{position:fixed;left:14px;bottom:16px;z-index:180;font-family:'Manrope';font-weight:700;font-size:13px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;cursor:pointer;box-shadow:var(--shadow-lift)}
+#sbToggle:hover{background:var(--orange-tint);color:var(--orange-deep);border-color:var(--orange)}
+#sbScrim{position:fixed;inset:0;z-index:155;background:rgba(28,23,20,.38);opacity:0;pointer-events:none;transition:opacity .25s}
+#sbScrim.on{opacity:1;pointer-events:auto}
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;z-index:170;background:var(--paper-2);border-right:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain;padding:16px 0 70px;transform:translateX(-101%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#sidebar.open{transform:none;box-shadow:var(--shadow-lift)}
+#sidebar .sb-head{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:4px 18px 10px}
+#sidebar a{display:block;text-decoration:none;color:var(--ink-soft);border-left:3px solid transparent}
+#sidebar a.sb-sec{font-weight:700;font-size:13.5px;padding:7px 16px 7px 15px;color:var(--ink);display:flex;gap:9px;align-items:baseline;line-height:1.3}
+#sidebar a.sb-sec .n{font-family:'JetBrains Mono';font-size:11px;color:var(--orange-deep);flex:none;min-width:14px}
+#sidebar a.sb-sub{font-size:12.5px;padding:4px 16px 4px 40px;font-family:'JetBrains Mono';color:var(--ink-faint);line-height:1.35}
+#sidebar a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+#sidebar a.cur{border-left-color:var(--orange);background:#fff;color:var(--orange-deep)}
+@media(min-width:1400px){
+  #sidebar{transform:none;box-shadow:none}
+  #sbToggle,#sbScrim{display:none}
+  body{padding-left:250px}
+  #progress,#topnav{left:250px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="sbToggle" aria-label="Contents">&#9776; Contents</button>
+<div id="sbScrim"></div>
+<aside id="sidebar"><div class="sb-head">Contents</div><nav class="sb-nav"></nav></aside>
+<div id="topnav"><div class="wrap"><span class="brand">FastAPI <b>Part 1</b></span><a href="#ch0">Ch 0</a><a href="#ch1">Ch 1</a><a href="#ch2">Ch 2</a><a href="#ch3">Ch 3</a><a href="#ch4">Ch 4</a><a href="#ch5">Ch 5</a><a href="python-for-js-devs.html">Cheatsheet</a></div></div>
+<header class="hero"><div class="orb"></div><div class="wrap">
+  <div>
+    <span class="kicker"><span class="dot"></span> Part 1 of 3 · Chapters 0-5</span>
+    <h1 class="title">Build the <em>employees API</em>, one endpoint at a time.</h1>
+    <p class="lede">You write React and TypeScript all day and you know Express. By the end of this page you will have a DB-backed FastAPI service for employees and departments: typed inputs, validated bodies, filtered and paginated lists, and a clean OpenAPI spec your React app can generate types from. Every chapter ships real endpoints; there are no theory chapters. New Python syntax shows up as a small <span class="chip-syn" style="margin:0">gold chip</span> linking to the <a class="link" href="python-for-js-devs.html">cheatsheet</a>.</p>
+    <div class="hero-meta"><span class="chip">🧱 12 endpoints in Part 1</span><span class="chip">🗄️ SQLite + SQLAlchemy 2.0 async</span><span class="chip">⚛️ Typed TS client for React</span><span class="chip">🔁 Express side by side</span></div>
+    <div class="signature"><b>Next</b>: <a class="link" href="part-2-auth-leave-tests.html">Part 2</a> adds auth, leave requests, approvals and tests (endpoints 13-24).</div>
+  </div>
+  <div><div class="vmap"><div class="vbar">🧪 the API you will have built <span class="live">try</span></div>
+    <div class="try"><div class="btns"><button data-k="1">GET /health</button><button data-k="2">GET /employees/3</button><button data-k="3">GET /employees/abc</button><button data-k="4">GET /employees/99</button></div>
+    <div class="stat" id="tryStat"></div><pre id="tryOut"></pre></div>
+    <div class="vfoot">canned responses · you will produce these yourself</div></div></div>
+</div></header>
+<section class="block reveal" id="ch0" data-shipped="1"><div class="wrap">
+<div class="sec-head accent"><div class="sec-num">0</div><div><div class="sec-time">Chapter 0 · ~10 minutes</div><h2>A <em>running</em> server</h2></div></div>
+<p class="big-p">Goal for the next ten minutes: a server that answers <code>GET /health</code>, and a browser tab that documents it. No database, no models. If you can run <code>node server.js</code> you can do this.</p>
+<h3 id="ch0-env">Environment, in half a screen</h3>
+<p>Python projects live inside a virtual environment, which is a per-project <code>node_modules</code> that also owns the interpreter. <a class="chip-syn" href="python-for-js-devs.html#venv"># new: venv + pip &rarr; cheatsheet</a></p>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> mkdir hr-api &amp;&amp; cd hr-api
+<span class="pr">$</span> python3 -m venv .venv
+<span class="pr">$</span> source .venv/bin/activate        # Windows: .venv\Scripts\activate
+<span class="pr">$</span> pip install -r requirements.txt
+<span class="cmt"># prompt now starts with (.venv); deactivate with: deactivate</span></pre></div>
+<p>Create <code>requirements.txt</code> first. Versions are pinned exactly so that what you install matches what every snippet on this page assumes. <code>requirements.txt</code> is your <code>package.json</code> and lockfile in one flat file.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>requirements.txt</span></div><pre>fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+email-validator==2.2.0
+pydantic-settings==2.7.0
+sqlalchemy==2.0.36
+aiosqlite==0.20.0</pre></div>
+<div class="note"><div class="ico">📌</div><p><b>Part 2 adds more pins.</b> When we get to auth, leave requests and tests you will append <code>pyjwt==2.10.1</code>, <code>bcrypt==4.2.1</code>, <code>python-multipart==0.0.20</code>, <code>pytest==8.3.4</code>, <code>pytest-asyncio==0.25.0</code> and <code>httpx==0.28.1</code>. Nothing to install for those yet.</p></div>
+<div class="analogy teal"><div class="ico">⚡</div><div><b>Box: <code>uv</code>, the faster alternative</b><p><code>uv</code> is a Rust-built replacement for venv plus pip, the way pnpm relates to npm. <code>uv venv &amp;&amp; uv pip install -r requirements.txt</code> does the same job in a fraction of the time, and the rest of this tutorial works identically. Use whichever you like; the pins are the same.</p></div></div>
+<h3 id="ch0-main">The whole server in twelve lines</h3>
+<p>Create <code>app/main.py</code> (and an empty <code>app/__init__.py</code> beside it, so <code>app</code> is an importable package). <a class="chip-syn" href="python-for-js-devs.html#decorators"># new: decorator &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#asyncawait"># new: async def &rarr; cheatsheet</a></p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">FastAPI</span>
+
+app = <span class="fn">FastAPI</span>(
+    title=<span class="st">"HR API"</span>,
+    description=<span class="st">"Employees, departments and leave for a small company."</span>,
+    version=<span class="st">"0.1.0"</span>,
+)
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/health"</span>, summary=<span class="st">"Liveness check"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">health</span>() -&gt; dict[str, str]:
+    <span class="st">""</span><span class="st">"Returns ok when the server is up."</span><span class="st">""</span>
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}</pre></div>
+<div class="cmp-pair"><div class="cmp-card js"><div class="ct">Express</div><pre><span class="kw">const</span> app = <span class="fn">express</span>();
+
+app.<span class="fn">get</span>(<span class="st">"/health"</span>, (req, res) =&gt; {
+  res.<span class="fn">json</span>({ status: <span class="st">"ok"</span> });
+});
+
+app.<span class="fn">listen</span>(<span class="nm">8000</span>);</pre></div><div class="cmp-card py"><div class="ct">FastAPI</div><pre>app = <span class="fn">FastAPI</span>()
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/health"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">health</span>():
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}
+
+<span class="cm"># no listen(): uvicorn imports `app`</span></pre></div></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>FastAPI(...)</code> builds the app object, like <code>express()</code>. The title, description and version are not decoration; they flow into <code>/openapi.json</code> and every doc page.</div></div><div class="dl"><b>2</b><div><code>@app.get("/health")</code> registers the route. It is a decorator, the same idea as a TS decorator: a function wrapping the one below it. Method and path in one line, like <code>app.get</code>.</div></div><div class="dl"><b>3</b><div>The <code>-&gt; dict[str, str]</code> return annotation documents the response shape. In Chapter 2 it becomes enforceable.</div></div><div class="dl"><b>4</b><div>The docstring becomes the endpoint description in <code>/docs</code>. Remember this: in Part 2 those descriptions become the tool schemas of an AI agent.</div></div><div class="dl"><b>5</b><div>There is no <code>listen()</code>. You hand <code>app.main:app</code> (module path, then variable) to a separate server process.</div></div></div>
+<div class="whydiff"><div class="wtag">Why this is different</div><h4>No <code>req</code>, no <code>res</code>: declare parameters, return data</h4><p>The biggest mental shift in this whole course. An Express handler receives two grab-bag objects and digs what it needs out of them. A FastAPI handler lists exactly the inputs it wants as typed function parameters and just returns a value.</p><div class="wd-cols"><div class="wd js"><div class="ct">Express</div><pre>app.<span class="fn">get</span>(<span class="st">"/employees/:id"</span>, (req, res) =&gt; {
+  <span class="kw">const</span> id = <span class="fn">Number</span>(req.params.id);   <span class="cm">// dig it out</span>
+  <span class="kw">const</span> limit = req.query.limit;      <span class="cm">// string | undefined</span>
+  res.<span class="fn">status</span>(<span class="nm">200</span>).<span class="fn">json</span>({ id, limit });
+});</pre></div><div class="wd py"><div class="ct">FastAPI</div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees/{id}"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_one</span>(id: int, limit: int = <span class="nm">20</span>):
+    <span class="kw">return</span> {<span class="st">"id"</span>: id, <span class="st">"limit"</span>: limit}
+    <span class="cm"># path param, query param, status code</span>
+    <span class="cm"># and response: all inferred</span></pre></div></div><div class="after"><p>FastAPI inspects the signature: a name that appears in the path is a path parameter, other simple types are query parameters, a Pydantic model is the JSON body. Returning a dict serialises it as JSON with a 200. No object to mutate, no <code>res.json()</code> call you can forget or call twice. We will use every one of these rules in the next chapters.</p></div></div>
+<h3 id="ch0-run">Run it</h3>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> uvicorn app.main:app --reload
+<span class="ok">INFO:     Will watch for changes in these directories: ['/home/you/hr-api']</span>
+<span class="ok">INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)</span>
+<span class="ok">INFO:     Started reloader process [48211] using WatchFiles</span>
+<span class="ok">INFO:     Started server process [48215]</span>
+<span class="ok">INFO:     Waiting for application startup.</span>
+<span class="ok">INFO:     Application startup complete.</span></pre></div>
+<p><code>uvicorn</code> is the server (the thing that actually listens on a port); FastAPI is the framework it runs. <code>--reload</code> is nodemon. Open <code>http://127.0.0.1:8000/health</code> and you get <code>{"status":"ok"}</code>.</p>
+<h3 id="ch0-docs">Now open /docs</h3>
+<div class="wow"><div class="star">✨</div><p><b>Visit <code>http://127.0.0.1:8000/docs</code>.</b> You did not write a line of documentation, yet there is a Swagger UI page listing <code>GET /health</code> with its summary and description. Expand it, press <em>Try it out</em> then <em>Execute</em>, and it fires a real request at your server and shows the response. <code>/redoc</code> is a read-only alternative, and <code>/openapi.json</code> is the machine-readable spec both are rendered from.</p></div>
+<p>This is the hook. Every endpoint you add from here on appears in <code>/docs</code> immediately, with its parameters, its validation rules and its response shape, because they are all derived from the same type hints that run the code. You will use <code>/docs</code> as your Postman for the entire build, and in Chapter 2 you will generate a typed TypeScript client from <code>/openapi.json</code>.</p>
+<div class="takeaways"><div class="lab">Chapter 0 takeaways</div><ul><li>A FastAPI app is an object; routes are decorated functions.</li><li>Handlers declare inputs as parameters and return data; no <code>req, res</code>.</li><li>uvicorn serves it, <code>--reload</code> watches it, and <code>/docs</code> is free.</li></ul></div>
+<div class="ships"><span class="lab">Shipped in this chapter</span><span class="ep"><b class="m get">GET</b> <code>/health</code></span></div>
+</div></section>
+<section class="block reveal" id="ch1" data-shipped="3"><div class="wrap">
+<div class="sec-head"><div class="sec-num">1</div><div><div class="sec-time">Chapter 1 · ~20 minutes</div><h2><em>Reading</em> data</h2></div></div>
+<p class="big-p">Two read endpoints over a plain Python list. No database yet, on purpose: this chapter is about how the framework treats <em>inputs</em>.</p>
+<h3 id="ch1-data">Seed data and the list endpoint</h3>
+<p>A module-level list of dicts is our fake table. <a class="chip-syn" href="python-for-js-devs.html#dicts"># new: dict / list literals &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#optional"># new: str | None &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#enums"># new: str Enum &rarr; cheatsheet</a></p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">from</span> enum <span class="kw">import</span> <span class="nm">Enum</span>
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">FastAPI</span>, <span class="nm">HTTPException</span>
+
+app = <span class="fn">FastAPI</span>(
+    title=<span class="st">"HR API"</span>,
+    description=<span class="st">"Employees, departments and leave for a small company."</span>,
+    version=<span class="st">"0.1.0"</span>,
+)
+
+
+<span class="kw">class</span> <span class="fn">Role</span>(str, <span class="nm">Enum</span>):
+    <span class="nm">EMPLOYEE</span> = <span class="st">"employee"</span>
+    <span class="nm">MANAGER</span> = <span class="st">"manager"</span>
+    <span class="nm">HR_ADMIN</span> = <span class="st">"hr_admin"</span>
+
+
+<span class="kw">class</span> <span class="fn">EmploymentStatus</span>(str, <span class="nm">Enum</span>):
+    <span class="nm">ACTIVE</span> = <span class="st">"active"</span>
+    <span class="nm">ON_LEAVE</span> = <span class="st">"on_leave"</span>
+    <span class="nm">TERMINATED</span> = <span class="st">"terminated"</span>
+
+
+<span class="nm">EMPLOYEES</span>: list[dict] = [
+    {<span class="st">"id"</span>: <span class="nm">1</span>, <span class="st">"name"</span>: <span class="st">"Maya Chen"</span>, <span class="st">"email"</span>: <span class="st">"maya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"hr_admin"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Head of People"</span>, <span class="st">"hire_date"</span>: <span class="st">"2019-02-11"</span>, <span class="st">"salary"</span>: <span class="nm">120000</span>,
+     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">2</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
+     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+    {<span class="st">"id"</span>: <span class="nm">2</span>, <span class="st">"name"</span>: <span class="st">"Arjun Rao"</span>, <span class="st">"email"</span>: <span class="st">"arjun@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"manager"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Engineering Manager"</span>, <span class="st">"hire_date"</span>: <span class="st">"2020-06-01"</span>, <span class="st">"salary"</span>: <span class="nm">140000</span>,
+     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
+     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+    {<span class="st">"id"</span>: <span class="nm">3</span>, <span class="st">"name"</span>: <span class="st">"Priya Nair"</span>, <span class="st">"email"</span>: <span class="st">"priya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Senior Engineer"</span>, <span class="st">"hire_date"</span>: <span class="st">"2021-03-15"</span>, <span class="st">"salary"</span>: <span class="nm">118000</span>,
+     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
+     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+    {<span class="st">"id"</span>: <span class="nm">4</span>, <span class="st">"name"</span>: <span class="st">"Tomas Weber"</span>, <span class="st">"email"</span>: <span class="st">"tomas@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Frontend Engineer"</span>, <span class="st">"hire_date"</span>: <span class="st">"2022-09-05"</span>, <span class="st">"salary"</span>: <span class="nm">98000</span>,
+     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
+     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+    {<span class="st">"id"</span>: <span class="nm">5</span>, <span class="st">"name"</span>: <span class="st">"Lena Park"</span>, <span class="st">"email"</span>: <span class="st">"lena@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Product Designer"</span>, <span class="st">"hire_date"</span>: <span class="st">"2023-01-16"</span>, <span class="st">"salary"</span>: <span class="nm">92000</span>,
+     <span class="st">"employment_status"</span>: <span class="st">"on_leave"</span>, <span class="st">"department_id"</span>: <span class="nm">3</span>, <span class="st">"manager_id"</span>: <span class="nm">1</span>,
+     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+]
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/health"</span>, summary=<span class="st">"Liveness check"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">health</span>() -&gt; dict[str, str]:
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>, summary=<span class="st">"List employees"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_employees</span>(role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>, limit: int = <span class="nm">50</span>) -&gt; list[dict]:
+    <span class="st">""</span><span class="st">"List employees, optionally filtered by role."</span><span class="st">""</span>
+    rows = [e <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span> <span class="kw">if</span> role <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> e[<span class="st">"role"</span>] == role]
+    <span class="kw">return</span> rows[:limit]</pre></div>
+<p>Two things to notice. <code>role</code> and <code>limit</code> are not in the path, so FastAPI treats them as query parameters: <code>/employees?role=manager&amp;limit=2</code>. The <code>= None</code> and <code>= 50</code> defaults make them optional; a parameter with no default is required. And <code>role: Role | None</code> means "one of the three enum values, or absent". <a class="chip-syn" href="python-for-js-devs.html#comprehensions"># new: list comprehension &rarr; cheatsheet</a></p>
+<div class="note"><div class="ico">⚠️</div><p><b>Look at the output honestly.</b> This endpoint currently returns <code>salary</code> and <code>password_hash</code> to anyone who asks. That is deliberate: Chapter 2 fixes it, and it is the clearest motivation for what <code>response_model</code> does.</p></div>
+<h3 id="ch1-one">One employee, and what a bad id does</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees/{employee_id}"</span>, summary=<span class="st">"Get one employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(employee_id: int) -&gt; dict:
+    <span class="st">""</span><span class="st">"Fetch a single employee by numeric id."</span><span class="st">""</span>
+    <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>:
+        <span class="kw">if</span> e[<span class="st">"id"</span>] == employee_id:
+            <span class="kw">return</span> e
+    <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">404</span>, detail=<span class="st">f"Employee {employee_id} not found"</span>)</pre></div>
+<p><a class="chip-syn" href="python-for-js-devs.html#fstrings"># new: f-string &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#tryexcept"># new: raise &rarr; cheatsheet</a> Now compare the Express version of the same route, including the guard you would have to hand-write:</p>
+<div class="cmp-pair"><div class="cmp-card js"><div class="ct">Express</div><pre>app.<span class="fn">get</span>(<span class="st">"/employees/:id"</span>, (req, res) =&gt; {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id, <span class="nm">10</span>);
+  <span class="kw">if</span> (<span class="nm">Number</span>.<span class="fn">isNaN</span>(id)) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="nm">400</span>).<span class="fn">json</span>({ error: <span class="st">"id must be an integer"</span> });
+  }
+  <span class="kw">const</span> emp = employees.<span class="fn">find</span>(e =&gt; e.id === id);
+  <span class="kw">if</span> (!emp) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="nm">404</span>).<span class="fn">json</span>({ error: <span class="st">`Employee ${id} not found`</span> });
+  }
+  res.<span class="fn">json</span>(emp);
+});</pre></div><div class="cmp-card py"><div class="ct">FastAPI</div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees/{employee_id}"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(employee_id: int) -&gt; dict:
+    <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>:
+        <span class="kw">if</span> e[<span class="st">"id"</span>] == employee_id:
+            <span class="kw">return</span> e
+    <span class="kw">raise</span> <span class="fn">HTTPException</span>(
+        status_code=<span class="nm">404</span>,
+        detail=<span class="st">f"Employee {employee_id} not found"</span>,
+    )</pre></div></div>
+<p>The <code>parseInt</code> and <code>isNaN</code> lines are simply gone. Request <code>/employees/abc</code> and your function never runs; FastAPI answers on its own:</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>HTTP 422 Unprocessable Entity  ·  GET /employees/abc</span></div><pre>{
+  <span class="st">"detail"</span>: [
+    {
+      <span class="st">"type"</span>: <span class="st">"int_parsing"</span>,
+      <span class="st">"loc"</span>: [<span class="st">"path"</span>, <span class="st">"employee_id"</span>],
+      <span class="st">"msg"</span>: <span class="st">"Input should be a valid integer, unable to parse string as an integer"</span>,
+      <span class="st">"input"</span>: <span class="st">"abc"</span>
+    }
+  ]
+}</pre></div>
+<p>That body is machine-readable: <code>loc</code> tells your React form which field failed, <code>type</code> is a stable code, <code>msg</code> is display text. Same shape for every validation failure in the whole API. And the 404 you raise yourself:</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>HTTP 404 Not Found  ·  GET /employees/99</span></div><pre>{ <span class="st">"detail"</span>: <span class="st">"Employee 99 not found"</span> }</pre></div>
+<p><code>raise</code> unwinds the function immediately, so there is no <code>return res.status(404)...</code> to forget; the early exit is the exception. Note this is <code>"detail"</code> with a string, whereas validation errors carry a list. Part 2 (Chapter 9) unifies both into one error body your frontend can parse with a single type.</p>
+<div class="whydiff"><div class="wtag">Why this is different</div><h4>The type hint <em>is</em> the validator</h4><p>In Express, validation is something you bolt on: parse manually, or write a Zod schema and call <code>.parse()</code> inside (or middleware before) each handler. In FastAPI the annotation you already wrote for your editor is read at runtime and enforces itself.</p><div class="wd-cols"><div class="wd js"><div class="ct">Express</div><pre><span class="kw">const</span> <span class="nm">Params</span> = z.<span class="fn">object</span>({ id: z.coerce.<span class="fn">number</span>().<span class="fn">int</span>() });
+
+app.<span class="fn">get</span>(<span class="st">"/employees/:id"</span>, (req, res) =&gt; {
+  <span class="kw">const</span> p = <span class="nm">Params</span>.<span class="fn">safeParse</span>(req.params);
+  <span class="kw">if</span> (!p.success) <span class="kw">return</span> res.<span class="fn">status</span>(<span class="nm">400</span>).<span class="fn">json</span>(p.error);
+  <span class="cm">// ... p.data.id is now a number</span>
+});</pre></div><div class="wd py"><div class="ct">FastAPI</div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees/{employee_id}"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(employee_id: int):
+    <span class="cm"># employee_id is already an int here,</span>
+    <span class="cm"># or this function never ran.</span>
+    ...</pre></div></div><div class="after"><p>Types are normally erased in Python, exactly like TypeScript (see the <a class="link" href="python-for-js-devs.html#typing-erased">cheatsheet row</a>). FastAPI and Pydantic are the deliberate exception: they read your hints at runtime to coerce <code>"3"</code> into <code>3</code>, reject <code>"abc"</code>, enforce enum membership for <code>role</code>, and write the same rules into the OpenAPI schema. One declaration, three jobs.</p></div></div>
+<p>Try <code>/employees?role=intern</code> in <code>/docs</code>: the enum rejects it with a 422 listing the allowed values. Try <code>limit=abc</code>: same. You wrote zero validation code.</p>
+<div class="takeaways"><div class="lab">Chapter 1 takeaways</div><ul><li>Path params come from the route string, query params from everything else.</li><li>A default value makes a parameter optional; a type makes it validated.</li><li><code>HTTPException</code> is how you return an error from anywhere in a handler.</li><li>422 means "your request was malformed"; 404 means "well-formed, but not there".</li></ul></div>
+<div class="ships"><span class="lab">Shipped in this chapter</span><span class="ep"><b class="m get">GET</b> <code>/employees</code></span><span class="ep"><b class="m get">GET</b> <code>/employees/{employee_id}</code></span></div>
+</div></section>
+<section class="block reveal" id="ch2" data-shipped="4"><div class="wrap">
+<div class="sec-head"><div class="sec-num">2</div><div><div class="sec-time">Chapter 2 · ~25 minutes</div><h2><em>Writing</em> data</h2></div></div>
+<p class="big-p">Writing is where the Zod comparison really lands. You describe the body once, as a class, and get parsing, validation, docs and a response filter from it.</p>
+<h3 id="ch2-schemas">Two schemas: one in, one out</h3>
+<p>Pydantic models are the "Zod schema plus its inferred TS type" in one declaration. <a class="chip-syn" href="python-for-js-devs.html#dataclass"># new: class with typed fields &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#imports"># new: date, EmailStr &rarr; cheatsheet</a></p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py  (additions: imports and schemas)</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">FastAPI</span>, <span class="nm">HTTPException</span>
+<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">EmailStr</span>, <span class="nm">Field</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"Body for creating an employee."</span><span class="st">""</span>
+    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    email: <span class="nm">EmailStr</span>
+    role: <span class="nm">Role</span> = <span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
+    job_title: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
+    hire_date: date
+    salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>, description=<span class="st">"Annual salary in whole currency units"</span>)
+    department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeRead</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"What the API returns. Note: no salary, no password_hash."</span><span class="st">""</span>
+    id: int
+    name: str
+    email: <span class="nm">EmailStr</span>
+    role: <span class="nm">Role</span>
+    job_title: str
+    hire_date: date
+    employment_status: <span class="nm">EmploymentStatus</span>
+    department_id: int | <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span></pre></div>
+<div class="cmp-pair"><div class="cmp-card js"><div class="ct">Express + Zod</div><pre><span class="kw">const</span> <span class="nm">EmployeeCreate</span> = z.<span class="fn">object</span>({
+  name: z.<span class="fn">string</span>().<span class="fn">min</span>(<span class="nm">2</span>).<span class="fn">max</span>(<span class="nm">100</span>),
+  email: z.<span class="fn">string</span>().<span class="fn">email</span>(),
+  hire_date: z.coerce.<span class="fn">date</span>(),
+  salary: z.<span class="fn">number</span>().<span class="fn">int</span>().<span class="fn">min</span>(<span class="nm">0</span>),
+});
+<span class="kw">type</span> <span class="nm">EmployeeCreate</span> = z.infer&lt;<span class="kw">typeof</span> <span class="nm">EmployeeCreate</span>&gt;;
+
+app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res) =&gt; {
+  <span class="kw">const</span> r = <span class="nm">EmployeeCreate</span>.<span class="fn">safeParse</span>(req.body);
+  <span class="kw">if</span> (!r.success) <span class="kw">return</span> res.<span class="fn">status</span>(<span class="nm">400</span>).<span class="fn">json</span>(r.error);
+  ...
+});</pre></div><div class="cmp-card py"><div class="ct">FastAPI + Pydantic</div><pre><span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
+    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    email: <span class="nm">EmailStr</span>
+    hire_date: date
+    salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>)
+
+<span class="fn">@app</span>.<span class="fn">post</span>(<span class="st">"/employees"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">create</span>(payload: <span class="nm">EmployeeCreate</span>):
+    ...  <span class="cm"># payload is already valid</span></pre></div></div>
+<p>Same constraints, but the schema is attached to the function signature by being a parameter type, so there is no <code>.parse()</code> call and no way to forget it. <code>Field(min_length=2)</code> is <code>.min(2)</code>; <code>ge=0</code> is "greater than or equal"; <code>EmailStr</code> is <code>.email()</code> (that is what <code>email-validator</code> in your requirements is for); <code>date</code> parses <code>"2024-05-01"</code> into a real date object.</p>
+<h3 id="ch2-post">POST with a response model</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py  (added endpoint)</span></div><pre><span class="fn">@app</span>.<span class="fn">post</span>(
+    <span class="st">"/employees"</span>,
+    response_model=<span class="nm">EmployeeRead</span>,
+    status_code=<span class="nm">201</span>,
+    summary=<span class="st">"Create an employee"</span>,
+)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_employee</span>(payload: <span class="nm">EmployeeCreate</span>) -&gt; dict:
+    <span class="st">""</span><span class="st">"Create an employee. Returns the new record without salary."</span><span class="st">""</span>
+    <span class="kw">if</span> <span class="fn">any</span>(e[<span class="st">"email"</span>] == payload.email <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>):
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
+    new = {
+        <span class="st">"id"</span>: <span class="fn">max</span>(e[<span class="st">"id"</span>] <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>) + <span class="nm">1</span>,
+        **payload.<span class="fn">model_dump</span>(),
+        <span class="st">"employment_status"</span>: <span class="st">"active"</span>,
+        <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>,   <span class="cm"># Part 2 (ch 6) sets this for real</span>
+    }
+    <span class="nm">EMPLOYEES</span>.<span class="fn">append</span>(new)
+    <span class="kw">return</span> new</pre></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>payload: EmployeeCreate</code> is a Pydantic model, so FastAPI reads the JSON body into it, like <code>req.body</code> but parsed and checked first.</div></div><div class="dl"><b>2</b><div><code>model_dump()</code> turns the validated model into a plain dict. <code>{**a, "k": v}</code> is object spread.</div></div><div class="dl"><b>3</b><div><code>status_code=201</code> sets the success code; Express would be <code>res.status(201)</code>.</div></div><div class="dl"><b>4</b><div><code>response_model=EmployeeRead</code> is the output filter. We return the full dict including <code>salary</code> and <code>password_hash</code>; FastAPI validates it against <code>EmployeeRead</code> and keeps <strong>only</strong> its fields. The secrets cannot leak even if a later edit returns the whole record.</div></div><div class="dl"><b>5</b><div>The <code>"password_hash"</code> key exists from now on but is never returned. Part 2, chapter 6, starts setting it properly.</div></div></div>
+<div class="analogy blue"><div class="ico">🔒</div><div><b>Fail-closed by default</b><p>Because the response is filtered through a schema, adding a new column to the record cannot accidentally expose it. Someone has to add it to <code>EmployeeRead</code> on purpose. Apply the same instinct to every future endpoint.</p></div></div>
+<p>Re-run <code>GET /employees</code> and <code>GET /employees/{id}</code> after adding <code>response_model=list[EmployeeRead]</code> and <code>response_model=EmployeeRead</code> to those decorators; the leak from Chapter 1 is closed. (Chapter 3 rewrites both anyway, with this already in place.)</p>
+<h3 id="ch2-422">A rejected request, in full</h3>
+<p>POST this body: a one-letter name and a negative salary.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>POST /employees  ·  request body</span></div><pre>{
+  <span class="st">"name"</span>: <span class="st">"A"</span>,
+  <span class="st">"email"</span>: <span class="st">"a@acme.test"</span>,
+  <span class="st">"job_title"</span>: <span class="st">"Intern"</span>,
+  <span class="st">"hire_date"</span>: <span class="st">"2025-01-06"</span>,
+  <span class="st">"salary"</span>: -<span class="nm">5</span>
+}</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>HTTP 422 Unprocessable Entity</span></div><pre>{
+  <span class="st">"detail"</span>: [
+    {
+      <span class="st">"type"</span>: <span class="st">"string_too_short"</span>,
+      <span class="st">"loc"</span>: [<span class="st">"body"</span>, <span class="st">"name"</span>],
+      <span class="st">"msg"</span>: <span class="st">"String should have at least 2 characters"</span>,
+      <span class="st">"input"</span>: <span class="st">"A"</span>,
+      <span class="st">"ctx"</span>: { <span class="st">"min_length"</span>: <span class="nm">2</span> }
+    },
+    {
+      <span class="st">"type"</span>: <span class="st">"greater_than_equal"</span>,
+      <span class="st">"loc"</span>: [<span class="st">"body"</span>, <span class="st">"salary"</span>],
+      <span class="st">"msg"</span>: <span class="st">"Input should be greater than or equal to 0"</span>,
+      <span class="st">"input"</span>: -<span class="nm">5</span>,
+      <span class="st">"ctx"</span>: { <span class="st">"ge"</span>: <span class="nm">0</span> }
+    }
+  ]
+}</pre></div>
+<p>Both problems are reported at once, not just the first. For a React form that is exactly what you want: map each <code>loc[1]</code> onto an input and show <code>msg</code> underneath. Unlike a hand-rolled Zod setup, you did not choose this shape; every FastAPI app on earth produces it.</p>
+<div class="industry"><div class="tag">Box · for the React app</div><h4>Generate a typed client from <code>/openapi.json</code></h4><p>Every schema you just wrote is already in the spec. With the server running, in your React project:</p><p><code>npx openapi-typescript http://localhost:8000/openapi.json -o src/api.d.ts</code></p><p>You now never hand-write an <code>Employee</code> interface again; rerun the command whenever the API changes and the compiler tells you what broke.</p></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>src/api.d.ts  (generated, excerpt)</span></div><pre><span class="kw">export</span> <span class="kw">interface</span> components {
+  schemas: {
+    <span class="nm">EmployeeCreate</span>: {
+      name: string;
+      email: string;
+      role?: <span class="st">"employee"</span> | <span class="st">"manager"</span> | <span class="st">"hr_admin"</span>;
+      job_title: string;
+      hire_date: string;       <span class="cm">// date -&gt; "YYYY-MM-DD"</span>
+      salary: number;
+      department_id?: number | null;
+      manager_id?: number | null;
+    };
+    <span class="nm">EmployeeRead</span>: {
+      id: number;
+      name: string;
+      email: string;
+      role: <span class="st">"employee"</span> | <span class="st">"manager"</span> | <span class="st">"hr_admin"</span>;
+      job_title: string;
+      hire_date: string;
+      employment_status: <span class="st">"active"</span> | <span class="st">"on_leave"</span> | <span class="st">"terminated"</span>;
+      department_id: number | null;
+      manager_id: number | null;
+    };
+  };
+}</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>src/employees.ts  (in your React project)</span></div><pre><span class="kw">import</span> <span class="kw">type</span> { components } <span class="kw">from</span> <span class="st">"./api"</span>;
+
+<span class="kw">type</span> <span class="nm">EmployeeRead</span> = components[<span class="st">"schemas"</span>][<span class="st">"EmployeeRead"</span>];
+<span class="kw">type</span> <span class="nm">EmployeeCreate</span> = components[<span class="st">"schemas"</span>][<span class="st">"EmployeeCreate"</span>];
+
+<span class="kw">const</span> <span class="nm">BASE</span> = <span class="st">"http://localhost:8000"</span>;
+
+<span class="kw">export</span> <span class="kw">async</span> <span class="kw">function</span> <span class="fn">createEmployee</span>(body: <span class="nm">EmployeeCreate</span>): <span class="nm">Promise</span>&lt;<span class="nm">EmployeeRead</span>&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="st">`${BASE}/employees`</span>, {
+    method: <span class="st">"POST"</span>,
+    headers: { <span class="st">"Content-Type"</span>: <span class="st">"application/json"</span> },
+    body: <span class="nm">JSON</span>.<span class="fn">stringify</span>(body),
+  });
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw</span> <span class="kw">await</span> res.<span class="fn">json</span>();   <span class="cm">// { detail: ... }</span>
+  <span class="kw">return</span> res.<span class="fn">json</span>();
+}</pre></div>
+<p>Notice the generated <code>EmployeeRead</code> has no <code>salary</code>: the client type matches what the server really sends. (Calling this from the browser needs CORS, which arrives in Chapter 5.)</p>
+<div class="takeaways"><div class="lab">Chapter 2 takeaways</div><ul><li>A Pydantic class is the request validator, the parsed type and the doc schema.</li><li>Separate in/out models: <code>EmployeeCreate</code> accepts, <code>EmployeeRead</code> reveals.</li><li><code>response_model</code> filters output, so secret fields cannot leak.</li><li>422 bodies list every violation with a <code>loc</code> your UI can map to a field.</li></ul></div>
+<div class="ships"><span class="lab">Shipped in this chapter</span><span class="ep"><b class="m post">POST</b> <code>/employees</code></span></div>
+</div></section>
+<section class="block reveal" id="ch3" data-shipped="10"><div class="wrap">
+<div class="sec-head"><div class="sec-num">3</div><div><div class="sec-time">Chapter 3 · ~45 minutes</div><h2>The <em>database</em></h2></div></div>
+<p class="big-p">Time to throw away the list. This chapter moves everything onto SQLite through SQLAlchemy 2.0 in async mode, and adds the rest of the CRUD: <code>PATCH</code>, <code>DELETE</code>, and the whole departments resource. Files are still flat for now; Chapter 5 splits them. Every changed file is shown <strong>in full</strong>.</p>
+<div class="note"><div class="ico">📌</div><p>Install is already done: <code>sqlalchemy</code> and <code>aiosqlite</code> are in your requirements. The database file <code>app.db</code> is created on first run in the folder where you start uvicorn. Tables start empty; add rows through <code>/docs</code>, and Chapter 5 gives you a <code>seed.py</code>.</p></div>
+<h3 id="ch3-engine">The engine, the session factory, the base class</h3>
+<p><a class="chip-syn" href="python-for-js-devs.html#generics"># new: AsyncIterator, yield &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#asyncawait"># new: async with &rarr; cheatsheet</a> Think of the engine as the connection pool and a session as one unit of work, roughly a transaction scope with an identity map.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/db.py</span></div><pre><span class="kw">from</span> collections.abc <span class="kw">import</span> <span class="nm">AsyncIterator</span>
+
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>, async_sessionmaker, create_async_engine
+<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">DeclarativeBase</span>
+
+engine = <span class="fn">create_async_engine</span>(<span class="st">"sqlite+aiosqlite:///./app.db"</span>)
+
+<span class="cm"># expire_on_commit=False: objects stay readable after commit(),</span>
+<span class="cm"># which we need because we return them to FastAPI after committing.</span>
+<span class="nm">SessionLocal</span> = <span class="fn">async_sessionmaker</span>(engine, expire_on_commit=<span class="kw">False</span>)
+
+
+<span class="kw">class</span> <span class="fn">Base</span>(<span class="nm">DeclarativeBase</span>):
+    <span class="st">""</span><span class="st">"Parent class of every ORM model."</span><span class="st">""</span>
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_db</span>() -&gt; <span class="nm">AsyncIterator</span>[<span class="nm">AsyncSession</span>]:
+    <span class="st">""</span><span class="st">"Yield one session per request, always closed afterwards."</span><span class="st">""</span>
+    <span class="kw">async</span> <span class="kw">with</span> <span class="fn">SessionLocal</span>() <span class="kw">as</span> session:
+        <span class="kw">yield</span> session</pre></div>
+<div class="whydiff"><div class="wtag">Why this is different</div><h4><code>Depends</code> and <code>get_db</code>: typed, per-request injection</h4><p>In Express the usual way to hand a handler its database is middleware that bolts a property onto <code>req</code>, and TypeScript then needs a declaration merge to know it exists. FastAPI inverts this: the handler asks for the thing by parameter, and a function you point at produces it.</p><div class="wd-cols"><div class="wd js"><div class="ct">Express</div><pre>app.<span class="fn">use</span>((req, res, next) =&gt; {
+  req.db = pool.<span class="fn">acquire</span>();
+  res.<span class="fn">on</span>(<span class="st">"finish"</span>, () =&gt; req.db.<span class="fn">release</span>());
+  <span class="fn">next</span>();
+});
+
+app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span class="kw">async</span> (req, res) =&gt; {
+  <span class="kw">const</span> rows = <span class="kw">await</span> req.db.<span class="fn">query</span>(...);   <span class="cm">// typed? only by hand</span>
+});</pre></div><div class="wd py"><div class="ct">FastAPI</div><pre><span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_db</span>():
+    <span class="kw">async</span> <span class="kw">with</span> <span class="fn">SessionLocal</span>() <span class="kw">as</span> session:
+        <span class="kw">yield</span> session        <span class="cm"># handler runs here</span>
+    <span class="cm"># session closed after the response</span>
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_employees</span>(
+    db: <span class="nm">AsyncSession</span> = <span class="fn">Depends</span>(get_db),
+):
+    ...</pre></div></div><div class="after"><p>Everything before <code>yield</code> is setup, everything after is teardown, run even when the handler raises. The result is injected only into routes that ask for it, it is fully typed (your editor knows <code>db</code> is an <code>AsyncSession</code>), it is created fresh per request, and it appears in OpenAPI when it has parameters of its own. The same mechanism will carry "who is the current user" in Part 2. In tests you can swap any dependency for a fake with one line.</p></div></div>
+<h3 id="ch3-models">The models</h3>
+<p><a class="chip-syn" href="python-for-js-devs.html#optional"># new: Mapped[int | None] &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#classes"># new: class inheritance &rarr; cheatsheet</a> <code>Mapped[T]</code> is the type, <code>mapped_column()</code> adds database options. <code>Mapped[str | None]</code> becomes a nullable column automatically. The enums moved here from <code>main.py</code>.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+<span class="kw">from</span> enum <span class="kw">import</span> <span class="nm">Enum</span>
+
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">Enum</span> <span class="kw">as</span> <span class="nm">SAEnum</span>
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">ForeignKey</span>, <span class="nm">String</span>
+<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">Mapped</span>, mapped_column, relationship
+
+<span class="kw">from</span> app.db <span class="kw">import</span> <span class="nm">Base</span>
+
+
+<span class="kw">class</span> <span class="fn">Role</span>(str, <span class="nm">Enum</span>):
+    <span class="nm">EMPLOYEE</span> = <span class="st">"employee"</span>
+    <span class="nm">MANAGER</span> = <span class="st">"manager"</span>
+    <span class="nm">HR_ADMIN</span> = <span class="st">"hr_admin"</span>
+
+
+<span class="kw">class</span> <span class="fn">EmploymentStatus</span>(str, <span class="nm">Enum</span>):
+    <span class="nm">ACTIVE</span> = <span class="st">"active"</span>
+    <span class="nm">ON_LEAVE</span> = <span class="st">"on_leave"</span>
+    <span class="nm">TERMINATED</span> = <span class="st">"terminated"</span>
+
+
+<span class="kw">def</span> <span class="fn">_values</span>(e: type[<span class="nm">Enum</span>]) -&gt; list[str]:
+    <span class="kw">return</span> [m.value <span class="kw">for</span> m <span class="kw">in</span> e]   <span class="cm"># store "hr_admin", not "HR_ADMIN"</span>
+
+
+<span class="kw">class</span> <span class="fn">Department</span>(<span class="nm">Base</span>):
+    __tablename__ = <span class="st">"departments"</span>
+
+    id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
+    name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>), unique=<span class="kw">True</span>)
+    description: <span class="nm">Mapped</span>[str | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>), default=<span class="kw">None</span>)
+
+    employees: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"department"</span>)
+
+
+<span class="kw">class</span> <span class="fn">Employee</span>(<span class="nm">Base</span>):
+    __tablename__ = <span class="st">"employees"</span>
+
+    id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
+    name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
+    email: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>), unique=<span class="kw">True</span>, index=<span class="kw">True</span>)
+    role: <span class="nm">Mapped</span>[<span class="nm">Role</span>] = <span class="fn">mapped_column</span>(
+        <span class="fn">SAEnum</span>(<span class="nm">Role</span>, native_enum=<span class="kw">False</span>, values_callable=_values), default=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
+    )
+    job_title: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
+    hire_date: <span class="nm">Mapped</span>[date]
+    salary: <span class="nm">Mapped</span>[int]
+    employment_status: <span class="nm">Mapped</span>[<span class="nm">EmploymentStatus</span>] = <span class="fn">mapped_column</span>(
+        <span class="fn">SAEnum</span>(<span class="nm">EmploymentStatus</span>, native_enum=<span class="kw">False</span>, values_callable=_values),
+        default=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
+    )
+    department_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"departments.id"</span>))
+    manager_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>))
+    password_hash: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>))   <span class="cm"># set for real in Part 2</span>
+
+    department: <span class="nm">Mapped</span>[<span class="nm">Department</span> | <span class="kw">None</span>] = <span class="fn">relationship</span>(back_populates=<span class="st">"employees"</span>)
+    <span class="cm"># Self-referential: the "one" side. remote_side says which end is the parent.</span>
+    manager: <span class="nm">Mapped</span>[<span class="st">"Employee | None"</span>] = <span class="fn">relationship</span>(
+        remote_side=<span class="st">"Employee.id"</span>, back_populates=<span class="st">"reports"</span>
+    )
+    reports: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"manager"</span>)</pre></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>manager_id</code> is a foreign key to the <em>same</em> table. That one column is the entire org chart.</div></div><div class="dl"><b>2</b><div><code>remote_side="Employee.id"</code> disambiguates a self-join: it marks the <code>id</code> end as the parent ("remote") side, so <code>manager</code> means "the employee whose id equals my <code>manager_id</code>".</div></div><div class="dl"><b>3</b><div><code>reports</code> is the reverse direction: everyone whose <code>manager_id</code> is my id.</div></div><div class="dl"><b>4</b><div>These relationships exist for completeness. In async code you must <strong>not</strong> read them lazily (<code>emp.manager</code> would try to do I/O in a sync context and raise). We always query by id columns instead, which is also what the API exposes.</div></div></div>
+<h3 id="ch3-schemas">The schemas</h3>
+<p>The Chapter 2 models move into their own file and gain an update shape and the department models. <code>from_attributes=True</code> lets Pydantic read fields off an ORM object instead of requiring a dict.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+
+<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">ConfigDict</span>, <span class="nm">EmailStr</span>, <span class="nm">Field</span>
+
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"Body for creating an employee."</span><span class="st">""</span>
+    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    email: <span class="nm">EmailStr</span>
+    role: <span class="nm">Role</span> = <span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
+    job_title: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
+    hire_date: date
+    salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>, description=<span class="st">"Annual salary in whole currency units"</span>)
+    department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeUpdate</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"Partial update: send only the fields you want to change."</span><span class="st">""</span>
+    name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    job_title: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
+    salary: int | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, ge=<span class="nm">0</span>)
+    employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeRead</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"What the API returns. No salary, no password_hash."</span><span class="st">""</span>
+    model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
+
+    id: int
+    name: str
+    email: <span class="nm">EmailStr</span>
+    role: <span class="nm">Role</span>
+    job_title: str
+    hire_date: date
+    employment_status: <span class="nm">EmploymentStatus</span>
+    department_id: int | <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="fn">DepartmentCreate</span>(<span class="nm">BaseModel</span>):
+    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+
+
+<span class="kw">class</span> <span class="fn">DepartmentUpdate</span>(<span class="nm">BaseModel</span>):
+    name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+
+
+<span class="kw">class</span> <span class="fn">DepartmentRead</span>(<span class="nm">BaseModel</span>):
+    model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
+
+    id: int
+    name: str
+    description: str | <span class="kw">None</span></pre></div>
+<h3 id="ch3-main">The endpoints on SQLAlchemy</h3>
+<p><a class="chip-syn" href="python-for-js-devs.html#annotated"># new: Annotated alias &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#dicts"># new: dict .items() &rarr; cheatsheet</a> The shape of every query is the same: build a <code>select()</code>, <code>await db.scalars(...)</code>, then <code>.all()</code> for a list or <code>.one_or_none()</code> for zero-or-one rows. Reads never need a commit; writes call <code>await db.commit()</code>.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Annotated</span>
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">Depends</span>, <span class="nm">FastAPI</span>, <span class="nm">HTTPException</span>
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> select, update
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>
+
+<span class="kw">from</span> app.db <span class="kw">import</span> <span class="nm">Base</span>, engine, get_db
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="nm">Department</span>, <span class="nm">Employee</span>, <span class="nm">Role</span>
+<span class="kw">from</span> app.schemas <span class="kw">import</span> (
+    <span class="nm">DepartmentCreate</span>, <span class="nm">DepartmentRead</span>, <span class="nm">DepartmentUpdate</span>,
+    <span class="nm">EmployeeCreate</span>, <span class="nm">EmployeeRead</span>, <span class="nm">EmployeeUpdate</span>,
+)
+
+
+<span class="fn">@asynccontextmanager</span>
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">lifespan</span>(app: <span class="nm">FastAPI</span>):
+    <span class="cm"># create tables on startup (Alembic migrations come much later)</span>
+    <span class="kw">async</span> <span class="kw">with</span> engine.<span class="fn">begin</span>() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.<span class="fn">run_sync</span>(<span class="nm">Base</span>.metadata.create_all)
+    <span class="kw">yield</span>
+
+
+app = <span class="fn">FastAPI</span>(
+    title=<span class="st">"HR API"</span>,
+    description=<span class="st">"Employees, departments and leave for a small company."</span>,
+    version=<span class="st">"0.1.0"</span>,
+    lifespan=lifespan,
+)
+
+<span class="cm"># One alias, reused everywhere: "a request-scoped session"</span>
+<span class="nm">DbSession</span> = <span class="nm">Annotated</span>[<span class="nm">AsyncSession</span>, <span class="fn">Depends</span>(get_db)]
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee_or_404</span>(db: <span class="nm">AsyncSession</span>, employee_id: int) -&gt; <span class="nm">Employee</span>:
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.id == employee_id))
+    emp = result.<span class="fn">one_or_none</span>()
+    <span class="kw">if</span> emp <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">404</span>, detail=<span class="st">f"Employee {employee_id} not found"</span>)
+    <span class="kw">return</span> emp
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_department_or_404</span>(db: <span class="nm">AsyncSession</span>, department_id: int) -&gt; <span class="nm">Department</span>:
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.id == department_id))
+    dept = result.<span class="fn">one_or_none</span>()
+    <span class="kw">if</span> dept <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">404</span>, detail=<span class="st">f"Department {department_id} not found"</span>)
+    <span class="kw">return</span> dept
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/health"</span>, summary=<span class="st">"Liveness check"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">health</span>() -&gt; dict[str, str]:
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}
+
+
+<span class="cm"># ---------- employees ----------</span>
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>, response_model=list[<span class="nm">EmployeeRead</span>], summary=<span class="st">"List employees"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_employees</span>(
+    db: <span class="nm">DbSession</span>, role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>, limit: int = <span class="nm">50</span>
+):
+    <span class="st">""</span><span class="st">"List employees, optionally filtered by role."</span><span class="st">""</span>
+    stmt = <span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">order_by</span>(<span class="nm">Employee</span>.id).<span class="fn">limit</span>(limit)
+    <span class="kw">if</span> role <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.role == role)
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(stmt)
+    <span class="kw">return</span> result.<span class="fn">all</span>()
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees/{employee_id}"</span>, response_model=<span class="nm">EmployeeRead</span>, summary=<span class="st">"Get one employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(employee_id: int, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Fetch a single employee by numeric id."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">get_employee_or_404</span>(db, employee_id)
+
+
+<span class="fn">@app</span>.<span class="fn">post</span>(<span class="st">"/employees"</span>, response_model=<span class="nm">EmployeeRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create an employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_employee</span>(payload: <span class="nm">EmployeeCreate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Create an employee. Returns the new record without salary."</span><span class="st">""</span>
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.email == payload.email))
+    <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
+    emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>(), password_hash=<span class="st">"!unset"</span>)   <span class="cm"># Part 2, ch 6</span>
+    db.<span class="fn">add</span>(emp)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(emp)        <span class="cm"># loads the generated id and defaults</span>
+    <span class="kw">return</span> emp
+
+
+<span class="fn">@app</span>.<span class="fn">patch</span>(<span class="st">"/employees/{employee_id}"</span>, response_model=<span class="nm">EmployeeRead</span>, summary=<span class="st">"Update an employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">update_employee</span>(employee_id: int, payload: <span class="nm">EmployeeUpdate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Change only the fields that are present in the request body."</span><span class="st">""</span>
+    emp = <span class="kw">await</span> <span class="fn">get_employee_or_404</span>(db, employee_id)
+    changes = payload.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>)
+    <span class="kw">for</span> field, value <span class="kw">in</span> changes.<span class="fn">items</span>():
+        <span class="fn">setattr</span>(emp, field, value)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(emp)
+    <span class="kw">return</span> emp
+
+
+<span class="fn">@app</span>.<span class="fn">delete</span>(<span class="st">"/employees/{employee_id}"</span>, status_code=<span class="nm">204</span>, summary=<span class="st">"Delete an employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">delete_employee</span>(employee_id: int, db: <span class="nm">DbSession</span>) -&gt; <span class="kw">None</span>:
+    <span class="st">""</span><span class="st">"Delete an employee. Anyone they managed is left with no manager."</span><span class="st">""</span>
+    emp = <span class="kw">await</span> <span class="fn">get_employee_or_404</span>(db, employee_id)
+    <span class="kw">await</span> db.<span class="fn">execute</span>(
+        <span class="fn">update</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.manager_id == employee_id).<span class="fn">values</span>(manager_id=<span class="kw">None</span>)
+    )
+    <span class="kw">await</span> db.<span class="fn">delete</span>(emp)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+
+
+<span class="cm"># ---------- departments ----------</span>
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/departments"</span>, response_model=list[<span class="nm">DepartmentRead</span>], summary=<span class="st">"List departments"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_departments</span>(db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"List all departments ordered by name."</span><span class="st">""</span>
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">order_by</span>(<span class="nm">Department</span>.name))
+    <span class="kw">return</span> result.<span class="fn">all</span>()
+
+
+<span class="fn">@app</span>.<span class="fn">post</span>(<span class="st">"/departments"</span>, response_model=<span class="nm">DepartmentRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create a department"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_department</span>(payload: <span class="nm">DepartmentCreate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Create a department. Names are unique."</span><span class="st">""</span>
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.name == payload.name))
+    <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Department name already in use"</span>)
+    dept = <span class="fn">Department</span>(**payload.<span class="fn">model_dump</span>())
+    db.<span class="fn">add</span>(dept)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(dept)
+    <span class="kw">return</span> dept
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/departments/{department_id}"</span>, response_model=<span class="nm">DepartmentRead</span>, summary=<span class="st">"Get one department"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_department</span>(department_id: int, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Fetch a single department by numeric id."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">get_department_or_404</span>(db, department_id)
+
+
+<span class="fn">@app</span>.<span class="fn">patch</span>(<span class="st">"/departments/{department_id}"</span>, response_model=<span class="nm">DepartmentRead</span>, summary=<span class="st">"Update a department"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">update_department</span>(department_id: int, payload: <span class="nm">DepartmentUpdate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Change only the fields that are present in the request body."</span><span class="st">""</span>
+    dept = <span class="kw">await</span> <span class="fn">get_department_or_404</span>(db, department_id)
+    <span class="kw">for</span> field, value <span class="kw">in</span> payload.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>).<span class="fn">items</span>():
+        <span class="fn">setattr</span>(dept, field, value)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(dept)
+    <span class="kw">return</span> dept</pre></div>
+<p>The rewrite is almost mechanical: <code>EMPLOYEES</code> became <code>select(Employee)</code>, <code>for e in EMPLOYEES</code> became <code>await db.scalars(...)</code>, and the <code>EmployeeRead</code> schema now reads ORM objects directly thanks to <code>from_attributes</code>. Paths and response shapes are unchanged, so your React code does not notice the swap.</p>
+<h3 id="ch3-patch">Why PATCH needs exclude_unset</h3>
+<p>The key line is <code>payload.model_dump(exclude_unset=True)</code>. Every field on <code>EmployeeUpdate</code> defaults to <code>None</code>, so without that flag you cannot tell "the client did not send <code>department_id</code>" from "the client sent <code>department_id: null</code> to remove the department".</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>PATCH /employees/3  ·  what the handler sees</span></div><pre><span class="cm"># body: {"job_title": "Staff Engineer"}</span>
+payload.<span class="fn">model_dump</span>()                    <span class="cm"># {"name": None, "role": None, "job_title": "Staff Engineer", ... all the rest None}</span>
+payload.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>)  <span class="cm"># {"job_title": "Staff Engineer"}</span>
+
+<span class="cm"># body: {"manager_id": null}   -&gt; explicitly clear the manager</span>
+payload.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>)  <span class="cm"># {"manager_id": None}   &lt;- applied, as intended</span></pre></div>
+<p>That is the whole difference between the verbs. <strong>PUT</strong> replaces the resource: every field is required and anything omitted is overwritten. <strong>PATCH</strong> merges: omitted means untouched, explicit <code>null</code> means clear. <code>exclude_unset</code> is what makes that distinction available. <code>DELETE</code> returns <code>204 No Content</code>: success with an empty body, so the handler returns <code>None</code>.</p>
+<div class="whydiff"><div class="wtag">Why this is different</div><h4>Blocking calls inside <code>async def</code></h4><p>Express is single-threaded too, and you already know the rule: never call <code>fs.readFileSync</code> inside a request handler, because it freezes every other request. The same trap exists here, and Python makes it easier to fall into because the blocking version of a library often has the same name as the async one.</p><div class="wd-cols"><div class="wd js"><div class="ct">Express</div><pre><span class="cm">// freezes every request for 2 seconds</span>
+app.<span class="fn">get</span>(<span class="st">"/slow"</span>, (req, res) =&gt; {
+  <span class="kw">const</span> data = fs.<span class="fn">readFileSync</span>(<span class="st">"big.csv"</span>);
+  res.<span class="fn">send</span>(data);
+});</pre></div><div class="wd py"><div class="ct">FastAPI</div><pre><span class="kw">import</span> requests            <span class="cm"># blocking HTTP client</span>
+<span class="kw">import</span> sqlite3             <span class="cm"># blocking DB driver</span>
+
+<span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/slow"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">slow</span>():
+    r = requests.<span class="fn">get</span>(<span class="st">"https://api.example.com"</span>)  <span class="cm"># stalls the loop</span>
+    <span class="kw">return</span> r.<span class="fn">json</span>()</pre></div></div><div class="after"><p>An <code>async def</code> handler runs on the event loop. One blocking call inside it stops <em>every</em> in-flight request until it returns. Use the async twins: <code>httpx.AsyncClient</code> instead of <code>requests</code>, and <code>aiosqlite</code> (what our SQLAlchemy URL <code>sqlite+aiosqlite</code> uses) instead of <code>sqlite3</code>. If you must call blocking code, declare the handler as plain <code>def</code> and FastAPI will run it in a thread pool for you, off the loop. The cheatsheet has the <a class="link" href="python-for-js-devs.html#blocking">side-by-side row</a>. Never mix: <code>async def</code> plus <code>requests</code> is the bad combination; plain <code>def</code> plus <code>requests</code> is fine.</p></div></div>
+<h3 id="ch3-try">Try it</h3>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> uvicorn app.main:app --reload
+<span class="pr">$</span> curl -X POST localhost:8000/departments -H "Content-Type: application/json" \
+    -d '{"name":"Engineering"}'
+{"id":1,"name":"Engineering","description":null}
+<span class="pr">$</span> curl -X PATCH localhost:8000/departments/1 -H "Content-Type: application/json" \
+    -d '{"description":"Builds the product"}'
+<span class="pr">$</span> curl -i -X DELETE localhost:8000/employees/999
+<span class="ok">HTTP/1.1 404 Not Found</span></pre></div>
+<div class="takeaways"><div class="lab">Chapter 3 takeaways</div><ul><li>Engine = pool, session = unit of work, <code>Base</code> = parent of all models.</li><li><code>Depends(get_db)</code> injects a per-request session; code after <code>yield</code> is cleanup.</li><li><code>scalars(select(...)).all()</code> for lists, <code>.one_or_none()</code> for a row or nothing.</li><li><code>exclude_unset=True</code> is what makes PATCH a patch.</li><li>Never block the event loop; use async libraries or a plain <code>def</code>.</li></ul></div>
+<div class="ships"><span class="lab">Shipped in this chapter</span><span class="ep"><b class="m patch">PATCH</b> <code>/employees/{employee_id}</code></span><span class="ep"><b class="m delete">DELETE</b> <code>/employees/{employee_id}</code></span><span class="ep"><b class="m get">GET</b> <code>/departments</code></span><span class="ep"><b class="m post">POST</b> <code>/departments</code></span><span class="ep"><b class="m get">GET</b> <code>/departments/{department_id}</code></span><span class="ep"><b class="m patch">PATCH</b> <code>/departments/{department_id}</code></span></div>
+</div></section>
+<section class="block reveal" id="ch4" data-shipped="12"><div class="wrap">
+<div class="sec-head"><div class="sec-num">4</div><div><div class="sec-time">Chapter 4 · ~30 minutes</div><h2>Lists a frontend can <em>actually use</em></h2></div></div>
+<p class="big-p">A React table needs more than "all rows": it needs filtering, a search box, sortable columns, pages, and a total count for the pager. This chapter builds all of that once, as reusable pieces, and adds the two endpoints that walk the org chart.</p>
+<p>These are additions to <code>app/main.py</code> and <code>app/schemas.py</code>; Chapter 5 shows the finished files.</p>
+<h3 id="ch4-page">A response envelope: Page[T]</h3>
+<p><a class="chip-syn" href="python-for-js-devs.html#generics"># new: Generic[T] &rarr; cheatsheet</a> Returning a bare array makes it impossible to add a total later without breaking clients. Wrap lists in one generic envelope so the React side always gets <code>{items, total, limit, offset}</code>.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas.py  (added)</span></div><pre><span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Generic</span>, <span class="nm">TypeVar</span>
+
+<span class="nm">T</span> = <span class="fn">TypeVar</span>(<span class="st">"T"</span>)
+
+
+<span class="kw">class</span> <span class="fn">Page</span>(<span class="nm">BaseModel</span>, <span class="nm">Generic</span>[<span class="nm">T</span>]):
+    <span class="st">""</span><span class="st">"Standard envelope for every list endpoint."</span><span class="st">""</span>
+    items: list[<span class="nm">T</span>]
+    total: int = <span class="fn">Field</span>(description=<span class="st">"Rows matching the filters, ignoring limit/offset"</span>)
+    limit: int
+    offset: int</pre></div>
+<p>It is <code>interface Page&lt;T&gt;</code> that also validates. <code>Page[EmployeeRead]</code> is a concrete model, and the OpenAPI schema (and your generated TS type) comes out as <code>Page_EmployeeRead_</code> with <code>items: EmployeeRead[]</code>.</p>
+<h3 id="ch4-filters">Filters as a reusable dependency</h3>
+<p><a class="chip-syn" href="python-for-js-devs.html#literal"># new: Literal &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#annotated"># new: Annotated + Query &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#classes"># new: class __init__ &rarr; cheatsheet</a> Eight query parameters would bloat every signature, and you need them in two endpoints. Put them in a class. FastAPI reads its <code>__init__</code> parameters exactly as it would a function&rsquo;s.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py  (added)</span></div><pre><span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Literal</span>
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">Query</span>
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">Select</span>, func, or_
+
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="nm">EmploymentStatus</span>
+<span class="kw">from</span> app.schemas <span class="kw">import</span> <span class="nm">Page</span>
+
+
+<span class="kw">class</span> <span class="nm">EmployeeFilters</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        department_id: int | <span class="kw">None</span> = <span class="kw">None</span>,
+        role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+        employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+        q: <span class="nm">Annotated</span>[str | <span class="kw">None</span>, <span class="fn">Query</span>(description=<span class="st">"Search name or email"</span>, max_length=<span class="nm">100</span>)] = <span class="kw">None</span>,
+        sort_by: <span class="nm">Literal</span>[<span class="st">"name"</span>, <span class="st">"hire_date"</span>, <span class="st">"salary"</span>] = <span class="st">"name"</span>,
+        order: <span class="nm">Literal</span>[<span class="st">"asc"</span>, <span class="st">"desc"</span>] = <span class="st">"asc"</span>,
+        limit: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">1</span>, le=<span class="nm">100</span>)] = <span class="nm">20</span>,
+        offset: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">0</span>)] = <span class="nm">0</span>,
+    ) -&gt; <span class="kw">None</span>:
+        self.department_id = department_id
+        self.role = role
+        self.employment_status = employment_status
+        self.q = q
+        self.sort_by = sort_by
+        self.order = order
+        self.limit = limit
+        self.offset = offset
+
+
+<span class="nm">Filters</span> = <span class="nm">Annotated</span>[<span class="nm">EmployeeFilters</span>, <span class="fn">Depends</span>()]
+
+
+<span class="kw">def</span> <span class="fn">apply_filters</span>(stmt: <span class="nm">Select</span>, f: <span class="nm">EmployeeFilters</span>) -&gt; <span class="nm">Select</span>:
+    <span class="kw">if</span> f.department_id <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.department_id == f.department_id)
+    <span class="kw">if</span> f.role <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.role == f.role)
+    <span class="kw">if</span> f.employment_status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.employment_status == f.employment_status)
+    <span class="kw">if</span> f.q:
+        like = <span class="st">f"%{f.q}%"</span>
+        stmt = stmt.<span class="fn">where</span>(<span class="fn">or_</span>(<span class="nm">Employee</span>.name.<span class="fn">ilike</span>(like), <span class="nm">Employee</span>.email.<span class="fn">ilike</span>(like)))
+    <span class="kw">return</span> stmt
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">page_of_employees</span>(db: <span class="nm">AsyncSession</span>, f: <span class="nm">EmployeeFilters</span>, base: <span class="nm">Select</span>) -&gt; dict:
+    base = <span class="fn">apply_filters</span>(base, f)
+    total = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(func.<span class="fn">count</span>()).<span class="fn">select_from</span>(base.<span class="fn">subquery</span>()))
+    sort_col = {<span class="st">"name"</span>: <span class="nm">Employee</span>.name, <span class="st">"hire_date"</span>: <span class="nm">Employee</span>.hire_date, <span class="st">"salary"</span>: <span class="nm">Employee</span>.salary}[f.sort_by]
+    ordering = sort_col.<span class="fn">asc</span>() <span class="kw">if</span> f.order == <span class="st">"asc"</span> <span class="kw">else</span> sort_col.<span class="fn">desc</span>()
+    stmt = base.<span class="fn">order_by</span>(ordering, <span class="nm">Employee</span>.id).<span class="fn">offset</span>(f.offset).<span class="fn">limit</span>(f.limit)
+    items = (<span class="kw">await</span> db.<span class="fn">scalars</span>(stmt)).<span class="fn">all</span>()
+    <span class="kw">return</span> {<span class="st">"items"</span>: items, <span class="st">"total"</span>: total <span class="kw">or</span> <span class="nm">0</span>, <span class="st">"limit"</span>: f.limit, <span class="st">"offset"</span>: f.offset}</pre></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>Literal["name", "hire_date", "salary"]</code> is a union of string literals, like TS. A client sending <code>sort_by=password_hash</code> gets a 422 listing the allowed values, so the sort key can never be used to probe a column you did not list. It also becomes an <code>enum</code> in OpenAPI.</div></div><div class="dl"><b>2</b><div><code>Query(ge=1, le=100)</code> adds constraints to a query param, the same way <code>Field</code> does for bodies. A client cannot ask for <code>limit=100000</code>.</div></div><div class="dl"><b>3</b><div><code>or_(name.ilike(...), email.ilike(...))</code> is SQL <code>name LIKE ? OR email LIKE ?</code>, case-insensitive. The <code>%</code> wildcards are added around the term.</div></div><div class="dl"><b>4</b><div>The total comes from a <code>count(*)</code> over the <em>filtered</em> query wrapped as a subquery, before limit and offset are applied. That is what the pager needs.</div></div><div class="dl"><b>5</b><div>The sort column is looked up in a dict whose keys are the only values <code>Literal</code> lets through, never interpolated from user text.</div></div></div>
+<div class="note"><div class="ico">🔐</div><p><b>Forward note.</b> Sorting and filtering on <code>salary</code> leaks ordering information even though the value is hidden by <code>EmployeeRead</code>. Part 2 restricts this to callers allowed to see salary.</p></div>
+<h3 id="ch4-endpoints">The list endpoint and the two relationship endpoints</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py  (replaces GET /employees; adds two endpoints)</span></div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>, response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>], summary=<span class="st">"List employees"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_employees</span>(db: <span class="nm">DbSession</span>, f: <span class="nm">Filters</span>):
+    <span class="st">""</span><span class="st">"Search, filter, sort and paginate employees."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">page_of_employees</span>(db, f, <span class="fn">select</span>(<span class="nm">Employee</span>))
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(
+    <span class="st">"/employees/{employee_id}/reports"</span>,
+    response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>],
+    summary=<span class="st">"List an employee's direct reports"</span>,
+)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_reports</span>(employee_id: int, db: <span class="nm">DbSession</span>, f: <span class="nm">Filters</span>):
+    <span class="st">""</span><span class="st">"Employees whose manager is the given employee."</span><span class="st">""</span>
+    <span class="kw">await</span> <span class="fn">get_employee_or_404</span>(db, employee_id)       <span class="cm"># 404 if the manager is unknown</span>
+    base = <span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.manager_id == employee_id)
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">page_of_employees</span>(db, f, base)
+
+
+<span class="fn">@app</span>.<span class="fn">get</span>(
+    <span class="st">"/departments/{department_id}/employees"</span>,
+    response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>],
+    summary=<span class="st">"List employees in a department"</span>,
+)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_department_employees</span>(department_id: int, db: <span class="nm">DbSession</span>, f: <span class="nm">Filters</span>):
+    <span class="st">""</span><span class="st">"Everyone in one department, with the same filters as /employees."</span><span class="st">""</span>
+    <span class="kw">await</span> <span class="fn">get_department_or_404</span>(db, department_id)
+    f.department_id = department_id                   <span class="cm"># path wins over the query string</span>
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">page_of_employees</span>(db, f, <span class="fn">select</span>(<span class="nm">Employee</span>))</pre></div>
+<p>Both new endpoints are tiny because the heavy lifting is shared. <code>/reports</code> uses the self-relationship from Chapter 3 as nothing more than <code>WHERE manager_id = :id</code>. <code>/departments/{id}/employees</code> reuses the same filters, so a department page in React gets search, sort and paging for free. The path now overrides any <code>department_id</code> query value, so nobody can read another department by passing the query string.</p>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;curl</div><pre><span class="pr">$</span> curl "localhost:8000/employees?q=an&amp;sort_by=hire_date&amp;order=desc&amp;limit=2"
+{"items":[{"id":5,"name":"Lena Park", ...},{"id":3,"name":"Priya Nair", ...}],
+ "total":3,"limit":2,"offset":0}</pre></div>
+<h3 id="ch4-compose">Dependencies compose and are cached</h3>
+<p>A dependency can itself declare dependencies. <code>Filters</code> needs nothing, but a route that takes both <code>db: DbSession</code> and <code>f: Filters</code> already shows the idea: FastAPI builds a graph from the signatures and resolves it per request. If two dependencies in the same request both depend on <code>get_db</code>, it runs <strong>once</strong> and both receive the same session, because results are cached per request by default (pass <code>use_cache=False</code> to opt out). This is why Part 2 can stack "current user", then "must be manager", then "owns this resource" without opening three database sessions.</p>
+<div class="takeaways"><div class="lab">Chapter 4 takeaways</div><ul><li>Wrap every list in <code>Page[T]</code> so the client gets <code>total</code> without a second call.</li><li><code>Literal</code> and <code>Query(ge, le)</code> make sort keys and page sizes safe by construction.</li><li>A class with a typed <code>__init__</code> is a reusable bundle of query params.</li><li>Dependencies form a graph resolved per request, with results cached.</li></ul></div>
+<div class="ships"><span class="lab">Shipped in this chapter</span><span class="ep"><b class="m get">GET</b> <code>/employees/{employee_id}/reports</code></span><span class="ep"><b class="m get">GET</b> <code>/departments/{department_id}/employees</code></span></div>
+</div></section>
+<section class="block reveal" id="ch5" data-shipped="12"><div class="wrap">
+<div class="sec-head"><div class="sec-num">5</div><div><div class="sec-time">Chapter 5 · ~40 minutes</div><h2>The shape of a <em>real project</em></h2></div></div>
+<p class="big-p">No new endpoints. Chapter 3 already pushed the engine, the models and the schemas out into three flat modules, and <code>main.py</code> still holds every route at about 250 lines. All four are about to get auth and leave piled on top of them, so we split them now into the layout Part 2 extends. Nothing the client sees changes.</p>
+<h3 id="ch5-tree">The target layout</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/</span></div><pre>hr-api/
+├── .env
+├── .gitignore
+├── requirements.txt
+├── seed.py
+├── app.db                     (generated, gitignored)
+└── app/
+    ├── __init__.py
+    ├── main.py
+    ├── deps.py                # get_db, shared dependency aliases
+    ├── core/
+    │   ├── __init__.py
+    │   ├── config.py
+    │   └── db.py
+    ├── models/
+    │   ├── __init__.py
+    │   ├── base.py
+    │   ├── department.py
+    │   └── employee.py
+    ├── schemas/
+    │   ├── __init__.py
+    │   ├── common.py          # Page envelope
+    │   ├── department.py
+    │   └── employee.py
+    ├── services/
+    │   ├── __init__.py
+    │   └── employees.py
+    └── routers/
+        ├── __init__.py
+        ├── health.py
+        ├── employees.py
+        └── departments.py</pre></div>
+<p>All the <code>__init__.py</code> files are empty except <code>models/__init__.py</code>, shown below. Rule of thumb for what goes where: <strong>models</strong> are database tables, <strong>schemas</strong> are request and response shapes, <strong>services</strong> hold query logic with no HTTP in it, <strong>routers</strong> are thin HTTP adapters. Keeping HTTP out of services is what lets Part 2 reuse them from tests and approval flows.</p>
+<h3 id="ch5-config">Settings and the .env file</h3>
+<p><a class="chip-syn" href="python-for-js-devs.html#decorators"># new: @lru_cache &rarr; cheatsheet</a> <code>pydantic-settings</code> is Zod-for-<code>process.env</code> (think <code>dotenv</code> plus a schema): typed, validated at startup, and the app refuses to boot on bad config.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>.env</span></div><pre>DATABASE_URL=sqlite+aiosqlite:///./app.db
+CORS_ORIGINS=["http://localhost:5173"]
+APP_NAME=HR API</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>.gitignore</span></div><pre>.venv/
+__pycache__/
+.env
+app.db
+app.db-wal
+app.db-shm</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/core/config.py</span></div><pre><span class="kw">from</span> functools <span class="kw">import</span> lru_cache
+
+<span class="kw">from</span> pydantic_settings <span class="kw">import</span> <span class="nm">BaseSettings</span>, <span class="nm">SettingsConfigDict</span>
+
+
+<span class="kw">class</span> <span class="fn">Settings</span>(<span class="nm">BaseSettings</span>):
+    model_config = <span class="fn">SettingsConfigDict</span>(env_file=<span class="st">".env"</span>)
+
+    app_name: str = <span class="st">"HR API"</span>
+    database_url: str = <span class="st">"sqlite+aiosqlite:///./app.db"</span>
+    cors_origins: list[str] = [<span class="st">"http://localhost:5173"</span>]   <span class="cm"># JSON list in .env</span>
+
+
+<span class="fn">@lru_cache</span>
+<span class="kw">def</span> <span class="fn">get_settings</span>() -&gt; <span class="nm">Settings</span>:
+    <span class="st">""</span><span class="st">"Build Settings once; every later call returns the same object."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="fn">Settings</span>()</pre></div>
+<h3 id="ch5-db">Database setup and WAL mode</h3>
+<p>Two SQLite pragmas run on every new connection. <code>journal_mode=WAL</code> switches to write-ahead logging: readers no longer block on the writer, so a GUI (the VS Code SQLite Viewer extension, the <code>sqlite3</code> CLI, or DB Browser for SQLite) can read <code>app.db</code> while uvicorn holds it open. Without it you hit "database is locked" the moment you inspect data mid-request. <code>foreign_keys=ON</code> is needed because SQLite ignores foreign keys by default; without it <code>manager_id: 999</code> would silently be accepted.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/core/db.py</span></div><pre><span class="kw">from</span> sqlalchemy <span class="kw">import</span> event
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> async_sessionmaker, create_async_engine
+
+<span class="kw">from</span> app.core.config <span class="kw">import</span> get_settings
+
+engine = <span class="fn">create_async_engine</span>(<span class="fn">get_settings</span>().database_url)
+
+<span class="nm">SessionLocal</span> = <span class="fn">async_sessionmaker</span>(engine, expire_on_commit=<span class="kw">False</span>)
+
+
+<span class="fn">@event</span>.<span class="fn">listens_for</span>(engine.sync_engine, <span class="st">"connect"</span>)
+<span class="kw">def</span> <span class="fn">_sqlite_pragmas</span>(dbapi_connection, _record) -&gt; <span class="kw">None</span>:
+    cur = dbapi_connection.<span class="fn">cursor</span>()
+    cur.<span class="fn">execute</span>(<span class="st">"PRAGMA journal_mode=WAL"</span>)    <span class="cm"># readers don't block the writer</span>
+    cur.<span class="fn">execute</span>(<span class="st">"PRAGMA foreign_keys=ON"</span>)     <span class="cm"># enforce FKs (off by default in SQLite)</span>
+    cur.<span class="fn">close</span>()</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/deps.py</span></div><pre><span class="kw">from</span> collections.abc <span class="kw">import</span> <span class="nm">AsyncIterator</span>
+<span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Annotated</span>, <span class="nm">Literal</span>
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">Depends</span>, <span class="nm">Query</span>
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>
+
+<span class="kw">from</span> app.core.db <span class="kw">import</span> <span class="nm">SessionLocal</span>
+<span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_db</span>() -&gt; <span class="nm">AsyncIterator</span>[<span class="nm">AsyncSession</span>]:
+    <span class="kw">async</span> <span class="kw">with</span> <span class="fn">SessionLocal</span>() <span class="kw">as</span> session:
+        <span class="kw">yield</span> session
+
+
+<span class="nm">DbSession</span> = <span class="nm">Annotated</span>[<span class="nm">AsyncSession</span>, <span class="fn">Depends</span>(get_db)]
+
+
+<span class="kw">class</span> <span class="nm">EmployeeFilters</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        department_id: int | <span class="kw">None</span> = <span class="kw">None</span>,
+        role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+        employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+        q: <span class="nm">Annotated</span>[str | <span class="kw">None</span>, <span class="fn">Query</span>(description=<span class="st">"Search name or email"</span>, max_length=<span class="nm">100</span>)] = <span class="kw">None</span>,
+        sort_by: <span class="nm">Literal</span>[<span class="st">"name"</span>, <span class="st">"hire_date"</span>, <span class="st">"salary"</span>] = <span class="st">"name"</span>,
+        order: <span class="nm">Literal</span>[<span class="st">"asc"</span>, <span class="st">"desc"</span>] = <span class="st">"asc"</span>,
+        limit: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">1</span>, le=<span class="nm">100</span>)] = <span class="nm">20</span>,
+        offset: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">0</span>)] = <span class="nm">0</span>,
+    ) -&gt; <span class="kw">None</span>:
+        self.department_id = department_id
+        self.role = role
+        self.employment_status = employment_status
+        self.q = q
+        self.sort_by = sort_by
+        self.order = order
+        self.limit = limit
+        self.offset = offset
+
+
+<span class="nm">Filters</span> = <span class="nm">Annotated</span>[<span class="nm">EmployeeFilters</span>, <span class="fn">Depends</span>()]</pre></div>
+<h3 id="ch5-models">Models</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models/base.py</span></div><pre><span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">DeclarativeBase</span>
+
+
+<span class="kw">class</span> <span class="fn">Base</span>(<span class="nm">DeclarativeBase</span>):
+    <span class="st">""</span><span class="st">"Parent class of every ORM model."</span><span class="st">""</span></pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models/department.py</span></div><pre><span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">String</span>
+<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">Mapped</span>, mapped_column, relationship
+
+<span class="kw">from</span> app.models.base <span class="kw">import</span> <span class="nm">Base</span>
+
+
+<span class="kw">class</span> <span class="fn">Department</span>(<span class="nm">Base</span>):
+    __tablename__ = <span class="st">"departments"</span>
+
+    id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
+    name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>), unique=<span class="kw">True</span>)
+    description: <span class="nm">Mapped</span>[str | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>), default=<span class="kw">None</span>)
+
+    employees: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"department"</span>)</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models/employee.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+<span class="kw">from</span> enum <span class="kw">import</span> <span class="nm">Enum</span>
+
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">Enum</span> <span class="kw">as</span> <span class="nm">SAEnum</span>
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">ForeignKey</span>, <span class="nm">String</span>
+<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">Mapped</span>, mapped_column, relationship
+
+<span class="kw">from</span> app.models.base <span class="kw">import</span> <span class="nm">Base</span>
+<span class="kw">from</span> app.models.department <span class="kw">import</span> <span class="nm">Department</span>
+
+
+<span class="kw">class</span> <span class="fn">Role</span>(str, <span class="nm">Enum</span>):
+    <span class="nm">EMPLOYEE</span> = <span class="st">"employee"</span>
+    <span class="nm">MANAGER</span> = <span class="st">"manager"</span>
+    <span class="nm">HR_ADMIN</span> = <span class="st">"hr_admin"</span>
+
+
+<span class="kw">class</span> <span class="fn">EmploymentStatus</span>(str, <span class="nm">Enum</span>):
+    <span class="nm">ACTIVE</span> = <span class="st">"active"</span>
+    <span class="nm">ON_LEAVE</span> = <span class="st">"on_leave"</span>
+    <span class="nm">TERMINATED</span> = <span class="st">"terminated"</span>
+
+
+<span class="kw">def</span> <span class="fn">_values</span>(e: type[<span class="nm">Enum</span>]) -&gt; list[str]:
+    <span class="kw">return</span> [m.value <span class="kw">for</span> m <span class="kw">in</span> e]
+
+
+<span class="kw">class</span> <span class="fn">Employee</span>(<span class="nm">Base</span>):
+    __tablename__ = <span class="st">"employees"</span>
+
+    id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
+    name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
+    email: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>), unique=<span class="kw">True</span>, index=<span class="kw">True</span>)
+    role: <span class="nm">Mapped</span>[<span class="nm">Role</span>] = <span class="fn">mapped_column</span>(
+        <span class="fn">SAEnum</span>(<span class="nm">Role</span>, native_enum=<span class="kw">False</span>, values_callable=_values), default=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
+    )
+    job_title: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
+    hire_date: <span class="nm">Mapped</span>[date]
+    salary: <span class="nm">Mapped</span>[int]
+    employment_status: <span class="nm">Mapped</span>[<span class="nm">EmploymentStatus</span>] = <span class="fn">mapped_column</span>(
+        <span class="fn">SAEnum</span>(<span class="nm">EmploymentStatus</span>, native_enum=<span class="kw">False</span>, values_callable=_values),
+        default=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
+    )
+    department_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"departments.id"</span>))
+    manager_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>))
+    password_hash: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>))
+
+    department: <span class="nm">Mapped</span>[<span class="nm">Department</span> | <span class="kw">None</span>] = <span class="fn">relationship</span>(back_populates=<span class="st">"employees"</span>)
+    manager: <span class="nm">Mapped</span>[<span class="st">"Employee | None"</span>] = <span class="fn">relationship</span>(
+        remote_side=<span class="st">"Employee.id"</span>, back_populates=<span class="st">"reports"</span>
+    )
+    reports: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"manager"</span>)</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models/__init__.py</span></div><pre><span class="cm"># Importing every model here registers it on Base.metadata.</span>
+<span class="kw">from</span> app.models.base <span class="kw">import</span> <span class="nm">Base</span>
+<span class="kw">from</span> app.models.department <span class="kw">import</span> <span class="nm">Department</span>
+<span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">Employee</span>, <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
+
+__all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>, <span class="st">"Employee"</span>, <span class="st">"EmploymentStatus"</span>, <span class="st">"Role"</span>]</pre></div>
+<h3 id="ch5-schemas">Schemas</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas/common.py</span></div><pre><span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Generic</span>, <span class="nm">TypeVar</span>
+
+<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">Field</span>
+
+<span class="nm">T</span> = <span class="fn">TypeVar</span>(<span class="st">"T"</span>)
+
+
+<span class="kw">class</span> <span class="fn">Page</span>(<span class="nm">BaseModel</span>, <span class="nm">Generic</span>[<span class="nm">T</span>]):
+    <span class="st">""</span><span class="st">"Standard envelope for every list endpoint."</span><span class="st">""</span>
+    items: list[<span class="nm">T</span>]
+    total: int = <span class="fn">Field</span>(description=<span class="st">"Rows matching the filters, ignoring limit/offset"</span>)
+    limit: int
+    offset: int</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas/employee.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+
+<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">ConfigDict</span>, <span class="nm">EmailStr</span>, <span class="nm">Field</span>
+
+<span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"Body for creating an employee."</span><span class="st">""</span>
+    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    email: <span class="nm">EmailStr</span>
+    role: <span class="nm">Role</span> = <span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
+    job_title: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
+    hire_date: date
+    salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>, description=<span class="st">"Annual salary in whole currency units"</span>)
+    department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeUpdate</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"Partial update: send only the fields you want to change."</span><span class="st">""</span>
+    name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    job_title: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
+    salary: int | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, ge=<span class="nm">0</span>)
+    employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeRead</span>(<span class="nm">BaseModel</span>):
+    <span class="st">""</span><span class="st">"What the API returns. No salary, no password_hash."</span><span class="st">""</span>
+    model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
+
+    id: int
+    name: str
+    email: <span class="nm">EmailStr</span>
+    role: <span class="nm">Role</span>
+    job_title: str
+    hire_date: date
+    employment_status: <span class="nm">EmploymentStatus</span>
+    department_id: int | <span class="kw">None</span>
+    manager_id: int | <span class="kw">None</span></pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas/department.py</span></div><pre><span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">ConfigDict</span>, <span class="nm">Field</span>
+
+
+<span class="kw">class</span> <span class="fn">DepartmentCreate</span>(<span class="nm">BaseModel</span>):
+    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+
+
+<span class="kw">class</span> <span class="fn">DepartmentUpdate</span>(<span class="nm">BaseModel</span>):
+    name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+
+
+<span class="kw">class</span> <span class="fn">DepartmentRead</span>(<span class="nm">BaseModel</span>):
+    model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
+
+    id: int
+    name: str
+    description: str | <span class="kw">None</span></pre></div>
+<h3 id="ch5-services">The service layer</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/services/employees.py</span></div><pre><span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">Select</span>, func, or_, select
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>
+
+<span class="kw">from</span> app.deps <span class="kw">import</span> <span class="nm">EmployeeFilters</span>
+<span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">Employee</span>
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(db: <span class="nm">AsyncSession</span>, employee_id: int) -&gt; <span class="nm">Employee</span> | <span class="kw">None</span>:
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.id == employee_id))
+    <span class="kw">return</span> result.<span class="fn">one_or_none</span>()
+
+
+<span class="kw">def</span> <span class="fn">apply_filters</span>(stmt: <span class="nm">Select</span>, f: <span class="nm">EmployeeFilters</span>) -&gt; <span class="nm">Select</span>:
+    <span class="kw">if</span> f.department_id <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.department_id == f.department_id)
+    <span class="kw">if</span> f.role <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.role == f.role)
+    <span class="kw">if</span> f.employment_status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.employment_status == f.employment_status)
+    <span class="kw">if</span> f.q:
+        like = <span class="st">f"%{f.q}%"</span>
+        stmt = stmt.<span class="fn">where</span>(<span class="fn">or_</span>(<span class="nm">Employee</span>.name.<span class="fn">ilike</span>(like), <span class="nm">Employee</span>.email.<span class="fn">ilike</span>(like)))
+    <span class="kw">return</span> stmt
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">page_of_employees</span>(
+    db: <span class="nm">AsyncSession</span>, f: <span class="nm">EmployeeFilters</span>, base: <span class="nm">Select</span> | <span class="kw">None</span> = <span class="kw">None</span>
+) -&gt; dict:
+    base = <span class="fn">apply_filters</span>(base <span class="kw">if</span> base <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span> <span class="kw">else</span> <span class="fn">select</span>(<span class="nm">Employee</span>), f)
+    total = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(func.<span class="fn">count</span>()).<span class="fn">select_from</span>(base.<span class="fn">subquery</span>()))
+    sort_col = {
+        <span class="st">"name"</span>: <span class="nm">Employee</span>.name,
+        <span class="st">"hire_date"</span>: <span class="nm">Employee</span>.hire_date,
+        <span class="st">"salary"</span>: <span class="nm">Employee</span>.salary,
+    }[f.sort_by]
+    ordering = sort_col.<span class="fn">asc</span>() <span class="kw">if</span> f.order == <span class="st">"asc"</span> <span class="kw">else</span> sort_col.<span class="fn">desc</span>()
+    stmt = base.<span class="fn">order_by</span>(ordering, <span class="nm">Employee</span>.id).<span class="fn">offset</span>(f.offset).<span class="fn">limit</span>(f.limit)
+    items = (<span class="kw">await</span> db.<span class="fn">scalars</span>(stmt)).<span class="fn">all</span>()
+    <span class="kw">return</span> {<span class="st">"items"</span>: items, <span class="st">"total"</span>: total <span class="kw">or</span> <span class="nm">0</span>, <span class="st">"limit"</span>: f.limit, <span class="st">"offset"</span>: f.offset}</pre></div>
+<h3 id="ch5-routers">Routers: express.Router, with a prefix</h3>
+<div class="cmp-pair"><div class="cmp-card js"><div class="ct">Express</div><pre><span class="cm">// routes/employees.js</span>
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+router.<span class="fn">get</span>(<span class="st">"/"</span>, listEmployees);
+router.<span class="fn">get</span>(<span class="st">"/:id"</span>, getEmployee);
+module.exports = router;
+
+<span class="cm">// app.js</span>
+app.<span class="fn">use</span>(<span class="st">"/employees"</span>, <span class="fn">require</span>(<span class="st">"./routes/employees"</span>));</pre></div><div class="cmp-card py"><div class="ct">FastAPI</div><pre><span class="cm"># routers/employees.py</span>
+router = <span class="fn">APIRouter</span>(prefix=<span class="st">"/employees"</span>, tags=[<span class="st">"employees"</span>])
+
+<span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">""</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_employees</span>(...): ...
+
+<span class="cm"># main.py</span>
+app.<span class="fn">include_router</span>(employees.router)</pre></div></div>
+<p><code>APIRouter</code> is <code>express.Router</code>. The <code>prefix</code> is the mount path, and <code>tags</code> groups the endpoints in <code>/docs</code> (and later in your generated client). Inside a router, the list route is <code>""</code> rather than <code>"/"</code>, so there is no redirect from <code>/employees</code> to <code>/employees/</code>.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/routers/health.py</span></div><pre><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">APIRouter</span>
+
+router = <span class="fn">APIRouter</span>(tags=[<span class="st">"health"</span>])
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">"/health"</span>, summary=<span class="st">"Liveness check"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">health</span>() -&gt; dict[str, str]:
+    <span class="st">""</span><span class="st">"Returns ok when the server is up."</span><span class="st">""</span>
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/routers/employees.py</span></div><pre><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">APIRouter</span>, <span class="nm">HTTPException</span>
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> select, update
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>
+
+<span class="kw">from</span> app.deps <span class="kw">import</span> <span class="nm">DbSession</span>, <span class="nm">Filters</span>
+<span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">Employee</span>
+<span class="kw">from</span> app.schemas.common <span class="kw">import</span> <span class="nm">Page</span>
+<span class="kw">from</span> app.schemas.employee <span class="kw">import</span> <span class="nm">EmployeeCreate</span>, <span class="nm">EmployeeRead</span>, <span class="nm">EmployeeUpdate</span>
+<span class="kw">from</span> app.services <span class="kw">import</span> employees <span class="kw">as</span> svc
+
+router = <span class="fn">APIRouter</span>(prefix=<span class="st">"/employees"</span>, tags=[<span class="st">"employees"</span>])
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">_get_or_404</span>(db: <span class="nm">AsyncSession</span>, employee_id: int) -&gt; <span class="nm">Employee</span>:
+    emp = <span class="kw">await</span> svc.<span class="fn">get_employee</span>(db, employee_id)
+    <span class="kw">if</span> emp <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">404</span>, detail=<span class="st">f"Employee {employee_id} not found"</span>)
+    <span class="kw">return</span> emp
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">""</span>, response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>], summary=<span class="st">"List employees"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_employees</span>(db: <span class="nm">DbSession</span>, f: <span class="nm">Filters</span>):
+    <span class="st">""</span><span class="st">"Search, filter, sort and paginate employees."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="kw">await</span> svc.<span class="fn">page_of_employees</span>(db, f)
+
+
+<span class="fn">@router</span>.<span class="fn">post</span>(<span class="st">""</span>, response_model=<span class="nm">EmployeeRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create an employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_employee</span>(payload: <span class="nm">EmployeeCreate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Create an employee. Returns the new record without salary."</span><span class="st">""</span>
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.email == payload.email))
+    <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
+    emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>(), password_hash=<span class="st">"!unset"</span>)   <span class="cm"># Part 2, ch 6</span>
+    db.<span class="fn">add</span>(emp)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(emp)
+    <span class="kw">return</span> emp
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">"/{employee_id}"</span>, response_model=<span class="nm">EmployeeRead</span>, summary=<span class="st">"Get one employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(employee_id: int, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Fetch a single employee by numeric id."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, employee_id)
+
+
+<span class="fn">@router</span>.<span class="fn">patch</span>(<span class="st">"/{employee_id}"</span>, response_model=<span class="nm">EmployeeRead</span>, summary=<span class="st">"Update an employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">update_employee</span>(employee_id: int, payload: <span class="nm">EmployeeUpdate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Change only the fields that are present in the request body."</span><span class="st">""</span>
+    emp = <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, employee_id)
+    <span class="kw">for</span> field, value <span class="kw">in</span> payload.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>).<span class="fn">items</span>():
+        <span class="fn">setattr</span>(emp, field, value)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(emp)
+    <span class="kw">return</span> emp
+
+
+<span class="fn">@router</span>.<span class="fn">delete</span>(<span class="st">"/{employee_id}"</span>, status_code=<span class="nm">204</span>, summary=<span class="st">"Delete an employee"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">delete_employee</span>(employee_id: int, db: <span class="nm">DbSession</span>) -&gt; <span class="kw">None</span>:
+    <span class="st">""</span><span class="st">"Delete an employee. Anyone they managed is left with no manager."</span><span class="st">""</span>
+    emp = <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, employee_id)
+    <span class="kw">await</span> db.<span class="fn">execute</span>(
+        <span class="fn">update</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.manager_id == employee_id).<span class="fn">values</span>(manager_id=<span class="kw">None</span>)
+    )
+    <span class="kw">await</span> db.<span class="fn">delete</span>(emp)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(
+    <span class="st">"/{employee_id}/reports"</span>,
+    response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>],
+    summary=<span class="st">"List an employee's direct reports"</span>,
+)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_reports</span>(employee_id: int, db: <span class="nm">DbSession</span>, f: <span class="nm">Filters</span>):
+    <span class="st">""</span><span class="st">"Employees whose manager is the given employee."</span><span class="st">""</span>
+    <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, employee_id)
+    base = <span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.manager_id == employee_id)
+    <span class="kw">return</span> <span class="kw">await</span> svc.<span class="fn">page_of_employees</span>(db, f, base)</pre></div>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/routers/departments.py</span></div><pre><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">APIRouter</span>, <span class="nm">HTTPException</span>
+<span class="kw">from</span> sqlalchemy <span class="kw">import</span> select
+<span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>
+
+<span class="kw">from</span> app.deps <span class="kw">import</span> <span class="nm">DbSession</span>, <span class="nm">Filters</span>
+<span class="kw">from</span> app.models.department <span class="kw">import</span> <span class="nm">Department</span>
+<span class="kw">from</span> app.schemas.common <span class="kw">import</span> <span class="nm">Page</span>
+<span class="kw">from</span> app.schemas.department <span class="kw">import</span> <span class="nm">DepartmentCreate</span>, <span class="nm">DepartmentRead</span>, <span class="nm">DepartmentUpdate</span>
+<span class="kw">from</span> app.schemas.employee <span class="kw">import</span> <span class="nm">EmployeeRead</span>
+<span class="kw">from</span> app.services <span class="kw">import</span> employees <span class="kw">as</span> svc
+
+router = <span class="fn">APIRouter</span>(prefix=<span class="st">"/departments"</span>, tags=[<span class="st">"departments"</span>])
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">_get_or_404</span>(db: <span class="nm">AsyncSession</span>, department_id: int) -&gt; <span class="nm">Department</span>:
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.id == department_id))
+    dept = result.<span class="fn">one_or_none</span>()
+    <span class="kw">if</span> dept <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">404</span>, detail=<span class="st">f"Department {department_id} not found"</span>)
+    <span class="kw">return</span> dept
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">""</span>, response_model=list[<span class="nm">DepartmentRead</span>], summary=<span class="st">"List departments"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_departments</span>(db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"List all departments ordered by name."</span><span class="st">""</span>
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">order_by</span>(<span class="nm">Department</span>.name))
+    <span class="kw">return</span> result.<span class="fn">all</span>()
+
+
+<span class="fn">@router</span>.<span class="fn">post</span>(<span class="st">""</span>, response_model=<span class="nm">DepartmentRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create a department"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_department</span>(payload: <span class="nm">DepartmentCreate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Create a department. Names are unique."</span><span class="st">""</span>
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.name == payload.name))
+    <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Department name already in use"</span>)
+    dept = <span class="fn">Department</span>(**payload.<span class="fn">model_dump</span>())
+    db.<span class="fn">add</span>(dept)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(dept)
+    <span class="kw">return</span> dept
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">"/{department_id}"</span>, response_model=<span class="nm">DepartmentRead</span>, summary=<span class="st">"Get one department"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_department</span>(department_id: int, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Fetch a single department by numeric id."</span><span class="st">""</span>
+    <span class="kw">return</span> <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, department_id)
+
+
+<span class="fn">@router</span>.<span class="fn">patch</span>(<span class="st">"/{department_id}"</span>, response_model=<span class="nm">DepartmentRead</span>, summary=<span class="st">"Update a department"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">update_department</span>(department_id: int, payload: <span class="nm">DepartmentUpdate</span>, db: <span class="nm">DbSession</span>):
+    <span class="st">""</span><span class="st">"Change only the fields that are present in the request body."</span><span class="st">""</span>
+    dept = <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, department_id)
+    <span class="kw">for</span> field, value <span class="kw">in</span> payload.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>).<span class="fn">items</span>():
+        <span class="fn">setattr</span>(dept, field, value)
+    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">refresh</span>(dept)
+    <span class="kw">return</span> dept
+
+
+<span class="fn">@router</span>.<span class="fn">get</span>(
+    <span class="st">"/{department_id}/employees"</span>,
+    response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>],
+    summary=<span class="st">"List employees in a department"</span>,
+)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_department_employees</span>(department_id: int, db: <span class="nm">DbSession</span>, f: <span class="nm">Filters</span>):
+    <span class="st">""</span><span class="st">"Everyone in one department, with the same filters as /employees."</span><span class="st">""</span>
+    <span class="kw">await</span> <span class="fn">_get_or_404</span>(db, department_id)
+    f.department_id = department_id          <span class="cm"># path wins over the query string</span>
+    <span class="kw">return</span> <span class="kw">await</span> svc.<span class="fn">page_of_employees</span>(db, f)</pre></div>
+<h3 id="ch5-main">main.py, CORS and middleware</h3>
+<p>The browser blocks your React dev server (<code>localhost:5173</code>) from calling the API (<code>localhost:8000</code>) unless the API opts in; that is CORS, same as <code>app.use(cors())</code> in Express. Allow exactly the origin you serve from. Do not use <code>["*"]</code> together with <code>allow_credentials=True</code>: the browser spec forbids a wildcard origin on credentialed requests, and Starlette rejects the combination rather than letting you ship something that silently fails. (Part 2 switches to a bearer token in a header, so credentials stay off for now.)</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">import</span> logging
+<span class="kw">import</span> time
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">FastAPI</span>, <span class="nm">Request</span>
+<span class="kw">from</span> fastapi.middleware.cors <span class="kw">import</span> <span class="nm">CORSMiddleware</span>
+
+<span class="kw">from</span> app.core.config <span class="kw">import</span> get_settings
+<span class="kw">from</span> app.core.db <span class="kw">import</span> engine
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="nm">Base</span>
+<span class="kw">from</span> app.routers <span class="kw">import</span> departments, employees, health
+
+settings = <span class="fn">get_settings</span>()
+log = logging.<span class="fn">getLogger</span>(<span class="st">"hr-api"</span>)
+
+
+<span class="fn">@asynccontextmanager</span>
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">lifespan</span>(app: <span class="nm">FastAPI</span>):
+    <span class="kw">async</span> <span class="kw">with</span> engine.<span class="fn">begin</span>() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.<span class="fn">run_sync</span>(<span class="nm">Base</span>.metadata.create_all)
+    <span class="kw">yield</span>
+
+
+app = <span class="fn">FastAPI</span>(
+    title=settings.app_name,
+    description=<span class="st">"Employees, departments and leave for a small company."</span>,
+    version=<span class="st">"0.1.0"</span>,
+    lifespan=lifespan,
+)
+
+app.<span class="fn">add_middleware</span>(
+    <span class="nm">CORSMiddleware</span>,
+    allow_origins=settings.cors_origins,     <span class="cm"># ["http://localhost:5173"]</span>
+    allow_methods=[<span class="st">"*"</span>],
+    allow_headers=[<span class="st">"*"</span>],
+)
+
+
+<span class="fn">@app</span>.<span class="fn">middleware</span>(<span class="st">"http"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">log_requests</span>(request: <span class="nm">Request</span>, call_next):
+    started = time.<span class="fn">perf_counter</span>()
+    response = <span class="kw">await</span> <span class="fn">call_next</span>(request)
+    ms = (time.<span class="fn">perf_counter</span>() - started) * <span class="nm">1000</span>
+    log.<span class="fn">info</span>(<span class="st">"%s %s -&gt; %s (%.0f ms)"</span>, request.method, request.url.path, response.status_code, ms)
+    <span class="kw">return</span> response
+
+
+app.<span class="fn">include_router</span>(health.router)
+app.<span class="fn">include_router</span>(employees.router)
+app.<span class="fn">include_router</span>(departments.router)</pre></div>
+<p>Note <code>from app.models import Base</code>: importing the package runs <code>models/__init__.py</code>, which registers both tables before <code>create_all</code> executes.</p>
+<h3 id="ch5-seed">seed.py: wipe and repopulate</h3>
+<p>A script at the project root that drops every table and recreates known data. Run it whenever your data is a mess, or later when an agent has been let loose on destructive requests. Stop uvicorn first, or at least expect a brief lock.</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>seed.py</span></div><pre><span class="kw">import</span> asyncio
+<span class="kw">from</span> datetime <span class="kw">import</span> date
+
+<span class="kw">from</span> app.core.db <span class="kw">import</span> <span class="nm">SessionLocal</span>, engine
+<span class="kw">from</span> app.models <span class="kw">import</span> <span class="nm">Base</span>, <span class="nm">Department</span>, <span class="nm">Employee</span>, <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
+
+<span class="nm">DEPARTMENTS</span> = [
+    <span class="fn">Department</span>(id=<span class="nm">1</span>, name=<span class="st">"Engineering"</span>, description=<span class="st">"Builds the product"</span>),
+    <span class="fn">Department</span>(id=<span class="nm">2</span>, name=<span class="st">"People Ops"</span>, description=<span class="st">"Hiring, leave and payroll"</span>),
+    <span class="fn">Department</span>(id=<span class="nm">3</span>, name=<span class="st">"Design"</span>, description=<span class="st">"Product and brand design"</span>),
+]
+
+<span class="cm"># Managers come first so the self-referencing manager_id always has a target.</span>
+<span class="nm">EMPLOYEES</span> = [
+    <span class="fn">Employee</span>(id=<span class="nm">1</span>, name=<span class="st">"Maya Chen"</span>, email=<span class="st">"maya@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">HR_ADMIN</span>,
+             job_title=<span class="st">"Head of People"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2019</span>, <span class="nm">2</span>, <span class="nm">11</span>), salary=<span class="nm">120000</span>,
+             department_id=<span class="nm">2</span>, manager_id=<span class="kw">None</span>),
+    <span class="fn">Employee</span>(id=<span class="nm">2</span>, name=<span class="st">"Arjun Rao"</span>, email=<span class="st">"arjun@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">MANAGER</span>,
+             job_title=<span class="st">"Engineering Manager"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2020</span>, <span class="nm">6</span>, <span class="nm">1</span>), salary=<span class="nm">140000</span>,
+             department_id=<span class="nm">1</span>, manager_id=<span class="kw">None</span>),
+    <span class="fn">Employee</span>(id=<span class="nm">3</span>, name=<span class="st">"Priya Nair"</span>, email=<span class="st">"priya@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
+             job_title=<span class="st">"Senior Engineer"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2021</span>, <span class="nm">3</span>, <span class="nm">15</span>), salary=<span class="nm">118000</span>,
+             department_id=<span class="nm">1</span>, manager_id=<span class="nm">2</span>),
+    <span class="fn">Employee</span>(id=<span class="nm">4</span>, name=<span class="st">"Tomas Weber"</span>, email=<span class="st">"tomas@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
+             job_title=<span class="st">"Frontend Engineer"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2022</span>, <span class="nm">9</span>, <span class="nm">5</span>), salary=<span class="nm">98000</span>,
+             department_id=<span class="nm">1</span>, manager_id=<span class="nm">2</span>),
+    <span class="fn">Employee</span>(id=<span class="nm">5</span>, name=<span class="st">"Lena Park"</span>, email=<span class="st">"lena@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
+             job_title=<span class="st">"Product Designer"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2023</span>, <span class="nm">1</span>, <span class="nm">16</span>), salary=<span class="nm">92000</span>,
+             employment_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ON_LEAVE</span>, department_id=<span class="nm">3</span>, manager_id=<span class="nm">1</span>),
+]
+<span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>:
+    e.password_hash = <span class="st">"!unset"</span>    <span class="cm"># Part 2 (ch 6) seeds real hashes</span>
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">main</span>() -&gt; <span class="kw">None</span>:
+    <span class="kw">async</span> <span class="kw">with</span> engine.<span class="fn">begin</span>() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.<span class="fn">run_sync</span>(<span class="nm">Base</span>.metadata.drop_all)
+        <span class="kw">await</span> conn.<span class="fn">run_sync</span>(<span class="nm">Base</span>.metadata.create_all)
+    <span class="kw">async</span> <span class="kw">with</span> <span class="fn">SessionLocal</span>() <span class="kw">as</span> db:
+        db.<span class="fn">add_all</span>(<span class="nm">DEPARTMENTS</span>)
+        <span class="kw">await</span> db.<span class="fn">flush</span>()                 <span class="cm"># departments exist before employees point at them</span>
+        db.<span class="fn">add_all</span>(<span class="nm">EMPLOYEES</span>)
+        <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="fn">print</span>(<span class="st">f"Seeded {len(DEPARTMENTS)} departments and {len(EMPLOYEES)} employees."</span>)
+
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    asyncio.<span class="fn">run</span>(<span class="fn">main</span>())</pre></div>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> python seed.py
+Seeded 3 departments and 5 employees.
+<span class="pr">$</span> sqlite3 app.db "select id, name, manager_id from employees;"
+1|Maya Chen|
+2|Arjun Rao|
+3|Priya Nair|2
+4|Tomas Weber|2
+5|Lena Park|1</pre></div>
+<p>That second command works while uvicorn is running precisely because of WAL mode. Open <code>app.db</code> in the VS Code SQLite Viewer or DB Browser for SQLite for the same view in a GUI.</p>
+<h3 id="ch5-mw">Middleware or Depends?</h3>
+<p>You now have both tools, and they overlap just enough to confuse. The split:</p>
+<div class="cmp-pair"><div class="analogy teal" style="margin:0"><div class="ico">🌐</div><div><b>Reach for middleware when</b><p>It is cross-cutting and applies to every request without a return value the handler needs: request logging and timing, CORS, adding a response header, request ids. It sees raw requests and responses, like <code>app.use()</code>, and knows nothing about which route matched.</p></div></div><div class="analogy gold" style="margin:0"><div class="ico">🧩</div><div><b>Reach for Depends when</b><p>You need to inject a typed value (a session, the current user), it should run only on some routes, or it should show up in OpenAPI (a query parameter bundle, an auth scheme). It can read the same typed parameters a handler can, and tests can override it.</p></div></div></div>
+<p>Quick test: if the handler needs something <em>from</em> it, or it needs to be visible in <code>/docs</code>, it is a dependency. Otherwise middleware.</p>
+<h3 id="ch5-recap">Recap: all 12 endpoints</h3>
+<div class="wrapx"><table class="eptable"><tr><th>#</th><th>Method</th><th>Path</th><th>Chapter</th></tr><tr><td>1</td><td><b class="m get">GET</b></td><td><code>/health</code></td><td>0</td></tr><tr><td>2</td><td><b class="m get">GET</b></td><td><code>/employees</code></td><td>1</td></tr><tr><td>3</td><td><b class="m get">GET</b></td><td><code>/employees/{employee_id}</code></td><td>1</td></tr><tr><td>4</td><td><b class="m post">POST</b></td><td><code>/employees</code></td><td>2</td></tr><tr><td>5</td><td><b class="m patch">PATCH</b></td><td><code>/employees/{employee_id}</code></td><td>3</td></tr><tr><td>6</td><td><b class="m delete">DELETE</b></td><td><code>/employees/{employee_id}</code></td><td>3</td></tr><tr><td>7</td><td><b class="m get">GET</b></td><td><code>/departments</code></td><td>3</td></tr><tr><td>8</td><td><b class="m post">POST</b></td><td><code>/departments</code></td><td>3</td></tr><tr><td>9</td><td><b class="m get">GET</b></td><td><code>/departments/{department_id}</code></td><td>3</td></tr><tr><td>10</td><td><b class="m patch">PATCH</b></td><td><code>/departments/{department_id}</code></td><td>3</td></tr><tr><td>11</td><td><b class="m get">GET</b></td><td><code>/employees/{employee_id}/reports</code></td><td>4</td></tr><tr><td>12</td><td><b class="m get">GET</b></td><td><code>/departments/{department_id}/employees</code></td><td>4</td></tr></table></div>
+<div class="recap"><span>12 of 24 endpoints</span><span>SQLite + WAL</span><span>Pydantic v2 schemas</span><span>Page[T] envelope</span><span>CORS for :5173</span><span>seed.py</span></div>
+<div class="takeaways"><div class="lab">Chapter 5 takeaways</div><ul><li>Models = tables, schemas = wire shapes, services = queries, routers = HTTP.</li><li><code>include_router(prefix, tags)</code> is <code>app.use("/path", router)</code>.</li><li>Settings are typed env vars, built once with <code>@lru_cache</code>.</li><li>WAL lets you inspect <code>app.db</code> live; <code>foreign_keys=ON</code> makes the FKs real.</li></ul></div>
+<div class="ships"><span class="lab">Shipped in this chapter</span><span class="ep"><b class="m get">GET</b> <code>/health (moved to routers/health.py)</code></span><span class="ep"><b class="m get">GET</b> <code>/employees ... /departments/{department_id}/employees (all 12, refactored)</code></span></div>
+<div class="road"><a href="part-2-auth-leave-tests.html"><span class="cl">NEXT: PART 2</span><div><b>Auth, leave and tests</b><p>Chapters 6-11 · endpoints 13-24: three roles, leave requests and approvals, the balance race, pytest, agent-ready OpenAPI</p></div><span class="sk">12 more endpoints</span></a><a href="python-for-js-devs.html"><span class="cl">REFERENCE</span><div><b>Python for JS devs</b><p>The lookup sheet</p></div><span class="sk">cheatsheet</span></a></div>
+</div></section>
+<div id="tracker"><span id="trackTxt"></span><div class="bar"><i id="trackFill"></i></div></div>
+<footer><div class="wrap">FastAPI HR build · Part 1 · continue with <a class="link" href="part-2-auth-leave-tests.html">Part 2</a> · syntax lookups live in the <a class="link" href="python-for-js-devs.html">cheatsheet</a>.</div></footer>
+<script>
+const prog=document.getElementById('progress'),topnav=document.getElementById('topnav');
+addEventListener('scroll',()=>{const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;prog.style.width=(max>0?sc/max*100:0)+'%';topnav.classList.toggle('show',sc>620);});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- hero request tester ---------- */
+(function(){
+  const R={
+    '1':['GET /health','200 OK','{\n  "status": "ok"\n}'],
+    '2':['GET /employees/3','200 OK','{\n  "id": 3,\n  "name": "Priya Nair",\n  "role": "employee",\n  "job_title": "Senior Engineer"\n}'],
+    '3':['GET /employees/abc','422 Unprocessable Entity','{\n  "detail": [{\n    "type": "int_parsing",\n    "loc": ["path", "employee_id"],\n    "msg": "Input should be a valid integer...",\n    "input": "abc"\n  }]\n}'],
+    '4':['GET /employees/99','404 Not Found','{\n  "detail": "Employee 99 not found"\n}']
+  };
+  const out=document.getElementById('tryOut'),st=document.getElementById('tryStat'),bs=document.querySelectorAll('.try button');
+  function show(k){bs.forEach(b=>b.classList.toggle('on',b.dataset.k===k));st.textContent=R[k][0]+'  ->  '+R[k][1];out.textContent=R[k][2];}
+  bs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.k)));show('1');
+})();
+
+/* ---------- endpoint tracker ---------- */
+(function(){
+  const pill=document.getElementById('trackTxt'),fill=document.getElementById('trackFill');
+  function set(n){pill.innerHTML='<b>'+n+'</b> of 24 endpoints';fill.style.width=(n/24*100)+'%';}
+  set(0);
+  const secs=[...document.querySelectorAll('section.block[data-shipped]')];
+  const t=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)set(+e.target.dataset.shipped);}),{rootMargin:'-30% 0px -60% 0px'});
+  secs.forEach(s=>t.observe(s));
+  addEventListener('scroll',()=>{if(scrollY<300)set(0);});
+})();
+
+/* ---------- contents sidebar ---------- */
+(function(){
+  const sb=document.getElementById('sidebar'),nav=sb.querySelector('.sb-nav'),
+        tog=document.getElementById('sbToggle'),scrim=document.getElementById('sbScrim');
+  const targets=[];
+  document.querySelectorAll('section.block[id]').forEach(sec=>{
+    const h2=sec.querySelector('h2'); if(!h2)return;
+    const badge=sec.querySelector('.sec-num');
+    const a=document.createElement('a');
+    a.className='sb-sec'; a.href='#'+sec.id;
+    a.innerHTML='<span class="n">'+(badge?badge.textContent.trim():'')+'</span><span>'+h2.textContent.trim()+'</span>';
+    nav.appendChild(a); targets.push({a,el:sec});
+    sec.querySelectorAll('h3[id]').forEach(sub=>{
+      const b=document.createElement('a');
+      b.className='sb-sub'; b.href='#'+sub.id;
+      b.textContent=sub.textContent.trim().replace(/\s+/g,' ');
+      nav.appendChild(b); targets.push({a:b,el:sub});
+    });
+  });
+  function close(){sb.classList.remove('open');scrim.classList.remove('on');}
+  tog.addEventListener('click',()=>{const o=sb.classList.toggle('open');scrim.classList.toggle('on',o);});
+  scrim.addEventListener('click',close);
+  nav.addEventListener('click',e=>{if(e.target.closest('a')&&innerWidth<1400)close();});
+  addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  const spy=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const hit=targets.find(t=>t.el===e.target); if(!hit)return;
+      targets.forEach(t=>t.a.classList.remove('cur'));
+      hit.a.classList.add('cur');
+      const top=hit.a.offsetTop;
+      if(top<sb.scrollTop||top>sb.scrollTop+sb.clientHeight-50)sb.scrollTop=top-120;
+    });
+  },{rootMargin:'-18% 0px -70% 0px'});
+  targets.forEach(t=>spy.observe(t.el));
+})();
+</script>
+</body>
+</html>
