@@ -13,6 +13,68 @@ As of 2026-11-04:
 | `python-for-js-devs.html` | **Built.** 27 anchored lookup rows across 13 sections, live filter box, contents sidebar. |
 | `part-1-employees-api.html` | **Built.** 6 chapters, endpoints 1-12, 4 why-different boxes, ~181 KB. |
 | `part-2-auth-leave-tests.html` | **Built.** 6 chapters, endpoints 13-24, 2 why-different boxes, ~198 KB. |
+| `db-design.html` | **Built.** Data-model companion: four tables, ERD, keys and constraints, seven worked queries, SQLite specifics. |
+
+## The data-model companion
+
+> **Revision 2 (2026-11-05): the schema changed.** The design is now the user's own, corrected.
+> `HRMS.sql` in the repo root is the authoritative DDL; `hr-erd.svg` / `hr-erd.png` are the
+> rendered ERD. The biggest change: **leave types are a `leave_types` TABLE, not a Python enum**,
+> so the schema has FIVE tables. Adding a leave type is an INSERT, not a code change.
+> Renames: `departments.name`->`department_name`, `employees.email`->`work_email`,
+> `hire_date`->`date_joined`, `employment_status`->`emp_status`,
+> `leave_balances.year`->`consumed_year_in`, `leave_type`(enum)->`leave_type_id`(FK),
+> `working_days`->`no_of_days`, `status`->`request_status`, `decided_by_id`->`approver_id`.
+> Fixes applied to the user's draft: composite `UNIQUE(employee_id, leave_type_id, consumed_year_in)`;
+> `approver_id` nullable so a draft can exist; `department_id` nullable; `entitled_days` +
+> `used_days` replacing `leaves_remaining`; `password_hash` added (Part 2 auth needs it);
+> five indexes added. Dates are ISO-8601 `DATE`, no `_utc`, no time component.
+>
+> **Deliberately absent, by the user's decision — do not reintroduce:** `created_at` and
+> `decided_at` columns (a timestamp mixin will supply them; leave history orders by `id DESC`),
+> and `reason` / `description` stay NOT NULL.
+
+
+`db-design.html` is a companion reference like the cheatsheet, not a numbered part: the course stays Part 1 of 3 and Part 2 of 3. The schema in it is the single source of truth for both tutorial parts. It covers four tables: `departments`, `employees`, `leave_balances`, `leave_requests`.
+
+The page is SQL-only by rule (no Python or FastAPI code), so the design stays readable without the framework.
+
+The hero chip reads **4 tables · 16 relationships and constraints**, which is what `#keys`
+actually inventories: 4 primary keys, 5 foreign keys, 2 single-column uniques, 1 composite
+unique (`leave_balances(employee_id, leave_type, year)`) and 4 explicit indexes. Change the
+chip and the `#keys` breakdown together.
+
+### Verified against the tutorial pages
+
+The four column tables and the `#ddl` block were checked column for column against the ORM
+models in Part 1 chapter 3/5 and Part 2 chapter 7 — names, types, nullability, defaults,
+foreign keys and the composite unique all match. `schema.sql` was executed in SQLite: 4
+tables, 5 foreign keys and 4 explicit indexes created, plus the 3 implicit indexes SQLite
+builds for the UNIQUE constraints (which is why the page notes the explicit
+`ix_employees_email` is redundant). All 9 SQL blocks on the page — the 7 questions, the
+recursive-CTE subtree variant and the overlap check — run against seeded data.
+
+### Bugs caught in review and fixed
+
+- **`db-design.html` had a duplicated `<script>` opening tag**, so the literal text
+  `<script>` became the first line of JavaScript. That is a syntax error, and it killed the
+  whole script block: progress bar, sticky nav, sidebar, reveal animations and the table
+  tracker were all inert.
+- **The sidebar IIFE was never closed.** Its `})();` was missing before the hero
+  table-picker block, so the function swallowed the two following IIFEs and the file ended
+  mid-function. `node --check` on the extracted script is now clean; re-run it after any
+  edit to the inline JS.
+- **Design cross-links used chip phrasing in running prose.** Part 1 ended a paragraph with
+  the literal `# design: employees table` and Part 2 read `Design notes: # design:
+  leave_balances …`. Both are now sentences; the gold `.chip-syn` style stays reserved for
+  "new Python syntax → cheatsheet".
+
+Responsive handling: the column tables sit in `.wrapx{overflow-x:auto}` with a 560px
+`min-width`, so they scroll inside their own container, and `html,body{overflow-x:hidden}`
+keeps the page itself from scrolling sideways. Both ERD and lifecycle diagrams are inline
+SVG with a `viewBox`, so they scale rather than clip.
+
+Deep links from the tutorial pages depend on these 17 anchors; do not rename them: `#rules` `#erd` `#departments` `#employees` `#managers` `#balances` `#requests` `#lifecycle` `#cardinality` `#keys` `#queries` `#decisions` `#sqlite` `#ddl` `#seed` `#limits` `#trace`
 
 `docs/STYLE_TOKENS.css` holds an extracted copy of the style reference's tokens and component
 list, so the visual contract survives the reference file being moved or renamed.

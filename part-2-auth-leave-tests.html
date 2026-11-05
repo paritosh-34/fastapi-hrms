@@ -317,7 +317,7 @@ a.chip-syn:hover{background:var(--gold);color:#fff;border-color:var(--gold)}
 <nav id="topnav"><div class="wrap">
   <span class="brand">FastAPI&nbsp;<b>HR</b>&nbsp;· Part 2</span>
   <a href="#ch6">6 Auth</a><a href="#ch7">7 Leave</a><a href="#ch8">8 Race</a><a href="#ch9">9 Errors</a><a href="#ch10">10 Tests</a><a href="#ch11">11 Agent-ready</a>
-  <a class="out" href="part-1-employees-api.html">&larr; Part 1</a><a class="out" href="python-for-js-devs.html">Cheatsheet</a>
+  <a class="out" href="part-1-employees-api.html">&larr; Part 1</a><a class="out" href="db-design.html">Data model</a><a class="out" href="python-for-js-devs.html">Cheatsheet</a>
 </div></nav>
 
 <div id="tracker" aria-live="polite"><span id="trkTxt">12 of 24 endpoints</span><div class="trk-bar"><i id="trkFill"></i></div></div>
@@ -334,7 +334,7 @@ a.chip-syn:hover{background:var(--gold);color:#fff;border-color:var(--gold)}
       <span class="chip">🧪 pytest, like Jest</span>
       <span class="chip">🤖 Agent-ready OpenAPI</span>
     </div>
-    <div class="signature"><b>Endpoints</b>: Part 1 shipped 1&ndash;12. This page ships <b>13&ndash;24</b>, then spends three chapters making them trustworthy.</div>
+    <div class="signature"><b>Endpoints</b>: Part 1 shipped 1&ndash;12. This page ships <b>13&ndash;24</b>, then spends three chapters making them trustworthy. The leave tables, the composite unique key and the status lifecycle are designed on the <a class="link" href="db-design.html">data-model page</a>.</div>
   </div>
   <div>
     <div class="vmap">
@@ -432,7 +432,7 @@ JWT_SECRET=replace-me-with-64-hex-chars</pre></div>
 
 <span class="kw">class</span> <span class="fn">RegisterRequest</span>(<span class="nm">BaseModel</span>):
     name: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>, examples=[<span class="st">"Priya Raman"</span>])
-    email: <span class="nm">EmailStr</span> = <span class="fn">Field</span>(examples=[<span class="st">"priya@example.com"</span>])
+    work_email: <span class="nm">EmailStr</span> = <span class="fn">Field</span>(examples=[<span class="st">"priya@example.com"</span>])
     password: str = <span class="fn">Field</span>(min_length=<span class="nm">8</span>, max_length=<span class="nm">72</span>)   <span class="cm"># 72 = the bcrypt limit</span>
 
 
@@ -477,18 +477,18 @@ me_router = <span class="fn">APIRouter</span>(tags=[<span class="st">"me"</span>
 
 <span class="fn">@router.post</span>(<span class="st">"/register"</span>, response_model=<span class="nm">EmployeeRead</span>, status_code=<span class="nm">201</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">register</span>(body: <span class="nm">RegisterRequest</span>, db: <span class="nm">DbSession</span>) -&gt; <span class="nm">Employee</span>:
-    taken = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(<span class="nm">Employee</span>.id).<span class="fn">where</span>(<span class="nm">Employee</span>.email == body.email))
+    taken = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(<span class="nm">Employee</span>.id).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == body.work_email))
     <span class="kw">if</span> taken <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already registered"</span>)
     employee = <span class="fn">Employee</span>(
         name=body.name,
-        email=body.email,
+        work_email=body.work_email,
         password_hash=<span class="fn">hash_password</span>(body.password),
         role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,                      <span class="cm"># never client-controlled</span>
         job_title=<span class="st">"New hire"</span>,
-        hire_date=date.<span class="fn">today</span>(),
+        date_joined=date.<span class="fn">today</span>(),
         salary=<span class="nm">0</span>,                                <span class="cm"># HR fills this in later</span>
-        employment_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
+        emp_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
     )
     db.<span class="fn">add</span>(employee)
     <span class="kw">await</span> db.<span class="fn">commit</span>()
@@ -520,7 +520,7 @@ me_router = <span class="fn">APIRouter</span>(tags=[<span class="st">"me"</span>
     form: <span class="nm">Annotated</span>[<span class="nm">OAuth2PasswordRequestForm</span>, <span class="fn">Depends</span>()],
     db: <span class="nm">DbSession</span>,
 ) -&gt; <span class="nm">Token</span>:
-    employee = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.email == form.username))
+    employee = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == form.username))
     <span class="kw">if</span> employee <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> <span class="kw">not</span> <span class="fn">verify_password</span>(form.password, employee.password_hash):
         <span class="cm"># one message for both cases: do not reveal which emails exist</span>
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(
@@ -558,7 +558,7 @@ oauth2_scheme = <span class="fn">OAuth2PasswordBearer</span>(tokenUrl=<span clas
     <span class="kw">except</span> (jwt.<span class="nm">PyJWTError</span>, <span class="nm">KeyError</span>, <span class="nm">ValueError</span>):
         <span class="kw">raise</span> unauthorized
     employee = <span class="kw">await</span> db.<span class="fn">get</span>(<span class="nm">Employee</span>, employee_id)
-    <span class="kw">if</span> employee <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> employee.employment_status == <span class="nm">EmploymentStatus</span>.<span class="nm">TERMINATED</span>:
+    <span class="kw">if</span> employee <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> employee.emp_status == <span class="nm">EmploymentStatus</span>.<span class="nm">TERMINATED</span>:
         <span class="kw">raise</span> unauthorized                      <span class="cm"># a valid token for a fired employee is still no</span>
     <span class="kw">return</span> employee
 
@@ -706,25 +706,19 @@ async def get_employee(...) -&gt; Employee:
   <div class="sec-head"><div class="sec-num">7</div><div>
     <div class="sec-time">Chapter 7 · about 60 minutes · endpoints 16–22</div>
     <h2>Leave requests, <em>draft to submitted</em></h2></div></div>
-  <p class="big-p">A leave request has a life: you draft it, edit it, submit it, and a manager decides. Only a <code>draft</code> may be edited; only the owner may submit or cancel. We add two tables, a pair of schemas, a <strong>service</strong> that holds the rules, and a thin router.</p>
+  <p class="big-p">A leave request has a life (<a class="link" href="db-design.html#lifecycle">state diagram</a>): you draft it, edit it, submit it, and a manager decides. Only a <code>draft</code> may be edited; only the owner may submit or cancel. We add three tables, a pair of schemas, a <strong>service</strong> that holds the rules, and a thin router.</p>
 
-  <h3 id="c7-models">Two new models</h3>
-<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/models/leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date, datetime
+  <h3 id="c7-models">Three new models</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/models/leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
 <span class="kw">from</span> enum <span class="kw">import</span> <span class="nm">Enum</span>
 
 <span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">Enum</span> <span class="kw">as</span> <span class="nm">SAEnum</span>, <span class="nm">ForeignKey</span>, <span class="nm">String</span>, <span class="nm">UniqueConstraint</span>
-<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">Mapped</span>, mapped_column
+<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">Mapped</span>, mapped_column, relationship
 
 <span class="kw">from</span> app.models.base <span class="kw">import</span> <span class="nm">Base</span>
 
 
-<span class="kw">class</span> <span class="fn">LeaveType</span>(str, <span class="nm">Enum</span>):
-    <span class="nm">ANNUAL</span> = <span class="st">"annual"</span>
-    <span class="nm">SICK</span> = <span class="st">"sick"</span>
-    <span class="nm">UNPAID</span> = <span class="st">"unpaid"</span>
-
-
-<span class="kw">class</span> <span class="fn">LeaveStatus</span>(str, <span class="nm">Enum</span>):
+<span class="kw">class</span> <span class="fn">LeaveStatus</span>(str, <span class="nm">Enum</span>):         <span class="cm"># a fixed lifecycle: code branches on it, so it stays an enum</span>
     <span class="nm">DRAFT</span> = <span class="st">"draft"</span>
     <span class="nm">SUBMITTED</span> = <span class="st">"submitted"</span>
     <span class="nm">APPROVED</span> = <span class="st">"approved"</span>
@@ -733,19 +727,28 @@ async def get_employee(...) -&gt; Employee:
 
 
 <span class="kw">def</span> <span class="fn">_values</span>(e: type[<span class="nm">Enum</span>]) -&gt; list[str]:
-    <span class="kw">return</span> [m.value <span class="kw">for</span> m <span class="kw">in</span> e]          <span class="cm"># store "annual", not the member name "ANNUAL"</span>
+    <span class="kw">return</span> [m.value <span class="kw">for</span> m <span class="kw">in</span> e]          <span class="cm"># store "approved", not the member name "APPROVED"</span>
+
+
+<span class="kw">class</span> <span class="fn">LeaveType</span>(<span class="nm">Base</span>):                  <span class="cm"># a table, not an enum: annual / sick / unpaid are rows</span>
+    __tablename__ = <span class="st">"leave_types"</span>
+
+    id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
+    type: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">50</span>), unique=<span class="kw">True</span>)
+    days: <span class="nm">Mapped</span>[int]                          <span class="cm"># default yearly entitlement</span>
 
 
 <span class="kw">class</span> <span class="fn">LeaveBalance</span>(<span class="nm">Base</span>):
     __tablename__ = <span class="st">"leave_balances"</span>
-    __table_args__ = (<span class="fn">UniqueConstraint</span>(<span class="st">"employee_id"</span>, <span class="st">"leave_type"</span>, <span class="st">"year"</span>),)
+    __table_args__ = (<span class="fn">UniqueConstraint</span>(<span class="st">"employee_id"</span>, <span class="st">"leave_type_id"</span>, <span class="st">"consumed_year_in"</span>),)
 
     id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
     employee_id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>), index=<span class="kw">True</span>)
-    leave_type: <span class="nm">Mapped</span>[<span class="nm">LeaveType</span>] = <span class="fn">mapped_column</span>(<span class="fn">SAEnum</span>(<span class="nm">LeaveType</span>, values_callable=_values))
-    year: <span class="nm">Mapped</span>[int]
+    leave_type_id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"leave_types.id"</span>))
+    leave_type: <span class="nm">Mapped</span>[<span class="nm">LeaveType</span>] = <span class="fn">relationship</span>(lazy=<span class="st">"joined"</span>)   <span class="cm"># async code cannot lazy-load, so join up front</span>
     entitled_days: <span class="nm">Mapped</span>[int]
     used_days: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(default=<span class="nm">0</span>)    <span class="cm"># stored, not computed: see chapter 8</span>
+    consumed_year_in: <span class="nm">Mapped</span>[int]                       <span class="cm"># the calendar year this balance covers</span>
 
 
 <span class="kw">class</span> <span class="fn">LeaveRequest</span>(<span class="nm">Base</span>):
@@ -753,34 +756,36 @@ async def get_employee(...) -&gt; Employee:
 
     id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
     employee_id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>), index=<span class="kw">True</span>)
-    leave_type: <span class="nm">Mapped</span>[<span class="nm">LeaveType</span>] = <span class="fn">mapped_column</span>(<span class="fn">SAEnum</span>(<span class="nm">LeaveType</span>, values_callable=_values))
+    leave_type_id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"leave_types.id"</span>))
+    leave_type: <span class="nm">Mapped</span>[<span class="nm">LeaveType</span>] = <span class="fn">relationship</span>(lazy=<span class="st">"joined"</span>)
     start_date: <span class="nm">Mapped</span>[date]
     end_date: <span class="nm">Mapped</span>[date]
-    working_days: <span class="nm">Mapped</span>[int]
-    reason: <span class="nm">Mapped</span>[str | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>))
-    status: <span class="nm">Mapped</span>[<span class="nm">LeaveStatus</span>] = <span class="fn">mapped_column</span>(
+    reason: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>))
+    no_of_days: <span class="nm">Mapped</span>[int]
+    approver_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>))   <span class="cm"># NULL until someone decides</span>
+    request_status: <span class="nm">Mapped</span>[<span class="nm">LeaveStatus</span>] = <span class="fn">mapped_column</span>(
         <span class="fn">SAEnum</span>(<span class="nm">LeaveStatus</span>, values_callable=_values), default=<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>, index=<span class="kw">True</span>
-    )
-    decided_by_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>))
-    decided_at: <span class="nm">Mapped</span>[datetime | <span class="kw">None</span>]
-    created_at: <span class="nm">Mapped</span>[datetime]</pre></div>
-  <p><a class="chip-syn" href="python-for-js-devs.html#enums"># new: str, Enum &rarr; cheatsheet</a> <a class="chip-syn" href="python-for-js-devs.html#optional"># new: X | None &rarr; cheatsheet</a> Export both from <code>app/models/__init__.py</code> so <code>Base.metadata</code> knows about them (chapter 10's tests depend on that), then add leave balances to <code>seed.py</code>: one <code>annual</code> row per employee for the current year, say 20 entitled and 0 used. <code>seed.py</code> wipes and rebuilds, so there is no migration yet.</p>
+    )</pre></div>
+  <p><a class="chip-syn" href="python-for-js-devs.html#enums"># new: str, Enum &rarr; cheatsheet</a> <a class="chip-syn" href="python-for-js-devs.html#optional"># new: X | None &rarr; cheatsheet</a> Export all three from <code>app/models/__init__.py</code> so <code>Base.metadata</code> knows about them (chapter 10's tests depend on that). Note what is <em>not</em> here: no <code>LeaveType</code> enum. Leave types are rows in <code>leave_types</code>, so adding &ldquo;parental&rdquo; leave is an <code>INSERT</code>, not a code change. Then extend <code>seed.py</code>: insert <code>annual</code> (20), <code>sick</code> (10) and <code>unpaid</code> (0) into <code>leave_types</code>, then one <code>leave_balances</code> row per employee per type for the current year, with <code>consumed_year_in</code> set to that year, <code>entitled_days</code> copied from the type's <code>days</code> and 0 used. <code>seed.py</code> wipes and rebuilds, so there is no migration yet. The tables are designed column by column on the data-model page: <a class="link" href="db-design.html#balances">leave_balances</a>, where the <code>UniqueConstraint</code> is what keeps exactly one balance row per employee, leave type and year, and <a class="link" href="db-design.html#requests">leave_requests</a>.</p>
 
   <h3 id="c7-schemas">Schemas: validation that belongs at the boundary</h3>
   <p>&ldquo;End date is not before start date&rdquo; needs only the request body, so Pydantic enforces it before your code runs. This is the Zod <code>.refine()</code> you would attach by hand in Express, riding on the type.</p>
-<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/schemas/leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date, datetime
-<span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Self</span>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/schemas/leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+<span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Annotated</span>, <span class="nm">Self</span>
 
-<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">ConfigDict</span>, <span class="nm">Field</span>, computed_field, model_validator
+<span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">BeforeValidator</span>, <span class="nm">ConfigDict</span>, <span class="nm">Field</span>, computed_field, model_validator
 
 <span class="kw">from</span> app.models.leave <span class="kw">import</span> <span class="nm">LeaveStatus</span>, <span class="nm">LeaveType</span>
 
+<span class="cm"># Write by id, read by name: the client sends leave_type_id and gets the "annual" string back</span>
+<span class="nm">LeaveTypeName</span> = <span class="nm">Annotated</span>[str, <span class="fn">BeforeValidator</span>(<span class="kw">lambda</span> v: v.type <span class="kw">if</span> <span class="fn">isinstance</span>(v, <span class="nm">LeaveType</span>) <span class="kw">else</span> v)]
+
 
 <span class="kw">class</span> <span class="fn">LeaveRequestCreate</span>(<span class="nm">BaseModel</span>):
-    leave_type: <span class="nm">LeaveType</span>
+    leave_type_id: int = <span class="fn">Field</span>(examples=[<span class="nm">1</span>])
     start_date: date = <span class="fn">Field</span>(examples=[<span class="st">"2026-12-07"</span>])
     end_date: date = <span class="fn">Field</span>(examples=[<span class="st">"2026-12-08"</span>])
-    reason: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+    reason: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">500</span>)
 
     <span class="fn">@model_validator</span>(mode=<span class="st">"after"</span>)
     <span class="kw">def</span> <span class="fn">end_not_before_start</span>(self) -&gt; <span class="nm">Self</span>:
@@ -790,7 +795,7 @@ async def get_employee(...) -&gt; Employee:
 
 
 <span class="kw">class</span> <span class="fn">LeaveRequestUpdate</span>(<span class="nm">BaseModel</span>):
-    leave_type: <span class="nm">LeaveType</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    leave_type_id: int | <span class="kw">None</span> = <span class="kw">None</span>
     start_date: date | <span class="kw">None</span> = <span class="kw">None</span>
     end_date: date | <span class="kw">None</span> = <span class="kw">None</span>
     reason: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
@@ -807,22 +812,22 @@ async def get_employee(...) -&gt; Employee:
 
     id: int
     employee_id: int
-    leave_type: <span class="nm">LeaveType</span>
+    leave_type_id: int
+    leave_type: <span class="nm">LeaveTypeName</span>
     start_date: date
     end_date: date
-    working_days: int
-    reason: str | <span class="kw">None</span>
-    status: <span class="nm">LeaveStatus</span>
-    decided_by_id: int | <span class="kw">None</span>
-    decided_at: datetime | <span class="kw">None</span>
-    created_at: datetime
+    reason: str
+    no_of_days: int
+    request_status: <span class="nm">LeaveStatus</span>
+    approver_id: int | <span class="kw">None</span>
 
 
 <span class="kw">class</span> <span class="fn">LeaveBalanceRead</span>(<span class="nm">BaseModel</span>):
     model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
 
-    leave_type: <span class="nm">LeaveType</span>
-    year: int
+    leave_type_id: int
+    leave_type: <span class="nm">LeaveTypeName</span>
+    consumed_year_in: int
     entitled_days: int
     used_days: int
 
@@ -850,7 +855,7 @@ async def get_employee(...) -&gt; Employee:
     <p>The <strong>route</strong> does HTTP: parse the request, pick a status code, shape the response. The <strong>service</strong> does rules: who may do what, which transitions are legal, what overlaps. Rules never import <code>fastapi</code>.</p>
     <p>Three payoffs: chapter 10 tests the service <em>without an HTTP client</em>; the same function is reused unchanged when the chat agent later needs to submit leave; and routes stay readable enough to review at a glance.</p></div>
   <p>Signatures first, so you can see the shape. Every function takes the session and the acting <code>Employee</code>:</p>
-<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">def</span> <span class="fn">count_working_days</span>(start: date, end: date) -&gt; int: ...
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">def</span> <span class="fn">count_weekdays</span>(start: date, end: date) -&gt; int: ...
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_draft</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, data: <span class="nm">LeaveRequestCreate</span>) -&gt; <span class="nm">LeaveRequest</span>: ...
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_requests</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, status: <span class="nm">LeaveStatus</span> | <span class="kw">None</span>, scope: <span class="nm">Literal</span>[<span class="st">"mine"</span>, <span class="st">"team"</span>]) -&gt; list[<span class="nm">LeaveRequest</span>]: ...
@@ -860,7 +865,7 @@ async def get_employee(...) -&gt; Employee:
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">cancel</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, request_id: int) -&gt; <span class="nm">LeaveRequest</span>: ...
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_balances</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, year: int | <span class="kw">None</span>) -&gt; list[<span class="nm">LeaveBalance</span>]: ...</pre></div>
   <p>The pure function first. It counts Monday to Friday and nothing else (public holidays are out of scope), and being pure it is the easiest thing in the project to test:</p>
-<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">def</span> <span class="fn">count_working_days</span>(start: date, end: date) -&gt; int:
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">def</span> <span class="fn">count_weekdays</span>(start: date, end: date) -&gt; int:
     total_days = (end - start).days + <span class="nm">1</span>
     <span class="kw">return</span> <span class="fn">sum</span>(
         <span class="nm">1</span> <span class="kw">for</span> offset <span class="kw">in</span> <span class="fn">range</span>(total_days)
@@ -872,14 +877,14 @@ async def get_employee(...) -&gt; Employee:
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">update_draft</span>(db, user, request_id, data):
     req = <span class="kw">await</span> <span class="fn">_load_own</span>(db, user, request_id)
-    <span class="kw">if</span> req.status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
-        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be edited (this one is {req.status.value})"</span>)
+    <span class="kw">if</span> req.request_status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
+        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be edited (this one is {req.request_status.value})"</span>)
     patch = data.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>)
     <span class="kw">for</span> field, value <span class="kw">in</span> patch.<span class="fn">items</span>():
         <span class="fn">setattr</span>(req, field, value)
     <span class="kw">if</span> req.end_date &lt; req.start_date:                <span class="cm"># one-sided patch: re-check against stored date</span>
         <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">"end_date must be on or after start_date"</span>)
-    req.working_days = <span class="fn">count_working_days</span>(req.start_date, req.end_date)
+    req.no_of_days = <span class="fn">count_weekdays</span>(req.start_date, req.end_date)
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
     <span class="kw">return</span> req
@@ -887,20 +892,20 @@ async def get_employee(...) -&gt; Employee:
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">submit</span>(db, user, request_id):
     req = <span class="kw">await</span> <span class="fn">_load_own</span>(db, user, request_id)
-    <span class="kw">if</span> req.status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
-        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be submitted (this one is {req.status.value})"</span>)
+    <span class="kw">if</span> req.request_status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
+        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be submitted (this one is {req.request_status.value})"</span>)
     clash = <span class="kw">await</span> db.<span class="fn">scalar</span>(
         <span class="fn">select</span>(<span class="nm">LeaveRequest</span>.id).<span class="fn">where</span>(
             <span class="nm">LeaveRequest</span>.employee_id == req.employee_id,
             <span class="nm">LeaveRequest</span>.id != req.id,
-            <span class="nm">LeaveRequest</span>.status.<span class="fn">in_</span>(<span class="nm">ACTIVE</span>),             <span class="cm"># submitted or approved still hold their dates</span>
+            <span class="nm">LeaveRequest</span>.request_status.<span class="fn">in_</span>(<span class="nm">ACTIVE</span>),             <span class="cm"># submitted or approved still hold their dates</span>
             <span class="nm">LeaveRequest</span>.start_date &lt;= req.end_date,     <span class="cm"># ranges overlap when each starts</span>
             <span class="nm">LeaveRequest</span>.end_date &gt;= req.start_date,     <span class="cm"># before the other ends</span>
         ).<span class="fn">limit</span>(<span class="nm">1</span>)
     )
     <span class="kw">if</span> clash <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">LeaveOverlap</span>(<span class="st">f"Overlaps leave request {clash}"</span>)
-    req.status = <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>
+    req.request_status = <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
     <span class="kw">return</span> req
@@ -908,13 +913,13 @@ async def get_employee(...) -&gt; Employee:
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">cancel</span>(db, user, request_id):
     req = <span class="kw">await</span> <span class="fn">_load_own</span>(db, user, request_id)
-    <span class="kw">if</span> req.status <span class="kw">not</span> <span class="kw">in</span> (<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>, <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>):
-        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"A {req.status.value} request cannot be cancelled here"</span>)
-    req.status = <span class="nm">LeaveStatus</span>.<span class="nm">CANCELLED</span>
+    <span class="kw">if</span> req.request_status <span class="kw">not</span> <span class="kw">in</span> (<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>, <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>):
+        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"A {req.request_status.value} request cannot be cancelled here"</span>)
+    req.request_status = <span class="nm">LeaveStatus</span>.<span class="nm">CANCELLED</span>
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
     <span class="kw">return</span> req</pre></div>
-  <p>Cancelling an <em>approved</em> request would mean refunding the balance; we leave that path out and say so with <code>InvalidTransition</code> rather than half-implement it. Overlap counts only <code>submitted</code> and <code>approved</code> requests, so a stale draft or a cancelled request never blocks you.</p>
+  <p>Cancelling an <em>approved</em> request would mean refunding the balance; we leave that path out and say so with <code>InvalidTransition</code> rather than half-implement it. Overlap counts only <code>submitted</code> and <code>approved</code> requests, so a stale draft or a cancelled request never blocks you. <a class="link" href="db-design.html#queries">The overlap query, worked on its own</a>.</p>
 
   <h3 id="c7-404">404 or 403? A deliberate choice</h3>
   <p>If you ask for a request you have no business seeing, which do you get? We pick two rules and keep them everywhere:</p>
@@ -945,7 +950,7 @@ async def get_employee(...) -&gt; Employee:
 
   <h3 id="c7-list">Listing, and balances</h3>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_requests</span>(db, user, status, scope):
-    query = <span class="fn">select</span>(<span class="nm">LeaveRequest</span>).<span class="fn">order_by</span>(<span class="nm">LeaveRequest</span>.created_at.<span class="fn">desc</span>())
+    query = <span class="fn">select</span>(<span class="nm">LeaveRequest</span>).<span class="fn">order_by</span>(<span class="nm">LeaveRequest</span>.id.<span class="fn">desc</span>())   <span class="cm"># newest first; ids only grow</span>
     <span class="kw">if</span> scope == <span class="st">"mine"</span>:
         query = query.<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.employee_id == user.id)
     <span class="kw">else</span>:                                                <span class="cm"># "team": who reports to me (HR sees everyone)</span>
@@ -955,13 +960,13 @@ async def get_employee(...) -&gt; Employee:
         <span class="kw">if</span> user.role != <span class="nm">Role</span>.<span class="nm">HR_ADMIN</span>:
             query = query.<span class="fn">where</span>(<span class="nm">Employee</span>.manager_id == user.id)
     <span class="kw">if</span> status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
-        query = query.<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.status == status)
+        query = query.<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.request_status == status)
     <span class="kw">return</span> <span class="fn">list</span>((<span class="kw">await</span> db.<span class="fn">scalars</span>(query)).<span class="fn">all</span>())
 
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_balances</span>(db, user, year):
     query = <span class="fn">select</span>(<span class="nm">LeaveBalance</span>).<span class="fn">where</span>(<span class="nm">LeaveBalance</span>.employee_id == user.id)
-    query = query.<span class="fn">where</span>(<span class="nm">LeaveBalance</span>.year == (year <span class="kw">or</span> date.<span class="fn">today</span>().year))
+    query = query.<span class="fn">where</span>(<span class="nm">LeaveBalance</span>.consumed_year_in == (year <span class="kw">or</span> date.<span class="fn">today</span>().year))
     <span class="kw">return</span> <span class="fn">list</span>((<span class="kw">await</span> db.<span class="fn">scalars</span>(query)).<span class="fn">all</span>())</pre></div>
 
   <h3 id="c7-router">The thin router</h3>
@@ -1021,21 +1026,21 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">my_leave_balances</span>(user: <span class="nm">CurrentUser</span>, db: <span class="nm">DbSession</span>, year: int | <span class="kw">None</span> = <span class="kw">None</span>):
     <span class="kw">return</span> <span class="kw">await</span> leave_service.<span class="fn">list_balances</span>(db, user, year)</pre></div>
   <p>Register it in <code>main.py</code> next to the others: <code>app.include_router(leave.router, dependencies=[Depends(get_current_user)])</code>. Express would put these behind <code>express.Router()</code> and <code>router.use(requireAuth)</code>; same shape, but the handlers return data and the schema writes the response.</p>
-  <p>Note that <code>POST /leave-requests/{id}/submit</code> is a <em>verb on a resource</em>, not <code>PATCH {"status": "submitted"}</code>. Letting clients write <code>status</code> directly would put the lifecycle in their hands; named transitions keep it in the service. React gets four obvious buttons.</p>
+  <p>Note that <code>POST /leave-requests/{id}/submit</code> is a <em>verb on a resource</em>, not <code>PATCH {"request_status": "submitted"}</code>. Letting clients write <code>request_status</code> directly would put the lifecycle in their hands; named transitions keep it in the service. React gets four obvious buttons.</p>
 
 <div class="term"><div class="tbar"><i></i><i></i><i></i> a draft through its life</div><pre><span class="pr">$</span> curl -s -X POST localhost:8000/leave-requests -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" \
-    -d '{"leave_type":"annual","start_date":"2026-12-07","end_date":"2026-12-08"}'
-{"id":1,"status":"draft","working_days":2, ...}
+    -d '{"leave_type_id":1,"start_date":"2026-12-07","end_date":"2026-12-08","reason":"Family trip"}'
+{"id":1,"leave_type_id":1,"leave_type":"annual","request_status":"draft","no_of_days":2, ...}
 <span class="pr">$</span> curl -s -X POST localhost:8000/leave-requests/1/submit -H "Authorization: Bearer $TOKEN"
-{"id":1,"status":"submitted", ...}
+{"id":1,"request_status":"submitted", ...}
 <span class="pr">$</span> curl -s -X PATCH localhost:8000/leave-requests/1 -H "Authorization: Bearer $TOKEN" \
     -H "Content-Type: application/json" -d '{"reason":"too late"}'
 <span class="cmt"># an InvalidTransition (a 409 once chapter 9 is in): only drafts can be edited</span></pre></div>
 
   <div class="takeaways"><div class="lab">Chapter 7 in four lines</div><ul>
     <li>Boundary rules (<code>end &gt;= start</code>) are Pydantic validators; database rules (overlap) are service queries.</li>
-    <li>Lifecycle changes are named endpoints guarded by a status check, never a writable <code>status</code> field.</li>
+    <li>Lifecycle changes are named endpoints guarded by a status check, never a writable <code>request_status</code> field.</li>
     <li>Hidden things are 404, visible-but-forbidden things are 403.</li>
     <li>The router has no rules; chapter 10 tests the service directly, and the agent will call the same functions.</li>
   </ul></div>
@@ -1047,6 +1052,7 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
     <div class="sec-time">Chapter 8 · about 60 minutes · endpoints 23–24</div>
     <h2>Approvals, and <em>the race</em></h2></div></div>
   <p class="big-p">Two endpoints finish the API: <code>approve</code> and <code>reject</code>. They are short. The interesting part is that the obvious way to write <code>approve</code> has a bug that no single request will ever show you.</p>
+  <div class="note"><div class="ico">📌</div><p>Storing <code>used_days</code> instead of summing approved requests is the design decision this race is the price of; the trade-off and its alternative are laid out under <a class="link" href="db-design.html#decisions">design decisions</a>, and <a class="link" href="db-design.html#sqlite">SQLite's single-writer model</a> is why it bites so sharply.</p></div>
 
   <h3 id="c8-scope">Who may decide: a guard, not an <code>if</code></h3>
   <p>Only the requester's <strong>direct manager</strong> or an <strong>hr_admin</strong> may decide, and nobody decides their own request. The rule sits in the service; the route reaches it through a dependency, so the handler body never mentions authorization at all.</p>
@@ -1108,12 +1114,12 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="cm"># BROKEN -- looks correct, is not</span>
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">_debit_balance_naive</span>(db: <span class="nm">AsyncSession</span>, req: <span class="nm">LeaveRequest</span>) -&gt; <span class="kw">None</span>:
     balance = <span class="kw">await</span> <span class="fn">_find_balance</span>(db, req)
-    <span class="kw">if</span> balance.used_days + req.working_days &gt; balance.entitled_days:     <span class="cm"># 1. check on what we read</span>
+    <span class="kw">if</span> balance.used_days + req.no_of_days &gt; balance.entitled_days:     <span class="cm"># 1. check on what we read</span>
         <span class="kw">raise</span> <span class="fn">InsufficientBalance</span>(<span class="st">"Not enough leave left"</span>)
     <span class="kw">await</span> db.<span class="fn">execute</span>(                                                    <span class="cm"># 2. act on that check</span>
         <span class="fn">update</span>(<span class="nm">LeaveBalance</span>)
         .<span class="fn">where</span>(<span class="nm">LeaveBalance</span>.id == balance.id)
-        .<span class="fn">values</span>(used_days=<span class="nm">LeaveBalance</span>.used_days + req.working_days)
+        .<span class="fn">values</span>(used_days=<span class="nm">LeaveBalance</span>.used_days + req.no_of_days)
     )</pre></div>
   <p>Each line is right. The bug is the <em>gap</em> between the check and the write: the number you checked can change before you act on it. A single request never notices. Two overlapping ones do.</p>
 
@@ -1135,30 +1141,34 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
   <p>Stop reading and then deciding. Let the database check and write in <strong>one statement</strong>, and look at how many rows it changed:</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>(the statement we want the database to run)</span></div><pre><span class="kw">UPDATE</span> leave_balances
    <span class="kw">SET</span> used_days = used_days + :days
- <span class="kw">WHERE</span> id = :id
+ <span class="kw">WHERE</span> employee_id = :employee_id
+   <span class="kw">AND</span> leave_type_id = :leave_type_id
+   <span class="kw">AND</span> consumed_year_in = :year
    <span class="kw">AND</span> used_days + :days &lt;= entitled_days;
 <span class="cm">-- rowcount 1: the days were available and are now spent</span>
-<span class="cm">-- rowcount 0: they were not; nothing changed</span></pre></div>
+<span class="cm">-- rowcount 0: they were not (or no such balance row); nothing changed</span></pre></div>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">async</span> <span class="kw">def</span> <span class="fn">_debit_balance</span>(db: <span class="nm">AsyncSession</span>, req: <span class="nm">LeaveRequest</span>) -&gt; <span class="kw">None</span>:
-    balance = <span class="kw">await</span> <span class="fn">_find_balance</span>(db, req)        <span class="cm"># only to learn the row id; we never trust its numbers</span>
     result = <span class="kw">await</span> db.<span class="fn">execute</span>(
         <span class="fn">update</span>(<span class="nm">LeaveBalance</span>)
         .<span class="fn">where</span>(
-            <span class="nm">LeaveBalance</span>.id == balance.id,
-            <span class="nm">LeaveBalance</span>.used_days + req.working_days &lt;= <span class="nm">LeaveBalance</span>.entitled_days,
+            <span class="nm">LeaveBalance</span>.employee_id == req.employee_id,
+            <span class="nm">LeaveBalance</span>.leave_type_id == req.leave_type_id,
+            <span class="nm">LeaveBalance</span>.consumed_year_in == req.start_date.year,
+            <span class="nm">LeaveBalance</span>.used_days + req.no_of_days &lt;= <span class="nm">LeaveBalance</span>.entitled_days,
         )
-        .<span class="fn">values</span>(used_days=<span class="nm">LeaveBalance</span>.used_days + req.working_days)
+        .<span class="fn">values</span>(used_days=<span class="nm">LeaveBalance</span>.used_days + req.no_of_days)
     )
     <span class="kw">if</span> result.rowcount == <span class="nm">0</span>:
+        balance = <span class="kw">await</span> <span class="fn">_find_balance</span>(db, req)      <span class="cm"># only to explain the failure; raises if the row is missing</span>
         <span class="kw">raise</span> <span class="fn">InsufficientBalance</span>(<span class="st">f"Only {balance.entitled_days - balance.used_days} days left"</span>)</pre></div>
-  <p>Replay the timeline: A's statement runs first, finds 8 + 2 &lt;= 10, spends two days, 10 of 10. B's statement then finds 10 + 1 &gt; 10, changes <strong>zero rows</strong>, and we raise <code>InsufficientBalance</code> (a <code>409</code> after chapter 9). The check and the write can no longer be separated because they are the same operation. Press the second button above to see it.</p>
+  <p>Replay the timeline (both statements target the same employee, leave type and year): A's statement runs first, finds 8 + 2 &lt;= 10, spends two days, 10 of 10. B's statement then finds 10 + 1 &gt; 10, changes <strong>zero rows</strong>, and we raise <code>InsufficientBalance</code> (a <code>409</code> after chapter 9). The check and the write can no longer be separated because they are the same operation. Press the second button above to see it.</p>
   <div class="analogy gold"><div class="ico">🔑</div><div><b>Why this is the portable fix</b>
     <p>It uses nothing but a single SQL statement and the row count, which every relational database makes atomic. It works on SQLite, Postgres and MySQL without caring about locks or isolation levels. Row locks (next box) are another valid answer, but only on databases that have them.</p></div></div>
-  <p>The same idea guards a second race that costs nothing extra: two people approving the <em>same</em> request. We claim the request with a conditional update on <code>status</code> before spending anything.</p>
+  <p>The same idea guards a second race that costs nothing extra: two people approving the <em>same</em> request. We claim the request with a conditional update on <code>request_status</code> before spending anything.</p>
 
   <h3 id="c8-service">The whole service file, as it stands now</h3>
   <p>One transaction: the claim, the debit and the commit are a single unit. If the debit raises, we never reach <code>commit()</code>, the session closes, and the claim is rolled back with it. This is the full <code>services/leave.py</code> after chapter 8, ready to compare with your copy.</p>
-<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date, datetime, timedelta, timezone
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/services/leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date, timedelta
 <span class="kw">from</span> typing <span class="kw">import</span> <span class="nm">Literal</span>
 
 <span class="kw">from</span> sqlalchemy <span class="kw">import</span> select, update
@@ -1175,7 +1185,7 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 
 
 <span class="cm"># ---------- pure rules ----------</span>
-<span class="kw">def</span> <span class="fn">count_working_days</span>(start: date, end: date) -&gt; int:
+<span class="kw">def</span> <span class="fn">count_weekdays</span>(start: date, end: date) -&gt; int:
     total_days = (end - start).days + <span class="nm">1</span>
     <span class="kw">return</span> <span class="fn">sum</span>(
         <span class="nm">1</span> <span class="kw">for</span> offset <span class="kw">in</span> <span class="fn">range</span>(total_days)
@@ -1220,15 +1230,16 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 
 <span class="cm"># ---------- the draft -&gt; submitted lifecycle ----------</span>
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_draft</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, data: <span class="nm">LeaveRequestCreate</span>) -&gt; <span class="nm">LeaveRequest</span>:
+    <span class="kw">if</span> <span class="kw">await</span> db.<span class="fn">get</span>(<span class="nm">LeaveType</span>, data.leave_type_id) <span class="kw">is</span> <span class="kw">None</span>:
+        <span class="kw">raise</span> <span class="fn">NotFound</span>(<span class="st">"Leave type not found"</span>)          <span class="cm"># the id must be a row in leave_types</span>
     req = <span class="fn">LeaveRequest</span>(
         employee_id=user.id,
-        leave_type=data.leave_type,
+        leave_type_id=data.leave_type_id,
         start_date=data.start_date,
         end_date=data.end_date,
-        working_days=<span class="fn">count_working_days</span>(data.start_date, data.end_date),
+        no_of_days=<span class="fn">count_weekdays</span>(data.start_date, data.end_date),
         reason=data.reason,
-        status=<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>,
-        created_at=datetime.<span class="fn">now</span>(timezone.utc),
+        request_status=<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>,
     )
     db.<span class="fn">add</span>(req)
     <span class="kw">await</span> db.<span class="fn">commit</span>()
@@ -1239,7 +1250,7 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_requests</span>(
     db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, status: <span class="nm">LeaveStatus</span> | <span class="kw">None</span>, scope: <span class="nm">Literal</span>[<span class="st">"mine"</span>, <span class="st">"team"</span>]
 ) -&gt; list[<span class="nm">LeaveRequest</span>]:
-    query = <span class="fn">select</span>(<span class="nm">LeaveRequest</span>).<span class="fn">order_by</span>(<span class="nm">LeaveRequest</span>.created_at.<span class="fn">desc</span>())
+    query = <span class="fn">select</span>(<span class="nm">LeaveRequest</span>).<span class="fn">order_by</span>(<span class="nm">LeaveRequest</span>.id.<span class="fn">desc</span>())   <span class="cm"># newest first; ids only grow</span>
     <span class="kw">if</span> scope == <span class="st">"mine"</span>:
         query = query.<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.employee_id == user.id)
     <span class="kw">else</span>:
@@ -1249,7 +1260,7 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
         <span class="kw">if</span> user.role != <span class="nm">Role</span>.<span class="nm">HR_ADMIN</span>:
             query = query.<span class="fn">where</span>(<span class="nm">Employee</span>.manager_id == user.id)
     <span class="kw">if</span> status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
-        query = query.<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.status == status)
+        query = query.<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.request_status == status)
     <span class="kw">return</span> <span class="fn">list</span>((<span class="kw">await</span> db.<span class="fn">scalars</span>(query)).<span class="fn">all</span>())
 
 
@@ -1257,13 +1268,13 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
     db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, request_id: int, data: <span class="nm">LeaveRequestUpdate</span>
 ) -&gt; <span class="nm">LeaveRequest</span>:
     req = <span class="kw">await</span> <span class="fn">_load_own</span>(db, user, request_id)
-    <span class="kw">if</span> req.status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
-        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be edited (this one is {req.status.value})"</span>)
+    <span class="kw">if</span> req.request_status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
+        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be edited (this one is {req.request_status.value})"</span>)
     <span class="kw">for</span> field, value <span class="kw">in</span> data.<span class="fn">model_dump</span>(exclude_unset=<span class="kw">True</span>).<span class="fn">items</span>():
         <span class="fn">setattr</span>(req, field, value)
     <span class="kw">if</span> req.end_date &lt; req.start_date:
         <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">"end_date must be on or after start_date"</span>)
-    req.working_days = <span class="fn">count_working_days</span>(req.start_date, req.end_date)
+    req.no_of_days = <span class="fn">count_weekdays</span>(req.start_date, req.end_date)
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
     <span class="kw">return</span> req
@@ -1271,20 +1282,20 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">submit</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, request_id: int) -&gt; <span class="nm">LeaveRequest</span>:
     req = <span class="kw">await</span> <span class="fn">_load_own</span>(db, user, request_id)
-    <span class="kw">if</span> req.status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
-        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be submitted (this one is {req.status.value})"</span>)
+    <span class="kw">if</span> req.request_status <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>:
+        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"Only a draft can be submitted (this one is {req.request_status.value})"</span>)
     clash = <span class="kw">await</span> db.<span class="fn">scalar</span>(
         <span class="fn">select</span>(<span class="nm">LeaveRequest</span>.id).<span class="fn">where</span>(
             <span class="nm">LeaveRequest</span>.employee_id == req.employee_id,
             <span class="nm">LeaveRequest</span>.id != req.id,
-            <span class="nm">LeaveRequest</span>.status.<span class="fn">in_</span>(<span class="nm">ACTIVE</span>),
+            <span class="nm">LeaveRequest</span>.request_status.<span class="fn">in_</span>(<span class="nm">ACTIVE</span>),
             <span class="nm">LeaveRequest</span>.start_date &lt;= req.end_date,
             <span class="nm">LeaveRequest</span>.end_date &gt;= req.start_date,
         ).<span class="fn">limit</span>(<span class="nm">1</span>)
     )
     <span class="kw">if</span> clash <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">LeaveOverlap</span>(<span class="st">f"Overlaps leave request {clash}"</span>)
-    req.status = <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>
+    req.request_status = <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
     <span class="kw">return</span> req
@@ -1292,9 +1303,9 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">cancel</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, request_id: int) -&gt; <span class="nm">LeaveRequest</span>:
     req = <span class="kw">await</span> <span class="fn">_load_own</span>(db, user, request_id)
-    <span class="kw">if</span> req.status <span class="kw">not</span> <span class="kw">in</span> (<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>, <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>):
-        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"A {req.status.value} request cannot be cancelled here"</span>)
-    req.status = <span class="nm">LeaveStatus</span>.<span class="nm">CANCELLED</span>
+    <span class="kw">if</span> req.request_status <span class="kw">not</span> <span class="kw">in</span> (<span class="nm">LeaveStatus</span>.<span class="nm">DRAFT</span>, <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>):
+        <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">f"A {req.request_status.value} request cannot be cancelled here"</span>)
+    req.request_status = <span class="nm">LeaveStatus</span>.<span class="nm">CANCELLED</span>
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
     <span class="kw">return</span> req
@@ -1304,7 +1315,7 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_balances</span>(db: <span class="nm">AsyncSession</span>, user: <span class="nm">Employee</span>, year: int | <span class="kw">None</span>) -&gt; list[<span class="nm">LeaveBalance</span>]:
     query = <span class="fn">select</span>(<span class="nm">LeaveBalance</span>).<span class="fn">where</span>(
         <span class="nm">LeaveBalance</span>.employee_id == user.id,
-        <span class="nm">LeaveBalance</span>.year == (year <span class="kw">or</span> date.<span class="fn">today</span>().year),
+        <span class="nm">LeaveBalance</span>.consumed_year_in == (year <span class="kw">or</span> date.<span class="fn">today</span>().year),
     )
     <span class="kw">return</span> <span class="fn">list</span>((<span class="kw">await</span> db.<span class="fn">scalars</span>(query)).<span class="fn">all</span>())
 
@@ -1313,26 +1324,28 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
     balance = <span class="kw">await</span> db.<span class="fn">scalar</span>(
         <span class="fn">select</span>(<span class="nm">LeaveBalance</span>).<span class="fn">where</span>(
             <span class="nm">LeaveBalance</span>.employee_id == req.employee_id,
-            <span class="nm">LeaveBalance</span>.leave_type == req.leave_type,
-            <span class="nm">LeaveBalance</span>.year == req.start_date.year,
+            <span class="nm">LeaveBalance</span>.leave_type_id == req.leave_type_id,
+            <span class="nm">LeaveBalance</span>.consumed_year_in == req.start_date.year,
         )
     )
     <span class="kw">if</span> balance <span class="kw">is</span> <span class="kw">None</span>:
-        <span class="kw">raise</span> <span class="fn">InsufficientBalance</span>(<span class="st">f"No {req.leave_type.value} balance for {req.start_date.year}"</span>)
+        <span class="kw">raise</span> <span class="fn">InsufficientBalance</span>(<span class="st">f"No {req.leave_type.type} balance for {req.start_date.year}"</span>)
     <span class="kw">return</span> balance
 
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">_debit_balance</span>(db: <span class="nm">AsyncSession</span>, req: <span class="nm">LeaveRequest</span>) -&gt; <span class="kw">None</span>:
-    balance = <span class="kw">await</span> <span class="fn">_find_balance</span>(db, req)        <span class="cm"># only to learn the row id; its numbers are not trusted</span>
     result = <span class="kw">await</span> db.<span class="fn">execute</span>(
         <span class="fn">update</span>(<span class="nm">LeaveBalance</span>)
         .<span class="fn">where</span>(
-            <span class="nm">LeaveBalance</span>.id == balance.id,
-            <span class="nm">LeaveBalance</span>.used_days + req.working_days &lt;= <span class="nm">LeaveBalance</span>.entitled_days,
+            <span class="nm">LeaveBalance</span>.employee_id == req.employee_id,
+            <span class="nm">LeaveBalance</span>.leave_type_id == req.leave_type_id,
+            <span class="nm">LeaveBalance</span>.consumed_year_in == req.start_date.year,
+            <span class="nm">LeaveBalance</span>.used_days + req.no_of_days &lt;= <span class="nm">LeaveBalance</span>.entitled_days,
         )
-        .<span class="fn">values</span>(used_days=<span class="nm">LeaveBalance</span>.used_days + req.working_days)
+        .<span class="fn">values</span>(used_days=<span class="nm">LeaveBalance</span>.used_days + req.no_of_days)
     )
     <span class="kw">if</span> result.rowcount == <span class="nm">0</span>:
+        balance = <span class="kw">await</span> <span class="fn">_find_balance</span>(db, req)      <span class="cm"># only to explain the failure; raises if the row is missing</span>
         <span class="kw">raise</span> <span class="fn">InsufficientBalance</span>(<span class="st">f"Only {balance.entitled_days - balance.used_days} days left"</span>)
 
 
@@ -1340,8 +1353,8 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">_claim</span>(db: <span class="nm">AsyncSession</span>, req: <span class="nm">LeaveRequest</span>, new: <span class="nm">LeaveStatus</span>, approver: <span class="nm">Employee</span>) -&gt; <span class="kw">None</span>:
     result = <span class="kw">await</span> db.<span class="fn">execute</span>(
         <span class="fn">update</span>(<span class="nm">LeaveRequest</span>)
-        .<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.id == req.id, <span class="nm">LeaveRequest</span>.status == <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>)
-        .<span class="fn">values</span>(status=new, decided_by_id=approver.id, decided_at=datetime.<span class="fn">now</span>(timezone.utc))
+        .<span class="fn">where</span>(<span class="nm">LeaveRequest</span>.id == req.id, <span class="nm">LeaveRequest</span>.request_status == <span class="nm">LeaveStatus</span>.<span class="nm">SUBMITTED</span>)
+        .<span class="fn">values</span>(request_status=new, approver_id=approver.id)
     )
     <span class="kw">if</span> result.rowcount == <span class="nm">0</span>:
         <span class="kw">raise</span> <span class="fn">InvalidTransition</span>(<span class="st">"Only a submitted request can be decided (it may already have been)"</span>)
@@ -1349,7 +1362,7 @@ router = <span class="fn">APIRouter</span>(tags=[<span class="st">"leave"</span>
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">approve</span>(db: <span class="nm">AsyncSession</span>, req: <span class="nm">LeaveRequest</span>, approver: <span class="nm">Employee</span>) -&gt; <span class="nm">LeaveRequest</span>:
     <span class="kw">await</span> <span class="fn">_claim</span>(db, req, <span class="nm">LeaveStatus</span>.<span class="nm">APPROVED</span>, approver)
-    <span class="kw">if</span> req.leave_type <span class="kw">is</span> <span class="kw">not</span> <span class="nm">LeaveType</span>.<span class="nm">UNPAID</span>:           <span class="cm"># unpaid leave has no balance to spend</span>
+    <span class="kw">if</span> req.leave_type.type != <span class="st">"unpaid"</span>:                <span class="cm"># unpaid leave has no balance to spend</span>
         <span class="kw">await</span> <span class="fn">_debit_balance</span>(db, req)
     <span class="kw">await</span> db.<span class="fn">commit</span>()                                    <span class="cm"># claim + debit land together, or not at all</span>
     <span class="kw">await</span> db.<span class="fn">refresh</span>(req)
@@ -1620,7 +1633,11 @@ testpaths = tests</pre></div>
     engine = <span class="fn">create_async_engine</span>(<span class="st">f"sqlite+aiosqlite:///{tmp_path}/test.db"</span>)
     <span class="kw">async</span> <span class="kw">with</span> engine.<span class="fn">begin</span>() <span class="kw">as</span> conn:
         <span class="kw">await</span> conn.<span class="fn">run_sync</span>(<span class="nm">Base</span>.metadata.create_all)
-    <span class="kw">yield</span> <span class="fn">async_sessionmaker</span>(engine, expire_on_commit=<span class="kw">False</span>)
+    factory = <span class="fn">async_sessionmaker</span>(engine, expire_on_commit=<span class="kw">False</span>)
+    <span class="kw">async</span> <span class="kw">with</span> <span class="fn">factory</span>() <span class="kw">as</span> db:                   <span class="cm"># leave types are data, so every test DB starts with the rows</span>
+        db.<span class="fn">add_all</span>([<span class="fn">LeaveType</span>(type=<span class="st">"annual"</span>, days=<span class="nm">20</span>), <span class="fn">LeaveType</span>(type=<span class="st">"sick"</span>, days=<span class="nm">10</span>), <span class="fn">LeaveType</span>(type=<span class="st">"unpaid"</span>, days=<span class="nm">0</span>)])
+        <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">yield</span> factory
     <span class="kw">await</span> engine.<span class="fn">dispose</span>()
 
 
@@ -1641,16 +1658,16 @@ testpaths = tests</pre></div>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/tests/conftest.py</span></div><pre><span class="kw">async</span> <span class="kw">def</span> <span class="fn">make_client</span>(session_factory, *, name: str, role: <span class="nm">Role</span>, manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>):
     <span class="kw">async</span> <span class="kw">with</span> <span class="fn">session_factory</span>() <span class="kw">as</span> db:
         person = <span class="fn">Employee</span>(
-            name=name, email=<span class="st">f"{name.lower()}@test.dev"</span>, password_hash=<span class="fn">hash_password</span>(<span class="nm">PASSWORD</span>),
-            role=role, job_title=<span class="st">"Tester"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2020</span>, <span class="nm">1</span>, <span class="nm">1</span>), salary=50_000,
-            employment_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>, manager_id=manager_id,
+            name=name, work_email=<span class="st">f"{name.lower()}@test.dev"</span>, password_hash=<span class="fn">hash_password</span>(<span class="nm">PASSWORD</span>),
+            role=role, job_title=<span class="st">"Tester"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2020</span>, <span class="nm">1</span>, <span class="nm">1</span>), salary=50_000,
+            emp_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>, manager_id=manager_id,
         )
         db.<span class="fn">add</span>(person)
         <span class="kw">await</span> db.<span class="fn">commit</span>()
         <span class="kw">await</span> db.<span class="fn">refresh</span>(person)
 
     client = httpx.<span class="fn">AsyncClient</span>(transport=httpx.<span class="fn">ASGITransport</span>(app=app), base_url=<span class="st">"http://test"</span>)
-    login = <span class="kw">await</span> client.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, data={<span class="st">"username"</span>: person.email, <span class="st">"password"</span>: <span class="nm">PASSWORD</span>})
+    login = <span class="kw">await</span> client.<span class="fn">post</span>(<span class="st">"/auth/login"</span>, data={<span class="st">"username"</span>: person.work_email, <span class="st">"password"</span>: <span class="nm">PASSWORD</span>})
     client.headers[<span class="st">"Authorization"</span>] = <span class="st">f"Bearer {login.json()['access_token']}"</span>
     client.employee_id = person.id            <span class="cm"># handy in tests; a plain attribute on the client</span>
     <span class="kw">return</span> client
@@ -1687,8 +1704,8 @@ testpaths = tests</pre></div>
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">give_balance</span>(session_factory, employee_id: int, *, entitled: int, used: int) -&gt; <span class="kw">None</span>:
     <span class="kw">async</span> <span class="kw">with</span> <span class="fn">session_factory</span>() <span class="kw">as</span> db:
-        db.<span class="fn">add</span>(<span class="fn">LeaveBalance</span>(employee_id=employee_id, leave_type=<span class="nm">LeaveType</span>.<span class="nm">ANNUAL</span>,
-                            year=<span class="nm">2026</span>, entitled_days=entitled, used_days=used))
+        db.<span class="fn">add</span>(<span class="fn">LeaveBalance</span>(employee_id=employee_id, leave_type_id=<span class="nm">1</span>,       <span class="cm"># 1 = annual (seeded in session_factory)</span>
+                            consumed_year_in=<span class="nm">2026</span>, entitled_days=entitled, used_days=used))
         <span class="kw">await</span> db.<span class="fn">commit</span>()</pre></div>
   <p><a class="chip-syn" href="python-for-js-devs.html#kwargs"># new: keyword-only args &rarr; cheatsheet</a> The bare <code>*</code> in the signature forces keyword arguments, so call sites read like option objects. A fixture is a <code>beforeEach</code> that <em>returns</em> what it set up (or <code>yield</code>s it, with cleanup after the yield); a test asks for it by naming a parameter.</p>
 
@@ -1715,15 +1732,15 @@ testpaths = tests</pre></div>
   <p>A pure-service test needs no client at all. This is the payoff of chapter 7's split:</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/tests/test_leave.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
 
-<span class="kw">from</span> app.services.leave <span class="kw">import</span> count_working_days
+<span class="kw">from</span> app.services.leave <span class="kw">import</span> count_weekdays
 
 
-<span class="kw">def</span> <span class="fn">test_working_days_skip_the_weekend</span>():
+<span class="kw">def</span> <span class="fn">test_weekdays_skip_the_weekend</span>():
     <span class="cm"># Fri 4 Dec 2026 through Mon 7 Dec 2026: Friday and Monday count, Sat/Sun do not</span>
-    <span class="kw">assert</span> <span class="fn">count_working_days</span>(<span class="fn">date</span>(<span class="nm">2026</span>, <span class="nm">12</span>, <span class="nm">4</span>), <span class="fn">date</span>(<span class="nm">2026</span>, <span class="nm">12</span>, <span class="nm">7</span>)) == <span class="nm">2</span></pre></div>
+    <span class="kw">assert</span> <span class="fn">count_weekdays</span>(<span class="fn">date</span>(<span class="nm">2026</span>, <span class="nm">12</span>, <span class="nm">4</span>), <span class="fn">date</span>(<span class="nm">2026</span>, <span class="nm">12</span>, <span class="nm">7</span>)) == <span class="nm">2</span></pre></div>
   <p>Through HTTP now. Auth first:</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/tests/test_auth.py</span></div><pre><span class="kw">async</span> <span class="kw">def</span> <span class="fn">test_register_then_login</span>(client_anon):
-    body = {<span class="st">"name"</span>: <span class="st">"Newt"</span>, <span class="st">"email"</span>: <span class="st">"newt@test.dev"</span>, <span class="st">"password"</span>: <span class="st">"longenough1"</span>}
+    body = {<span class="st">"name"</span>: <span class="st">"Newt"</span>, <span class="st">"work_email"</span>: <span class="st">"newt@test.dev"</span>, <span class="st">"password"</span>: <span class="st">"longenough1"</span>}
     created = <span class="kw">await</span> client_anon.<span class="fn">post</span>(<span class="st">"/auth/register"</span>, json=body)
     <span class="kw">assert</span> created.status_code == <span class="nm">201</span>
     <span class="kw">assert</span> <span class="st">"password_hash"</span> <span class="kw">not</span> <span class="kw">in</span> created.<span class="fn">json</span>()               <span class="cm"># response_model at work</span>
@@ -1758,8 +1775,8 @@ testpaths = tests</pre></div>
 <span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">Role</span>
 <span class="kw">from</span> tests.conftest <span class="kw">import</span> give_balance, make_client
 
-<span class="nm">MON_TUE</span> = {<span class="st">"leave_type"</span>: <span class="st">"annual"</span>, <span class="st">"start_date"</span>: <span class="st">"2026-12-07"</span>, <span class="st">"end_date"</span>: <span class="st">"2026-12-08"</span>}   <span class="cm"># 2 working days</span>
-<span class="nm">NEXT_MON</span> = {<span class="st">"leave_type"</span>: <span class="st">"annual"</span>, <span class="st">"start_date"</span>: <span class="st">"2026-12-14"</span>, <span class="st">"end_date"</span>: <span class="st">"2026-12-14"</span>}  <span class="cm"># 1 working day</span>
+<span class="nm">MON_TUE</span> = {<span class="st">"leave_type_id"</span>: <span class="nm">1</span>, <span class="st">"reason"</span>: <span class="st">"Trip"</span>, <span class="st">"start_date"</span>: <span class="st">"2026-12-07"</span>, <span class="st">"end_date"</span>: <span class="st">"2026-12-08"</span>}   <span class="cm"># 2 working days</span>
+<span class="nm">NEXT_MON</span> = {<span class="st">"leave_type_id"</span>: <span class="nm">1</span>, <span class="st">"reason"</span>: <span class="st">"Long weekend"</span>, <span class="st">"start_date"</span>: <span class="st">"2026-12-14"</span>, <span class="st">"end_date"</span>: <span class="st">"2026-12-14"</span>}  <span class="cm"># 1 working day</span>
 
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">submitted</span>(client, payload) -&gt; int:
@@ -1782,7 +1799,7 @@ testpaths = tests</pre></div>
 
     res = <span class="kw">await</span> manager_client.<span class="fn">post</span>(<span class="st">f"/leave-requests/{request_id}/approve"</span>)
     <span class="kw">assert</span> res.status_code == <span class="nm">200</span>
-    <span class="kw">assert</span> res.<span class="fn">json</span>()[<span class="st">"status"</span>] == <span class="st">"approved"</span>
+    <span class="kw">assert</span> res.<span class="fn">json</span>()[<span class="st">"request_status"</span>] == <span class="st">"approved"</span>
 
     balance = (<span class="kw">await</span> employee_client.<span class="fn">get</span>(<span class="st">"/me/leave-balances"</span>, params={<span class="st">"year"</span>: <span class="nm">2026</span>})).<span class="fn">json</span>()[<span class="nm">0</span>]
     <span class="kw">assert</span> balance[<span class="st">"used_days"</span>] == <span class="nm">2</span>
@@ -1898,10 +1915,10 @@ testpaths = tests</pre></div>
   <p>The generated TypeScript client now has <code>approveLeaveRequest(requestId)</code>, a typed <code>LeaveRequestRead</code> result and a typed error body. Generate it with any OpenAPI-to-TypeScript tool pointed at <code>http://localhost:8000/openapi.json</code>; <code>openapi-typescript</code> is one common choice.</p>
   <p>Field-level hints help too. <code>Field(examples=[...])</code> on the schema (we did this on <code>LeaveRequestCreate</code> in chapter 7) puts a concrete sample next to each property, which is the single most effective way to stop a model inventing date formats:</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/schemas/leave.py</span></div><pre><span class="kw">class</span> <span class="fn">LeaveRequestCreate</span>(<span class="nm">BaseModel</span>):
-    leave_type: <span class="nm">LeaveType</span> = <span class="fn">Field</span>(description=<span class="st">"annual, sick or unpaid"</span>, examples=[<span class="st">"annual"</span>])
+    leave_type_id: int = <span class="fn">Field</span>(description=<span class="st">"Id of a row in leave_types (seeded: 1 annual, 2 sick, 3 unpaid)"</span>, examples=[<span class="nm">1</span>])
     start_date: date = <span class="fn">Field</span>(description=<span class="st">"First day off, ISO 8601 (YYYY-MM-DD)"</span>, examples=[<span class="st">"2026-12-07"</span>])
     end_date: date = <span class="fn">Field</span>(description=<span class="st">"Last day off, inclusive; not before start_date"</span>, examples=[<span class="st">"2026-12-08"</span>])
-    reason: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>, description=<span class="st">"Optional free text"</span>)</pre></div>
+    reason: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">500</span>, description=<span class="st">"Why the leave is needed; required"</span>)</pre></div>
   <p>The checklist per endpoint: a verb-first <code>summary</code>; a <code>description</code> that states <em>who may call it</em>, preconditions and side effects; a stable snake_case <code>operation_id</code> (it becomes the tool name); <code>tags</code> for grouping; a <code>response_model</code>; and <code>responses=</code> for every error a caller should plan for. Do this for all 24; the approve example is the template.</p>
 
   <h3 id="c11-tools">Why the descriptions are the agent's tool schemas</h3>
@@ -2026,7 +2043,7 @@ function mountSim(id,full){
   ];
   root.innerHTML='<div class="sim'+(full?' full':'')+'">'+
     (full?'<p class="cap">Alice has 8 of 10 annual days used and two submitted requests: <b>A</b> (2 days) and <b>B</b> (1 day). Her manager approves A while an hr_admin approves B, at the same moment.</p>':'')+
-    '<div class="meter"><span class="val">8 / 10</span><span class="lbl">used_days / entitled</span></div>'+
+    '<div class="meter"><span class="val">8 / 10</span><span class="lbl">used_days / entitled_days</span></div>'+
     '<div class="gauge"><i></i><b></b></div>'+
     '<div class="lanes"><div class="lane" data-l="A"><h6>Approve A (2 days)</h6></div><div class="lane" data-l="B"><h6>Approve B (1 day)</h6></div></div>'+
     '<div class="ctl"><button class="btn bad" data-m="naive">Approve &times;2, naive</button><button class="btn good" data-m="atomic">Approve &times;2, atomic UPDATE</button>'+

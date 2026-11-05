@@ -268,14 +268,14 @@ footer .wrap{padding-top:0}
 <button id="sbToggle" aria-label="Contents">&#9776; Contents</button>
 <div id="sbScrim"></div>
 <aside id="sidebar"><div class="sb-head">Contents</div><nav class="sb-nav"></nav></aside>
-<div id="topnav"><div class="wrap"><span class="brand">FastAPI <b>Part 1</b></span><a href="#ch0">Ch 0</a><a href="#ch1">Ch 1</a><a href="#ch2">Ch 2</a><a href="#ch3">Ch 3</a><a href="#ch4">Ch 4</a><a href="#ch5">Ch 5</a><a href="python-for-js-devs.html">Cheatsheet</a></div></div>
+<div id="topnav"><div class="wrap"><span class="brand">FastAPI <b>Part 1</b></span><a href="#ch0">Ch 0</a><a href="#ch1">Ch 1</a><a href="#ch2">Ch 2</a><a href="#ch3">Ch 3</a><a href="#ch4">Ch 4</a><a href="#ch5">Ch 5</a><a href="db-design.html">Data model</a><a href="python-for-js-devs.html">Cheatsheet</a></div></div>
 <header class="hero"><div class="orb"></div><div class="wrap">
   <div>
     <span class="kicker"><span class="dot"></span> Part 1 of 3 · Chapters 0-5</span>
     <h1 class="title">Build the <em>employees API</em>, one endpoint at a time.</h1>
     <p class="lede">You write React and TypeScript all day and you know Express. By the end of this page you will have a DB-backed FastAPI service for employees and departments: typed inputs, validated bodies, filtered and paginated lists, and a clean OpenAPI spec your React app can generate types from. Every chapter ships real endpoints; there are no theory chapters. New Python syntax shows up as a small <span class="chip-syn" style="margin:0">gold chip</span> linking to the <a class="link" href="python-for-js-devs.html">cheatsheet</a>.</p>
     <div class="hero-meta"><span class="chip">🧱 12 endpoints in Part 1</span><span class="chip">🗄️ SQLite + SQLAlchemy 2.0 async</span><span class="chip">⚛️ Typed TS client for React</span><span class="chip">🔁 Express side by side</span></div>
-    <div class="signature"><b>Next</b>: <a class="link" href="part-2-auth-leave-tests.html">Part 2</a> adds auth, leave requests, approvals and tests (endpoints 13-24).</div>
+    <div class="signature"><b>Next</b>: <a class="link" href="part-2-auth-leave-tests.html">Part 2</a> adds auth, leave requests, approvals and tests (endpoints 13-24). <b>Alongside</b>: the <a class="link" href="db-design.html">data-model page</a> holds the four-table schema, the ERD and every constraint, so the models in chapter 3 arrive already justified.</div>
   </div>
   <div><div class="vmap"><div class="vbar">🧪 the API you will have built <span class="live">try</span></div>
     <div class="try"><div class="btns"><button data-k="1">GET /health</button><button data-k="2">GET /employees/3</button><button data-k="3">GET /employees/abc</button><button data-k="4">GET /employees/99</button></div>
@@ -384,25 +384,25 @@ app = <span class="fn">FastAPI</span>(
 
 
 <span class="nm">EMPLOYEES</span>: list[dict] = [
-    {<span class="st">"id"</span>: <span class="nm">1</span>, <span class="st">"name"</span>: <span class="st">"Maya Chen"</span>, <span class="st">"email"</span>: <span class="st">"maya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"hr_admin"</span>,
-     <span class="st">"job_title"</span>: <span class="st">"Head of People"</span>, <span class="st">"hire_date"</span>: <span class="st">"2019-02-11"</span>, <span class="st">"salary"</span>: <span class="nm">120000</span>,
-     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">2</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
+    {<span class="st">"id"</span>: <span class="nm">1</span>, <span class="st">"name"</span>: <span class="st">"Maya Chen"</span>, <span class="st">"work_email"</span>: <span class="st">"maya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"hr_admin"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Head of People"</span>, <span class="st">"date_joined"</span>: <span class="st">"2019-02-11"</span>, <span class="st">"salary"</span>: <span class="nm">120000</span>,
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">2</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
      <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
-    {<span class="st">"id"</span>: <span class="nm">2</span>, <span class="st">"name"</span>: <span class="st">"Arjun Rao"</span>, <span class="st">"email"</span>: <span class="st">"arjun@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"manager"</span>,
-     <span class="st">"job_title"</span>: <span class="st">"Engineering Manager"</span>, <span class="st">"hire_date"</span>: <span class="st">"2020-06-01"</span>, <span class="st">"salary"</span>: <span class="nm">140000</span>,
-     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
+    {<span class="st">"id"</span>: <span class="nm">2</span>, <span class="st">"name"</span>: <span class="st">"Arjun Rao"</span>, <span class="st">"work_email"</span>: <span class="st">"arjun@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"manager"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Engineering Manager"</span>, <span class="st">"date_joined"</span>: <span class="st">"2020-06-01"</span>, <span class="st">"salary"</span>: <span class="nm">140000</span>,
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
      <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
-    {<span class="st">"id"</span>: <span class="nm">3</span>, <span class="st">"name"</span>: <span class="st">"Priya Nair"</span>, <span class="st">"email"</span>: <span class="st">"priya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
-     <span class="st">"job_title"</span>: <span class="st">"Senior Engineer"</span>, <span class="st">"hire_date"</span>: <span class="st">"2021-03-15"</span>, <span class="st">"salary"</span>: <span class="nm">118000</span>,
-     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
+    {<span class="st">"id"</span>: <span class="nm">3</span>, <span class="st">"name"</span>: <span class="st">"Priya Nair"</span>, <span class="st">"work_email"</span>: <span class="st">"priya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Senior Engineer"</span>, <span class="st">"date_joined"</span>: <span class="st">"2021-03-15"</span>, <span class="st">"salary"</span>: <span class="nm">118000</span>,
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
      <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
-    {<span class="st">"id"</span>: <span class="nm">4</span>, <span class="st">"name"</span>: <span class="st">"Tomas Weber"</span>, <span class="st">"email"</span>: <span class="st">"tomas@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
-     <span class="st">"job_title"</span>: <span class="st">"Frontend Engineer"</span>, <span class="st">"hire_date"</span>: <span class="st">"2022-09-05"</span>, <span class="st">"salary"</span>: <span class="nm">98000</span>,
-     <span class="st">"employment_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
+    {<span class="st">"id"</span>: <span class="nm">4</span>, <span class="st">"name"</span>: <span class="st">"Tomas Weber"</span>, <span class="st">"work_email"</span>: <span class="st">"tomas@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Frontend Engineer"</span>, <span class="st">"date_joined"</span>: <span class="st">"2022-09-05"</span>, <span class="st">"salary"</span>: <span class="nm">98000</span>,
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
      <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
-    {<span class="st">"id"</span>: <span class="nm">5</span>, <span class="st">"name"</span>: <span class="st">"Lena Park"</span>, <span class="st">"email"</span>: <span class="st">"lena@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
-     <span class="st">"job_title"</span>: <span class="st">"Product Designer"</span>, <span class="st">"hire_date"</span>: <span class="st">"2023-01-16"</span>, <span class="st">"salary"</span>: <span class="nm">92000</span>,
-     <span class="st">"employment_status"</span>: <span class="st">"on_leave"</span>, <span class="st">"department_id"</span>: <span class="nm">3</span>, <span class="st">"manager_id"</span>: <span class="nm">1</span>,
+    {<span class="st">"id"</span>: <span class="nm">5</span>, <span class="st">"name"</span>: <span class="st">"Lena Park"</span>, <span class="st">"work_email"</span>: <span class="st">"lena@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
+     <span class="st">"job_title"</span>: <span class="st">"Product Designer"</span>, <span class="st">"date_joined"</span>: <span class="st">"2023-01-16"</span>, <span class="st">"salary"</span>: <span class="nm">92000</span>,
+     <span class="st">"emp_status"</span>: <span class="st">"on_leave"</span>, <span class="st">"department_id"</span>: <span class="nm">3</span>, <span class="st">"manager_id"</span>: <span class="nm">1</span>,
      <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
 ]
 
@@ -490,10 +490,10 @@ app.<span class="fn">get</span>(<span class="st">"/employees/:id"</span>, (req, 
 <span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
     <span class="st">""</span><span class="st">"Body for creating an employee."</span><span class="st">""</span>
     name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
-    email: <span class="nm">EmailStr</span>
+    work_email: <span class="nm">EmailStr</span>
     role: <span class="nm">Role</span> = <span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
     job_title: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
-    hire_date: date
+    date_joined: date
     salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>, description=<span class="st">"Annual salary in whole currency units"</span>)
     department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
@@ -503,17 +503,17 @@ app.<span class="fn">get</span>(<span class="st">"/employees/:id"</span>, (req, 
     <span class="st">""</span><span class="st">"What the API returns. Note: no salary, no password_hash."</span><span class="st">""</span>
     id: int
     name: str
-    email: <span class="nm">EmailStr</span>
+    work_email: <span class="nm">EmailStr</span>
     role: <span class="nm">Role</span>
     job_title: str
-    hire_date: date
-    employment_status: <span class="nm">EmploymentStatus</span>
+    date_joined: date
+    emp_status: <span class="nm">EmploymentStatus</span>
     department_id: int | <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span></pre></div>
 <div class="cmp-pair"><div class="cmp-card js"><div class="ct">Express + Zod</div><pre><span class="kw">const</span> <span class="nm">EmployeeCreate</span> = z.<span class="fn">object</span>({
   name: z.<span class="fn">string</span>().<span class="fn">min</span>(<span class="nm">2</span>).<span class="fn">max</span>(<span class="nm">100</span>),
-  email: z.<span class="fn">string</span>().<span class="fn">email</span>(),
-  hire_date: z.coerce.<span class="fn">date</span>(),
+  work_email: z.<span class="fn">string</span>().<span class="fn">email</span>(),
+  date_joined: z.coerce.<span class="fn">date</span>(),
   salary: z.<span class="fn">number</span>().<span class="fn">int</span>().<span class="fn">min</span>(<span class="nm">0</span>),
 });
 <span class="kw">type</span> <span class="nm">EmployeeCreate</span> = z.infer&lt;<span class="kw">typeof</span> <span class="nm">EmployeeCreate</span>&gt;;
@@ -524,8 +524,8 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
   ...
 });</pre></div><div class="cmp-card py"><div class="ct">FastAPI + Pydantic</div><pre><span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
     name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
-    email: <span class="nm">EmailStr</span>
-    hire_date: date
+    work_email: <span class="nm">EmailStr</span>
+    date_joined: date
     salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>)
 
 <span class="fn">@app</span>.<span class="fn">post</span>(<span class="st">"/employees"</span>)
@@ -541,12 +541,12 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
 )
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_employee</span>(payload: <span class="nm">EmployeeCreate</span>) -&gt; dict:
     <span class="st">""</span><span class="st">"Create an employee. Returns the new record without salary."</span><span class="st">""</span>
-    <span class="kw">if</span> <span class="fn">any</span>(e[<span class="st">"email"</span>] == payload.email <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>):
+    <span class="kw">if</span> <span class="fn">any</span>(e[<span class="st">"work_email"</span>] == payload.work_email <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>):
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
     new = {
         <span class="st">"id"</span>: <span class="fn">max</span>(e[<span class="st">"id"</span>] <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>) + <span class="nm">1</span>,
         **payload.<span class="fn">model_dump</span>(),
-        <span class="st">"employment_status"</span>: <span class="st">"active"</span>,
+        <span class="st">"emp_status"</span>: <span class="st">"active"</span>,
         <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>,   <span class="cm"># Part 2 (ch 6) sets this for real</span>
     }
     <span class="nm">EMPLOYEES</span>.<span class="fn">append</span>(new)
@@ -558,9 +558,9 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
 <p>POST this body: a one-letter name and a negative salary.</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>POST /employees  ·  request body</span></div><pre>{
   <span class="st">"name"</span>: <span class="st">"A"</span>,
-  <span class="st">"email"</span>: <span class="st">"a@acme.test"</span>,
+  <span class="st">"work_email"</span>: <span class="st">"a@acme.test"</span>,
   <span class="st">"job_title"</span>: <span class="st">"Intern"</span>,
-  <span class="st">"hire_date"</span>: <span class="st">"2025-01-06"</span>,
+  <span class="st">"date_joined"</span>: <span class="st">"2025-01-06"</span>,
   <span class="st">"salary"</span>: -<span class="nm">5</span>
 }</pre></div>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>HTTP 422 Unprocessable Entity</span></div><pre>{
@@ -587,10 +587,10 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
   schemas: {
     <span class="nm">EmployeeCreate</span>: {
       name: string;
-      email: string;
+      work_email: string;
       role?: <span class="st">"employee"</span> | <span class="st">"manager"</span> | <span class="st">"hr_admin"</span>;
       job_title: string;
-      hire_date: string;       <span class="cm">// date -&gt; "YYYY-MM-DD"</span>
+      date_joined: string;       <span class="cm">// date -&gt; "YYYY-MM-DD"</span>
       salary: number;
       department_id?: number | null;
       manager_id?: number | null;
@@ -598,11 +598,11 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
     <span class="nm">EmployeeRead</span>: {
       id: number;
       name: string;
-      email: string;
+      work_email: string;
       role: <span class="st">"employee"</span> | <span class="st">"manager"</span> | <span class="st">"hr_admin"</span>;
       job_title: string;
-      hire_date: string;
-      employment_status: <span class="st">"active"</span> | <span class="st">"on_leave"</span> | <span class="st">"terminated"</span>;
+      date_joined: string;
+      emp_status: <span class="st">"active"</span> | <span class="st">"on_leave"</span> | <span class="st">"terminated"</span>;
       department_id: number | null;
       manager_id: number | null;
     };
@@ -631,6 +631,7 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
 <section class="block reveal" id="ch3" data-shipped="10"><div class="wrap">
 <div class="sec-head"><div class="sec-num">3</div><div><div class="sec-time">Chapter 3 · ~45 minutes</div><h2>The <em>database</em></h2></div></div>
 <p class="big-p">Time to throw away the list. This chapter moves everything onto SQLite through SQLAlchemy 2.0 in async mode, and adds the rest of the CRUD: <code>PATCH</code>, <code>DELETE</code>, and the whole departments resource. Files are still flat for now; Chapter 5 splits them. Every changed file is shown <strong>in full</strong>.</p>
+<div class="note"><div class="ico">📌</div><p>The design these models encode is worked out table by table on the data-model page: <a class="link" href="db-design.html#erd">the ERD</a> is the map, <a class="link" href="db-design.html#keys">keys and indexes</a> covers every key and index, and <a class="link" href="db-design.html#ddl">the DDL</a> shows the same schema as plain <code>CREATE TABLE</code>.</p></div>
 <div class="note"><div class="ico">📌</div><p>Install is already done: <code>sqlalchemy</code> and <code>aiosqlite</code> are in your requirements. The database file <code>app.db</code> is created on first run in the folder where you start uvicorn. Tables start empty; add rows through <code>/docs</code>, and Chapter 5 gives you a <code>seed.py</code>.</p></div>
 <h3 id="ch3-engine">The engine, the session factory, the base class</h3>
 <p><a class="chip-syn" href="python-for-js-devs.html#generics"># new: AsyncIterator, yield &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#asyncawait"># new: async with &rarr; cheatsheet</a> Think of the engine as the connection pool and a session as one unit of work, roughly a transaction scope with an identity map.</p>
@@ -673,7 +674,7 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
 ):
     ...</pre></div></div><div class="after"><p>Everything before <code>yield</code> is setup, everything after is teardown, run even when the handler raises. The result is injected only into routes that ask for it, it is fully typed (your editor knows <code>db</code> is an <code>AsyncSession</code>), it is created fresh per request, and it appears in OpenAPI when it has parameters of its own. The same mechanism will carry "who is the current user" in Part 2. In tests you can swap any dependency for a fake with one line.</p></div></div>
 <h3 id="ch3-models">The models</h3>
-<p><a class="chip-syn" href="python-for-js-devs.html#optional"># new: Mapped[int | None] &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#classes"># new: class inheritance &rarr; cheatsheet</a> <code>Mapped[T]</code> is the type, <code>mapped_column()</code> adds database options. <code>Mapped[str | None]</code> becomes a nullable column automatically. The enums moved here from <code>main.py</code>.</p>
+<p><a class="chip-syn" href="python-for-js-devs.html#optional"># new: Mapped[int | None] &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#classes"># new: class inheritance &rarr; cheatsheet</a> <code>Mapped[T]</code> is the type, <code>mapped_column()</code> adds database options. <code>Mapped[str | None]</code> becomes a nullable column automatically. The enums moved here from <code>main.py</code>. An employee can sit between teams, so <code>department_id</code> is nullable (<code>Mapped[int | None]</code>). Every column here, and why each one is nullable or unique, is set out on the data-model page under <a class="link" href="db-design.html#employees">the employees table</a>, and the self-referencing <code>manager_id</code> gets <a class="link" href="db-design.html#managers">a section of its own</a>.</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
 <span class="kw">from</span> enum <span class="kw">import</span> <span class="nm">Enum</span>
 
@@ -704,8 +705,8 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
     __tablename__ = <span class="st">"departments"</span>
 
     id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
-    name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>), unique=<span class="kw">True</span>)
-    description: <span class="nm">Mapped</span>[str | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>), default=<span class="kw">None</span>)
+    department_name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>), unique=<span class="kw">True</span>)
+    description: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>))
 
     employees: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"department"</span>)
 
@@ -715,14 +716,14 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
 
     id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
     name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
-    email: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>), unique=<span class="kw">True</span>, index=<span class="kw">True</span>)
+    work_email: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>), unique=<span class="kw">True</span>, index=<span class="kw">True</span>)
     role: <span class="nm">Mapped</span>[<span class="nm">Role</span>] = <span class="fn">mapped_column</span>(
         <span class="fn">SAEnum</span>(<span class="nm">Role</span>, native_enum=<span class="kw">False</span>, values_callable=_values), default=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
     )
     job_title: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
-    hire_date: <span class="nm">Mapped</span>[date]
+    date_joined: <span class="nm">Mapped</span>[date]
     salary: <span class="nm">Mapped</span>[int]
-    employment_status: <span class="nm">Mapped</span>[<span class="nm">EmploymentStatus</span>] = <span class="fn">mapped_column</span>(
+    emp_status: <span class="nm">Mapped</span>[<span class="nm">EmploymentStatus</span>] = <span class="fn">mapped_column</span>(
         <span class="fn">SAEnum</span>(<span class="nm">EmploymentStatus</span>, native_enum=<span class="kw">False</span>, values_callable=_values),
         default=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
     )
@@ -736,7 +737,7 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
         remote_side=<span class="st">"Employee.id"</span>, back_populates=<span class="st">"reports"</span>
     )
     reports: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"manager"</span>)</pre></div>
-<div class="decode"><div class="dl"><b>1</b><div><code>manager_id</code> is a foreign key to the <em>same</em> table. That one column is the entire org chart.</div></div><div class="dl"><b>2</b><div><code>remote_side="Employee.id"</code> disambiguates a self-join: it marks the <code>id</code> end as the parent ("remote") side, so <code>manager</code> means "the employee whose id equals my <code>manager_id</code>".</div></div><div class="dl"><b>3</b><div><code>reports</code> is the reverse direction: everyone whose <code>manager_id</code> is my id.</div></div><div class="dl"><b>4</b><div>These relationships exist for completeness. In async code you must <strong>not</strong> read them lazily (<code>emp.manager</code> would try to do I/O in a sync context and raise). We always query by id columns instead, which is also what the API exposes.</div></div></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>manager_id</code> is a foreign key to the <em>same</em> table. That one column is the entire org chart (<a class="link" href="db-design.html#managers">why a self-reference</a>).</div></div><div class="dl"><b>2</b><div><code>remote_side="Employee.id"</code> disambiguates a self-join: it marks the <code>id</code> end as the parent ("remote") side, so <code>manager</code> means "the employee whose id equals my <code>manager_id</code>".</div></div><div class="dl"><b>3</b><div><code>reports</code> is the reverse direction: everyone whose <code>manager_id</code> is my id.</div></div><div class="dl"><b>4</b><div>These relationships exist for completeness. In async code you must <strong>not</strong> read them lazily (<code>emp.manager</code> would try to do I/O in a sync context and raise). We always query by id columns instead, which is also what the API exposes.</div></div></div>
 <h3 id="ch3-schemas">The schemas</h3>
 <p>The Chapter 2 models move into their own file and gain an update shape and the department models. <code>from_attributes=True</code> lets Pydantic read fields off an ORM object instead of requiring a dict.</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
@@ -749,10 +750,10 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
 <span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
     <span class="st">""</span><span class="st">"Body for creating an employee."</span><span class="st">""</span>
     name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
-    email: <span class="nm">EmailStr</span>
+    work_email: <span class="nm">EmailStr</span>
     role: <span class="nm">Role</span> = <span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
     job_title: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
-    hire_date: date
+    date_joined: date
     salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>, description=<span class="st">"Annual salary in whole currency units"</span>)
     department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
@@ -764,7 +765,7 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
     role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>
     job_title: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
     salary: int | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, ge=<span class="nm">0</span>)
-    employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    emp_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>
     department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
 
@@ -775,22 +776,22 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
 
     id: int
     name: str
-    email: <span class="nm">EmailStr</span>
+    work_email: <span class="nm">EmailStr</span>
     role: <span class="nm">Role</span>
     job_title: str
-    hire_date: date
-    employment_status: <span class="nm">EmploymentStatus</span>
+    date_joined: date
+    emp_status: <span class="nm">EmploymentStatus</span>
     department_id: int | <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span>
 
 
 <span class="kw">class</span> <span class="fn">DepartmentCreate</span>(<span class="nm">BaseModel</span>):
-    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
-    description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+    department_name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    description: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">500</span>)
 
 
 <span class="kw">class</span> <span class="fn">DepartmentUpdate</span>(<span class="nm">BaseModel</span>):
-    name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    department_name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
     description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
 
 
@@ -798,8 +799,9 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
     model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
 
     id: int
-    name: str
-    description: str | <span class="kw">None</span></pre></div>
+    department_name: str
+    description: str</pre></div>
+<p>Part 2 adds three more tables (<code>leave_types</code>, <code>leave_balances</code>, <code>leave_requests</code>); leave types are rows in <code>leave_types</code>, not a Python enum.</p>
 <h3 id="ch3-main">The endpoints on SQLAlchemy</h3>
 <p><a class="chip-syn" href="python-for-js-devs.html#annotated"># new: Annotated alias &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#dicts"># new: dict .items() &rarr; cheatsheet</a> The shape of every query is the same: build a <code>select()</code>, <code>await db.scalars(...)</code>, then <code>.all()</code> for a list or <code>.one_or_none()</code> for zero-or-one rows. Reads never need a commit; writes call <code>await db.commit()</code>.</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
@@ -880,7 +882,7 @@ app = <span class="fn">FastAPI</span>(
 <span class="fn">@app</span>.<span class="fn">post</span>(<span class="st">"/employees"</span>, response_model=<span class="nm">EmployeeRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create an employee"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_employee</span>(payload: <span class="nm">EmployeeCreate</span>, db: <span class="nm">DbSession</span>):
     <span class="st">""</span><span class="st">"Create an employee. Returns the new record without salary."</span><span class="st">""</span>
-    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.email == payload.email))
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == payload.work_email))
     <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
     emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>(), password_hash=<span class="st">"!unset"</span>)   <span class="cm"># Part 2, ch 6</span>
@@ -917,15 +919,15 @@ app = <span class="fn">FastAPI</span>(
 
 <span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/departments"</span>, response_model=list[<span class="nm">DepartmentRead</span>], summary=<span class="st">"List departments"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_departments</span>(db: <span class="nm">DbSession</span>):
-    <span class="st">""</span><span class="st">"List all departments ordered by name."</span><span class="st">""</span>
-    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">order_by</span>(<span class="nm">Department</span>.name))
+    <span class="st">""</span><span class="st">"List all departments ordered by department_name."</span><span class="st">""</span>
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">order_by</span>(<span class="nm">Department</span>.department_name))
     <span class="kw">return</span> result.<span class="fn">all</span>()
 
 
 <span class="fn">@app</span>.<span class="fn">post</span>(<span class="st">"/departments"</span>, response_model=<span class="nm">DepartmentRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create a department"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_department</span>(payload: <span class="nm">DepartmentCreate</span>, db: <span class="nm">DbSession</span>):
     <span class="st">""</span><span class="st">"Create a department. Names are unique."</span><span class="st">""</span>
-    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.name == payload.name))
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.department_name == payload.department_name))
     <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Department name already in use"</span>)
     dept = <span class="fn">Department</span>(**payload.<span class="fn">model_dump</span>())
@@ -974,8 +976,8 @@ app.<span class="fn">get</span>(<span class="st">"/slow"</span>, (req, res) =&gt
 <h3 id="ch3-try">Try it</h3>
 <div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> uvicorn app.main:app --reload
 <span class="pr">$</span> curl -X POST localhost:8000/departments -H "Content-Type: application/json" \
-    -d '{"name":"Engineering"}'
-{"id":1,"name":"Engineering","description":null}
+    -d '{"department_name":"Engineering","description":"Engineering team"}'
+{"id":1,"department_name":"Engineering","description":"Engineering team"}
 <span class="pr">$</span> curl -X PATCH localhost:8000/departments/1 -H "Content-Type: application/json" \
     -d '{"description":"Builds the product"}'
 <span class="pr">$</span> curl -i -X DELETE localhost:8000/employees/999
@@ -1017,16 +1019,16 @@ app.<span class="fn">get</span>(<span class="st">"/slow"</span>, (req, res) =&gt
         self,
         department_id: int | <span class="kw">None</span> = <span class="kw">None</span>,
         role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>,
-        employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>,
-        q: <span class="nm">Annotated</span>[str | <span class="kw">None</span>, <span class="fn">Query</span>(description=<span class="st">"Search name or email"</span>, max_length=<span class="nm">100</span>)] = <span class="kw">None</span>,
-        sort_by: <span class="nm">Literal</span>[<span class="st">"name"</span>, <span class="st">"hire_date"</span>, <span class="st">"salary"</span>] = <span class="st">"name"</span>,
+        emp_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+        q: <span class="nm">Annotated</span>[str | <span class="kw">None</span>, <span class="fn">Query</span>(description=<span class="st">"Search name or work email"</span>, max_length=<span class="nm">100</span>)] = <span class="kw">None</span>,
+        sort_by: <span class="nm">Literal</span>[<span class="st">"name"</span>, <span class="st">"date_joined"</span>, <span class="st">"salary"</span>] = <span class="st">"name"</span>,
         order: <span class="nm">Literal</span>[<span class="st">"asc"</span>, <span class="st">"desc"</span>] = <span class="st">"asc"</span>,
         limit: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">1</span>, le=<span class="nm">100</span>)] = <span class="nm">20</span>,
         offset: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">0</span>)] = <span class="nm">0</span>,
     ) -&gt; <span class="kw">None</span>:
         self.department_id = department_id
         self.role = role
-        self.employment_status = employment_status
+        self.emp_status = emp_status
         self.q = q
         self.sort_by = sort_by
         self.order = order
@@ -1042,23 +1044,23 @@ app.<span class="fn">get</span>(<span class="st">"/slow"</span>, (req, res) =&gt
         stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.department_id == f.department_id)
     <span class="kw">if</span> f.role <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.role == f.role)
-    <span class="kw">if</span> f.employment_status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
-        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.employment_status == f.employment_status)
+    <span class="kw">if</span> f.emp_status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.emp_status == f.emp_status)
     <span class="kw">if</span> f.q:
         like = <span class="st">f"%{f.q}%"</span>
-        stmt = stmt.<span class="fn">where</span>(<span class="fn">or_</span>(<span class="nm">Employee</span>.name.<span class="fn">ilike</span>(like), <span class="nm">Employee</span>.email.<span class="fn">ilike</span>(like)))
+        stmt = stmt.<span class="fn">where</span>(<span class="fn">or_</span>(<span class="nm">Employee</span>.name.<span class="fn">ilike</span>(like), <span class="nm">Employee</span>.work_email.<span class="fn">ilike</span>(like)))
     <span class="kw">return</span> stmt
 
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">page_of_employees</span>(db: <span class="nm">AsyncSession</span>, f: <span class="nm">EmployeeFilters</span>, base: <span class="nm">Select</span>) -&gt; dict:
     base = <span class="fn">apply_filters</span>(base, f)
     total = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(func.<span class="fn">count</span>()).<span class="fn">select_from</span>(base.<span class="fn">subquery</span>()))
-    sort_col = {<span class="st">"name"</span>: <span class="nm">Employee</span>.name, <span class="st">"hire_date"</span>: <span class="nm">Employee</span>.hire_date, <span class="st">"salary"</span>: <span class="nm">Employee</span>.salary}[f.sort_by]
+    sort_col = {<span class="st">"name"</span>: <span class="nm">Employee</span>.name, <span class="st">"date_joined"</span>: <span class="nm">Employee</span>.date_joined, <span class="st">"salary"</span>: <span class="nm">Employee</span>.salary}[f.sort_by]
     ordering = sort_col.<span class="fn">asc</span>() <span class="kw">if</span> f.order == <span class="st">"asc"</span> <span class="kw">else</span> sort_col.<span class="fn">desc</span>()
     stmt = base.<span class="fn">order_by</span>(ordering, <span class="nm">Employee</span>.id).<span class="fn">offset</span>(f.offset).<span class="fn">limit</span>(f.limit)
     items = (<span class="kw">await</span> db.<span class="fn">scalars</span>(stmt)).<span class="fn">all</span>()
     <span class="kw">return</span> {<span class="st">"items"</span>: items, <span class="st">"total"</span>: total <span class="kw">or</span> <span class="nm">0</span>, <span class="st">"limit"</span>: f.limit, <span class="st">"offset"</span>: f.offset}</pre></div>
-<div class="decode"><div class="dl"><b>1</b><div><code>Literal["name", "hire_date", "salary"]</code> is a union of string literals, like TS. A client sending <code>sort_by=password_hash</code> gets a 422 listing the allowed values, so the sort key can never be used to probe a column you did not list. It also becomes an <code>enum</code> in OpenAPI.</div></div><div class="dl"><b>2</b><div><code>Query(ge=1, le=100)</code> adds constraints to a query param, the same way <code>Field</code> does for bodies. A client cannot ask for <code>limit=100000</code>.</div></div><div class="dl"><b>3</b><div><code>or_(name.ilike(...), email.ilike(...))</code> is SQL <code>name LIKE ? OR email LIKE ?</code>, case-insensitive. The <code>%</code> wildcards are added around the term.</div></div><div class="dl"><b>4</b><div>The total comes from a <code>count(*)</code> over the <em>filtered</em> query wrapped as a subquery, before limit and offset are applied. That is what the pager needs.</div></div><div class="dl"><b>5</b><div>The sort column is looked up in a dict whose keys are the only values <code>Literal</code> lets through, never interpolated from user text.</div></div></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>Literal["name", "date_joined", "salary"]</code> is a union of string literals, like TS. A client sending <code>sort_by=password_hash</code> gets a 422 listing the allowed values, so the sort key can never be used to probe a column you did not list. It also becomes an <code>enum</code> in OpenAPI.</div></div><div class="dl"><b>2</b><div><code>Query(ge=1, le=100)</code> adds constraints to a query param, the same way <code>Field</code> does for bodies. A client cannot ask for <code>limit=100000</code>.</div></div><div class="dl"><b>3</b><div><code>or_(name.ilike(...), work_email.ilike(...))</code> is SQL <code>name LIKE ? OR work_email LIKE ?</code>, case-insensitive. The <code>%</code> wildcards are added around the term.</div></div><div class="dl"><b>4</b><div>The total comes from a <code>count(*)</code> over the <em>filtered</em> query wrapped as a subquery, before limit and offset are applied. That is what the pager needs.</div></div><div class="dl"><b>5</b><div>The sort column is looked up in a dict whose keys are the only values <code>Literal</code> lets through, never interpolated from user text.</div></div></div>
 <div class="note"><div class="ico">🔐</div><p><b>Forward note.</b> Sorting and filtering on <code>salary</code> leaks ordering information even though the value is hidden by <code>EmployeeRead</code>. Part 2 restricts this to callers allowed to see salary.</p></div>
 <h3 id="ch4-endpoints">The list endpoint and the two relationship endpoints</h3>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py  (replaces GET /employees; adds two endpoints)</span></div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>, response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>], summary=<span class="st">"List employees"</span>)
@@ -1090,7 +1092,7 @@ app.<span class="fn">get</span>(<span class="st">"/slow"</span>, (req, res) =&gt
     f.department_id = department_id                   <span class="cm"># path wins over the query string</span>
     <span class="kw">return</span> <span class="kw">await</span> <span class="fn">page_of_employees</span>(db, f, <span class="fn">select</span>(<span class="nm">Employee</span>))</pre></div>
 <p>Both new endpoints are tiny because the heavy lifting is shared. <code>/reports</code> uses the self-relationship from Chapter 3 as nothing more than <code>WHERE manager_id = :id</code>. <code>/departments/{id}/employees</code> reuses the same filters, so a department page in React gets search, sort and paging for free. The path now overrides any <code>department_id</code> query value, so nobody can read another department by passing the query string.</p>
-<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;curl</div><pre><span class="pr">$</span> curl "localhost:8000/employees?q=an&amp;sort_by=hire_date&amp;order=desc&amp;limit=2"
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;curl</div><pre><span class="pr">$</span> curl "localhost:8000/employees?q=an&amp;sort_by=date_joined&amp;order=desc&amp;limit=2"
 {"items":[{"id":5,"name":"Lena Park", ...},{"id":3,"name":"Priya Nair", ...}],
  "total":3,"limit":2,"offset":0}</pre></div>
 <h3 id="ch4-compose">Dependencies compose and are cached</h3>
@@ -1164,7 +1166,7 @@ app.db-shm</pre></div>
     <span class="st">""</span><span class="st">"Build Settings once; every later call returns the same object."</span><span class="st">""</span>
     <span class="kw">return</span> <span class="fn">Settings</span>()</pre></div>
 <h3 id="ch5-db">Database setup and WAL mode</h3>
-<p>Two SQLite pragmas run on every new connection. <code>journal_mode=WAL</code> switches to write-ahead logging: readers no longer block on the writer, so a GUI (the VS Code SQLite Viewer extension, the <code>sqlite3</code> CLI, or DB Browser for SQLite) can read <code>app.db</code> while uvicorn holds it open. Without it you hit "database is locked" the moment you inspect data mid-request. <code>foreign_keys=ON</code> is needed because SQLite ignores foreign keys by default; without it <code>manager_id: 999</code> would silently be accepted.</p>
+<p>Two SQLite pragmas run on every new connection. <code>journal_mode=WAL</code> switches to write-ahead logging: readers no longer block on the writer, so a GUI (the VS Code SQLite Viewer extension, the <code>sqlite3</code> CLI, or DB Browser for SQLite) can read <code>app.db</code> while uvicorn holds it open. Without it you hit "database is locked" the moment you inspect data mid-request. <code>foreign_keys=ON</code> is needed because SQLite ignores foreign keys by default; without it <code>manager_id: 999</code> would silently be accepted. <a class="link" href="db-design.html#sqlite">Why FKs are off by default and what WAL buys</a>.</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/core/db.py</span></div><pre><span class="kw">from</span> sqlalchemy <span class="kw">import</span> event
 <span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> async_sessionmaker, create_async_engine
 
@@ -1204,16 +1206,16 @@ engine = <span class="fn">create_async_engine</span>(<span class="fn">get_settin
         self,
         department_id: int | <span class="kw">None</span> = <span class="kw">None</span>,
         role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>,
-        employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>,
-        q: <span class="nm">Annotated</span>[str | <span class="kw">None</span>, <span class="fn">Query</span>(description=<span class="st">"Search name or email"</span>, max_length=<span class="nm">100</span>)] = <span class="kw">None</span>,
-        sort_by: <span class="nm">Literal</span>[<span class="st">"name"</span>, <span class="st">"hire_date"</span>, <span class="st">"salary"</span>] = <span class="st">"name"</span>,
+        emp_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>,
+        q: <span class="nm">Annotated</span>[str | <span class="kw">None</span>, <span class="fn">Query</span>(description=<span class="st">"Search name or work email"</span>, max_length=<span class="nm">100</span>)] = <span class="kw">None</span>,
+        sort_by: <span class="nm">Literal</span>[<span class="st">"name"</span>, <span class="st">"date_joined"</span>, <span class="st">"salary"</span>] = <span class="st">"name"</span>,
         order: <span class="nm">Literal</span>[<span class="st">"asc"</span>, <span class="st">"desc"</span>] = <span class="st">"asc"</span>,
         limit: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">1</span>, le=<span class="nm">100</span>)] = <span class="nm">20</span>,
         offset: <span class="nm">Annotated</span>[int, <span class="fn">Query</span>(ge=<span class="nm">0</span>)] = <span class="nm">0</span>,
     ) -&gt; <span class="kw">None</span>:
         self.department_id = department_id
         self.role = role
-        self.employment_status = employment_status
+        self.emp_status = emp_status
         self.q = q
         self.sort_by = sort_by
         self.order = order
@@ -1238,8 +1240,8 @@ engine = <span class="fn">create_async_engine</span>(<span class="fn">get_settin
     __tablename__ = <span class="st">"departments"</span>
 
     id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
-    name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>), unique=<span class="kw">True</span>)
-    description: <span class="nm">Mapped</span>[str | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>), default=<span class="kw">None</span>)
+    department_name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>), unique=<span class="kw">True</span>)
+    description: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">500</span>))
 
     employees: <span class="nm">Mapped</span>[list[<span class="st">"Employee"</span>]] = <span class="fn">relationship</span>(back_populates=<span class="st">"department"</span>)</pre></div>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/models/employee.py</span></div><pre><span class="kw">from</span> datetime <span class="kw">import</span> date
@@ -1274,14 +1276,14 @@ engine = <span class="fn">create_async_engine</span>(<span class="fn">get_settin
 
     id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(primary_key=<span class="kw">True</span>)
     name: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
-    email: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>), unique=<span class="kw">True</span>, index=<span class="kw">True</span>)
+    work_email: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>), unique=<span class="kw">True</span>, index=<span class="kw">True</span>)
     role: <span class="nm">Mapped</span>[<span class="nm">Role</span>] = <span class="fn">mapped_column</span>(
         <span class="fn">SAEnum</span>(<span class="nm">Role</span>, native_enum=<span class="kw">False</span>, values_callable=_values), default=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
     )
     job_title: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">100</span>))
-    hire_date: <span class="nm">Mapped</span>[date]
+    date_joined: <span class="nm">Mapped</span>[date]
     salary: <span class="nm">Mapped</span>[int]
-    employment_status: <span class="nm">Mapped</span>[<span class="nm">EmploymentStatus</span>] = <span class="fn">mapped_column</span>(
+    emp_status: <span class="nm">Mapped</span>[<span class="nm">EmploymentStatus</span>] = <span class="fn">mapped_column</span>(
         <span class="fn">SAEnum</span>(<span class="nm">EmploymentStatus</span>, native_enum=<span class="kw">False</span>, values_callable=_values),
         default=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
     )
@@ -1324,10 +1326,10 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
 <span class="kw">class</span> <span class="fn">EmployeeCreate</span>(<span class="nm">BaseModel</span>):
     <span class="st">""</span><span class="st">"Body for creating an employee."</span><span class="st">""</span>
     name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
-    email: <span class="nm">EmailStr</span>
+    work_email: <span class="nm">EmailStr</span>
     role: <span class="nm">Role</span> = <span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>
     job_title: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
-    hire_date: date
+    date_joined: date
     salary: int = <span class="fn">Field</span>(ge=<span class="nm">0</span>, description=<span class="st">"Annual salary in whole currency units"</span>)
     department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
@@ -1339,7 +1341,7 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
     role: <span class="nm">Role</span> | <span class="kw">None</span> = <span class="kw">None</span>
     job_title: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">1</span>, max_length=<span class="nm">100</span>)
     salary: int | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, ge=<span class="nm">0</span>)
-    employment_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>
+    emp_status: <span class="nm">EmploymentStatus</span> | <span class="kw">None</span> = <span class="kw">None</span>
     department_id: int | <span class="kw">None</span> = <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>
 
@@ -1350,23 +1352,23 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
 
     id: int
     name: str
-    email: <span class="nm">EmailStr</span>
+    work_email: <span class="nm">EmailStr</span>
     role: <span class="nm">Role</span>
     job_title: str
-    hire_date: date
-    employment_status: <span class="nm">EmploymentStatus</span>
+    date_joined: date
+    emp_status: <span class="nm">EmploymentStatus</span>
     department_id: int | <span class="kw">None</span>
     manager_id: int | <span class="kw">None</span></pre></div>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/schemas/department.py</span></div><pre><span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">ConfigDict</span>, <span class="nm">Field</span>
 
 
 <span class="kw">class</span> <span class="fn">DepartmentCreate</span>(<span class="nm">BaseModel</span>):
-    name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
-    description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
+    department_name: str = <span class="fn">Field</span>(min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    description: str = <span class="fn">Field</span>(min_length=<span class="nm">1</span>, max_length=<span class="nm">500</span>)
 
 
 <span class="kw">class</span> <span class="fn">DepartmentUpdate</span>(<span class="nm">BaseModel</span>):
-    name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
+    department_name: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, min_length=<span class="nm">2</span>, max_length=<span class="nm">100</span>)
     description: str | <span class="kw">None</span> = <span class="fn">Field</span>(default=<span class="kw">None</span>, max_length=<span class="nm">500</span>)
 
 
@@ -1374,8 +1376,8 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
     model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
 
     id: int
-    name: str
-    description: str | <span class="kw">None</span></pre></div>
+    department_name: str
+    description: str</pre></div>
 <h3 id="ch5-services">The service layer</h3>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/services/employees.py</span></div><pre><span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">Select</span>, func, or_, select
 <span class="kw">from</span> sqlalchemy.ext.asyncio <span class="kw">import</span> <span class="nm">AsyncSession</span>
@@ -1394,11 +1396,11 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
         stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.department_id == f.department_id)
     <span class="kw">if</span> f.role <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.role == f.role)
-    <span class="kw">if</span> f.employment_status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
-        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.employment_status == f.employment_status)
+    <span class="kw">if</span> f.emp_status <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
+        stmt = stmt.<span class="fn">where</span>(<span class="nm">Employee</span>.emp_status == f.emp_status)
     <span class="kw">if</span> f.q:
         like = <span class="st">f"%{f.q}%"</span>
-        stmt = stmt.<span class="fn">where</span>(<span class="fn">or_</span>(<span class="nm">Employee</span>.name.<span class="fn">ilike</span>(like), <span class="nm">Employee</span>.email.<span class="fn">ilike</span>(like)))
+        stmt = stmt.<span class="fn">where</span>(<span class="fn">or_</span>(<span class="nm">Employee</span>.name.<span class="fn">ilike</span>(like), <span class="nm">Employee</span>.work_email.<span class="fn">ilike</span>(like)))
     <span class="kw">return</span> stmt
 
 
@@ -1409,7 +1411,7 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
     total = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(func.<span class="fn">count</span>()).<span class="fn">select_from</span>(base.<span class="fn">subquery</span>()))
     sort_col = {
         <span class="st">"name"</span>: <span class="nm">Employee</span>.name,
-        <span class="st">"hire_date"</span>: <span class="nm">Employee</span>.hire_date,
+        <span class="st">"date_joined"</span>: <span class="nm">Employee</span>.date_joined,
         <span class="st">"salary"</span>: <span class="nm">Employee</span>.salary,
     }[f.sort_by]
     ordering = sort_col.<span class="fn">asc</span>() <span class="kw">if</span> f.order == <span class="st">"asc"</span> <span class="kw">else</span> sort_col.<span class="fn">desc</span>()
@@ -1471,7 +1473,7 @@ router = <span class="fn">APIRouter</span>(prefix=<span class="st">"/employees"<
 <span class="fn">@router</span>.<span class="fn">post</span>(<span class="st">""</span>, response_model=<span class="nm">EmployeeRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create an employee"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_employee</span>(payload: <span class="nm">EmployeeCreate</span>, db: <span class="nm">DbSession</span>):
     <span class="st">""</span><span class="st">"Create an employee. Returns the new record without salary."</span><span class="st">""</span>
-    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.email == payload.email))
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == payload.work_email))
     <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
     emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>(), password_hash=<span class="st">"!unset"</span>)   <span class="cm"># Part 2, ch 6</span>
@@ -1543,15 +1545,15 @@ router = <span class="fn">APIRouter</span>(prefix=<span class="st">"/departments
 
 <span class="fn">@router</span>.<span class="fn">get</span>(<span class="st">""</span>, response_model=list[<span class="nm">DepartmentRead</span>], summary=<span class="st">"List departments"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">list_departments</span>(db: <span class="nm">DbSession</span>):
-    <span class="st">""</span><span class="st">"List all departments ordered by name."</span><span class="st">""</span>
-    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">order_by</span>(<span class="nm">Department</span>.name))
+    <span class="st">""</span><span class="st">"List all departments ordered by department_name."</span><span class="st">""</span>
+    result = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">order_by</span>(<span class="nm">Department</span>.department_name))
     <span class="kw">return</span> result.<span class="fn">all</span>()
 
 
 <span class="fn">@router</span>.<span class="fn">post</span>(<span class="st">""</span>, response_model=<span class="nm">DepartmentRead</span>, status_code=<span class="nm">201</span>, summary=<span class="st">"Create a department"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">create_department</span>(payload: <span class="nm">DepartmentCreate</span>, db: <span class="nm">DbSession</span>):
     <span class="st">""</span><span class="st">"Create a department. Names are unique."</span><span class="st">""</span>
-    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.name == payload.name))
+    dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Department</span>).<span class="fn">where</span>(<span class="nm">Department</span>.department_name == payload.department_name))
     <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Department name already in use"</span>)
     dept = <span class="fn">Department</span>(**payload.<span class="fn">model_dump</span>())
@@ -1650,28 +1652,28 @@ app.<span class="fn">include_router</span>(departments.router)</pre></div>
 <span class="kw">from</span> app.models <span class="kw">import</span> <span class="nm">Base</span>, <span class="nm">Department</span>, <span class="nm">Employee</span>, <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
 
 <span class="nm">DEPARTMENTS</span> = [
-    <span class="fn">Department</span>(id=<span class="nm">1</span>, name=<span class="st">"Engineering"</span>, description=<span class="st">"Builds the product"</span>),
-    <span class="fn">Department</span>(id=<span class="nm">2</span>, name=<span class="st">"People Ops"</span>, description=<span class="st">"Hiring, leave and payroll"</span>),
-    <span class="fn">Department</span>(id=<span class="nm">3</span>, name=<span class="st">"Design"</span>, description=<span class="st">"Product and brand design"</span>),
+    <span class="fn">Department</span>(id=<span class="nm">1</span>, department_name=<span class="st">"Engineering"</span>, description=<span class="st">"Builds the product"</span>),
+    <span class="fn">Department</span>(id=<span class="nm">2</span>, department_name=<span class="st">"People Ops"</span>, description=<span class="st">"Hiring, leave and payroll"</span>),
+    <span class="fn">Department</span>(id=<span class="nm">3</span>, department_name=<span class="st">"Design"</span>, description=<span class="st">"Product and brand design"</span>),
 ]
 
 <span class="cm"># Managers come first so the self-referencing manager_id always has a target.</span>
 <span class="nm">EMPLOYEES</span> = [
-    <span class="fn">Employee</span>(id=<span class="nm">1</span>, name=<span class="st">"Maya Chen"</span>, email=<span class="st">"maya@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">HR_ADMIN</span>,
-             job_title=<span class="st">"Head of People"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2019</span>, <span class="nm">2</span>, <span class="nm">11</span>), salary=<span class="nm">120000</span>,
+    <span class="fn">Employee</span>(id=<span class="nm">1</span>, name=<span class="st">"Maya Chen"</span>, work_email=<span class="st">"maya@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">HR_ADMIN</span>,
+             job_title=<span class="st">"Head of People"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2019</span>, <span class="nm">2</span>, <span class="nm">11</span>), salary=<span class="nm">120000</span>,
              department_id=<span class="nm">2</span>, manager_id=<span class="kw">None</span>),
-    <span class="fn">Employee</span>(id=<span class="nm">2</span>, name=<span class="st">"Arjun Rao"</span>, email=<span class="st">"arjun@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">MANAGER</span>,
-             job_title=<span class="st">"Engineering Manager"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2020</span>, <span class="nm">6</span>, <span class="nm">1</span>), salary=<span class="nm">140000</span>,
+    <span class="fn">Employee</span>(id=<span class="nm">2</span>, name=<span class="st">"Arjun Rao"</span>, work_email=<span class="st">"arjun@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">MANAGER</span>,
+             job_title=<span class="st">"Engineering Manager"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2020</span>, <span class="nm">6</span>, <span class="nm">1</span>), salary=<span class="nm">140000</span>,
              department_id=<span class="nm">1</span>, manager_id=<span class="kw">None</span>),
-    <span class="fn">Employee</span>(id=<span class="nm">3</span>, name=<span class="st">"Priya Nair"</span>, email=<span class="st">"priya@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
-             job_title=<span class="st">"Senior Engineer"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2021</span>, <span class="nm">3</span>, <span class="nm">15</span>), salary=<span class="nm">118000</span>,
+    <span class="fn">Employee</span>(id=<span class="nm">3</span>, name=<span class="st">"Priya Nair"</span>, work_email=<span class="st">"priya@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
+             job_title=<span class="st">"Senior Engineer"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2021</span>, <span class="nm">3</span>, <span class="nm">15</span>), salary=<span class="nm">118000</span>,
              department_id=<span class="nm">1</span>, manager_id=<span class="nm">2</span>),
-    <span class="fn">Employee</span>(id=<span class="nm">4</span>, name=<span class="st">"Tomas Weber"</span>, email=<span class="st">"tomas@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
-             job_title=<span class="st">"Frontend Engineer"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2022</span>, <span class="nm">9</span>, <span class="nm">5</span>), salary=<span class="nm">98000</span>,
+    <span class="fn">Employee</span>(id=<span class="nm">4</span>, name=<span class="st">"Tomas Weber"</span>, work_email=<span class="st">"tomas@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
+             job_title=<span class="st">"Frontend Engineer"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2022</span>, <span class="nm">9</span>, <span class="nm">5</span>), salary=<span class="nm">98000</span>,
              department_id=<span class="nm">1</span>, manager_id=<span class="nm">2</span>),
-    <span class="fn">Employee</span>(id=<span class="nm">5</span>, name=<span class="st">"Lena Park"</span>, email=<span class="st">"lena@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
-             job_title=<span class="st">"Product Designer"</span>, hire_date=<span class="fn">date</span>(<span class="nm">2023</span>, <span class="nm">1</span>, <span class="nm">16</span>), salary=<span class="nm">92000</span>,
-             employment_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ON_LEAVE</span>, department_id=<span class="nm">3</span>, manager_id=<span class="nm">1</span>),
+    <span class="fn">Employee</span>(id=<span class="nm">5</span>, name=<span class="st">"Lena Park"</span>, work_email=<span class="st">"lena@acme.test"</span>, role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,
+             job_title=<span class="st">"Product Designer"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2023</span>, <span class="nm">1</span>, <span class="nm">16</span>), salary=<span class="nm">92000</span>,
+             emp_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ON_LEAVE</span>, department_id=<span class="nm">3</span>, manager_id=<span class="nm">1</span>),
 ]
 <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>:
     e.password_hash = <span class="st">"!unset"</span>    <span class="cm"># Part 2 (ch 6) seeds real hashes</span>

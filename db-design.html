@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR data model — database design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fdf7f0;--paper-2:#f7eee2;--card:#ffffff;
+  --ink:#1c1714;--ink-soft:#5a4f47;--ink-faint:#8a7d72;
+  --orange:#ff5b35;--orange-deep:#d83c18;--orange-tint:#ffe9e1;
+  --teal:#10806f;--teal-tint:#d8f0eb;
+  --blue:#2b4a8b;--blue-tint:#dde6f7;
+  --gold:#e0972a;--gold-tint:#fbeecd;
+  --purple:#7a4ca0;--purple-tint:#ece0f6;
+  --pink:#c23a78;--pink-tint:#fbe0ec;
+  --line:#e9ddcf;--code-bg:#211c18;--code-ink:#f2e9df;
+  --shadow:0 2px 0 rgba(28,23,20,.05),0 18px 40px -22px rgba(28,23,20,.45);
+  --shadow-lift:0 4px 0 rgba(28,23,20,.06),0 30px 60px -28px rgba(28,23,20,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 12% 6%,#fff4ea 0,transparent 38%),radial-gradient(circle at 88% 3%,#ffe6dd 0,transparent 30%),var(--paper);color:var(--ink);font-family:'Manrope',sans-serif;font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+
+#progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));z-index:200;transition:width .1s linear}
+
+/* permanent header — this is a lookup page, the search must never scroll away */
+#deck{position:sticky;top:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.9);border-bottom:1px solid var(--line)}
+#deck .wrap{display:flex;align-items:center;gap:14px;min-height:62px;padding-top:9px;padding-bottom:9px;flex-wrap:wrap}
+#deck .brand{font-family:'Fraunces';font-weight:600;font-size:16px;white-space:nowrap}
+#deck .brand b{color:var(--orange)}
+#deck .grow{flex:1;min-width:190px;position:relative}
+#deck input{width:100%;font-family:'Manrope';font-weight:600;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px 9px 34px;background:var(--card);color:var(--ink)}
+#deck input:focus{outline:none;border-color:var(--orange)}
+#deck .mag{position:absolute;left:11px;top:9px;font-size:14px;opacity:.5}
+#deck .kbd{position:absolute;right:9px;top:9px;font-family:'JetBrains Mono';font-size:10.5px;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--paper-2)}
+#deck select{font-family:'Manrope';font-weight:700;font-size:13px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--card);color:var(--ink-soft)}
+#hits{font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);white-space:nowrap}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding:56px 0 34px}
+.hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(var(--line) 1.1px,transparent 1.1px);background-size:22px 22px;opacity:.5;mask-image:linear-gradient(180deg,#000 30%,transparent)}
+.hero .orb{position:absolute;left:-140px;top:-150px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(43,74,139,.16),transparent 65%);animation:float 10s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(24px) scale(1.05)}}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.2fr .9fr;gap:36px;align-items:center}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep);background:var(--orange-tint);border:1px solid #ffd2c5;padding:7px 14px;border-radius:100px}
+.kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px #ffd2c5;animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px #ffd2c5}50%{box-shadow:0 0 0 7px rgba(255,210,197,.4)}}
+h1.title{font-family:'Fraunces';font-weight:900;font-size:clamp(34px,5.4vw,56px);line-height:1.04;letter-spacing:-.02em;margin:18px 0 0}
+h1.title em{font-style:italic;color:var(--orange)}
+.lede{font-size:18.5px;color:var(--ink-soft);max-width:640px;margin:16px 0 0;line-height:1.55}
+.hero-meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:100px;padding:8px 15px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
+.signature{margin-top:22px;font-family:'JetBrains Mono';font-size:13px;color:var(--ink-faint);border-top:1px dashed var(--line);padding-top:14px}
+.signature b{color:var(--ink)}
+
+/* hero flip card */
+.vmap{background:var(--card);border:2px solid var(--ink);border-radius:18px;box-shadow:var(--shadow-lift);overflow:hidden;transform:rotate(-1.2deg)}
+.vmap .vbar{background:var(--ink);color:var(--paper);padding:11px 16px;font-weight:700;font-size:13.5px;display:flex;gap:8px;align-items:center}
+.vmap .vbar .live{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.12em;background:var(--orange);padding:2px 7px;border-radius:5px;text-transform:uppercase;margin-left:auto}
+.flip{display:grid;grid-template-columns:1fr;background:var(--code-bg)}
+.flip .fl{padding:13px 16px;font-family:'JetBrains Mono';font-size:12.5px;line-height:1.6;color:var(--code-ink);white-space:pre-wrap;min-height:58px;transition:opacity .3s}
+.flip .fl .who{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}
+.flip .fl.j{border-bottom:1px dashed #3a2f26}
+.flip .fl.j .who{color:#f2c97d}
+.flip .fl.p .who{color:#7fc7e8}
+.vmap .vfoot{padding:9px 14px;font-family:'JetBrains Mono';font-size:11.5px;color:var(--ink-faint);background:var(--paper-2);border-top:1px solid var(--line);text-align:center}
+
+/* sections */
+section.block{padding:46px 0 10px;border-top:1px solid var(--line);scroll-margin-top:74px}
+.sec-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:12px}
+.sec-num{flex:none;width:54px;height:54px;border-radius:14px;background:var(--ink);color:var(--paper);font-family:'Fraunces';font-weight:700;font-size:22px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.sec-head.accent .sec-num{background:var(--orange)}
+.sec-time{font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep)}
+h2{font-family:'Fraunces';font-weight:700;font-size:clamp(26px,3.6vw,36px);line-height:1.08;letter-spacing:-.015em;margin:4px 0 0}
+h2 em{font-style:italic;color:var(--orange)}
+h3{font-family:'Fraunces';font-weight:600;font-size:23px;letter-spacing:-.01em;margin:30px 0 10px}
+h3 em{font-style:italic;color:var(--orange)}
+p{margin:0 0 16px}
+.big-p{font-size:18.5px;color:var(--ink-soft);max-width:760px}
+strong{color:var(--ink);font-weight:700}
+code{font-family:'JetBrains Mono';font-size:.88em;background:rgba(0,0,0,.06);padding:2px 6px;border-radius:5px}
+a.link{color:var(--orange-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* callouts */
+.def{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--orange);border-radius:14px;padding:20px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.def .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-deep);font-weight:500;margin-bottom:6px}
+.def p:last-child{margin-bottom:0}
+.wow{background:linear-gradient(135deg,#fff3ec,#ffe9e1);border:1px solid #ffd2c5;border-radius:16px;padding:20px 24px;margin:24px 0;display:flex;gap:14px;align-items:flex-start;box-shadow:var(--shadow)}
+.wow .star{flex:none;font-size:26px;filter:drop-shadow(0 2px 4px rgba(216,60,24,.3))}
+.wow b{color:var(--orange-deep)}
+.wow p{margin:0;font-size:16px}
+.analogy{border-radius:14px;padding:18px 22px;margin:20px 0;border:1px solid;display:flex;gap:14px;align-items:flex-start}
+.analogy .ico{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:20px}
+.analogy.teal{background:var(--teal-tint);border-color:#a9ddd2}.analogy.teal .ico{background:var(--teal);color:#fff}
+.analogy.blue{background:var(--blue-tint);border-color:#b8c8ee}.analogy.blue .ico{background:var(--blue);color:#fff}
+.analogy.gold{background:var(--gold-tint);border-color:#ecd49b}.analogy.gold .ico{background:var(--gold);color:#fff}
+.analogy.purple{background:var(--purple-tint);border-color:#d4bce8}.analogy.purple .ico{background:var(--purple);color:#fff}
+.analogy.pink{background:var(--pink-tint);border-color:#f2bcd4}.analogy.pink .ico{background:var(--pink);color:#fff}
+.analogy b{display:block;font-size:15px;margin-bottom:2px}
+.analogy p{margin:0;font-size:15.5px;color:var(--ink-soft)}
+.analogy em{color:var(--ink);font-style:italic}
+.note{background:var(--purple-tint);border:1px solid #d4bce8;border-radius:14px;padding:16px 20px;margin:22px 0;display:flex;gap:12px;align-items:flex-start}
+.note .ico{flex:none;font-size:20px}.note b{color:var(--purple)}.note p{margin:0;font-size:15px;color:#5a4566}
+.industry{position:relative;background:linear-gradient(135deg,#211c18,#2e2620);color:#f4ece2;border-radius:18px;padding:26px 28px;margin:26px 0;overflow:hidden;box-shadow:var(--shadow-lift)}
+.industry:before{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--orange),transparent 70%);opacity:.4}
+.industry .tag{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#ffb39e;margin-bottom:10px;display:inline-flex;font-weight:500}
+.industry h4{color:#fff;text-transform:none;font-family:'Fraunces';font-size:21px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.industry p{margin:0 0 10px;color:#d8ccbf;font-size:15.5px}
+.industry p:last-child{margin-bottom:0}
+.industry code{background:rgba(255,255,255,.12);color:#ffd9cc}
+.industry .cos{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.industry .cos span{font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:5px 11px;border-radius:6px;color:#fff;font-family:'JetBrains Mono'}
+
+/* code + terminal */
+.code{background:var(--code-bg);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:20px 0}
+.code .bar{background:#171411;padding:9px 16px;display:flex;align-items:center;gap:7px}
+.code .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.code .bar .r{background:#ff5f56}.code .bar .y{background:#ffbd2e}.code .bar .g{background:#27c93f}
+.code .bar span{margin-left:8px;font-family:'JetBrains Mono';font-size:12px;color:#9a8a78}
+.code pre{margin:0;padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono';font-size:13.5px;line-height:1.7;color:var(--code-ink)}
+.cm{color:#7f9c6a;font-style:italic}.kw{color:#ff9d7a}.st{color:#f2c97d}.fn{color:#7fc7e8}.nm{color:#c8a8e8}.op{color:#9a8a78}
+.term{background:#0e0c0a;color:#d8ccbf;border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lift);margin:18px 0}
+.term .tbar{background:#181513;padding:9px 14px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono';font-size:12px;color:#7a6e62}
+.term .tbar i{width:10px;height:10px;border-radius:50%;background:#5a4f47;display:inline-block}
+.term pre{margin:0;padding:14px 18px;font-family:'JetBrains Mono';font-size:13px;line-height:1.65;white-space:pre-wrap}
+.term .pr{color:#ff9d7a}.term .cmt{color:#7f9c6a;font-style:italic}.term .ok{color:#7fc7a8}
+
+/* ===== the cheatsheet row — the whole point of this page ===== */
+.crow{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:14px 0;box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:80px}
+.crow:target{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-tint),var(--shadow)}
+.crow .chead{display:flex;align-items:center;gap:10px;background:var(--paper-2);padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.crow .chead b{font-family:'Fraunces';font-size:17.5px;font-weight:600}
+.crow .chead .kw-tags{font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint)}
+.crow .chead .anchor{margin-left:auto;font-family:'JetBrains Mono';font-size:11px;color:var(--ink-faint);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.crow .chead .anchor:hover{color:var(--orange-deep);border-color:#ffd2c5;background:var(--orange-tint)}
+.cpair{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:800px){.cpair{grid-template-columns:1fr}}
+.cside{display:flex;flex-direction:column;min-width:0}
+.cside.js{border-right:1px solid #3a2f26}
+@media(max-width:800px){.cside.js{border-right:none}}
+.cside .ctag{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border-bottom:1px solid var(--line)}
+.cside.js .ctag{background:var(--gold-tint);color:#a8761a}
+.cside.py .ctag{background:var(--blue-tint);color:var(--blue)}
+.cside pre{margin:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font-family:'JetBrains Mono';font-size:12.8px;line-height:1.72;overflow-x:auto;flex:1}
+.cnote{padding:12px 16px;border-top:1px solid var(--line);font-size:14.5px;color:var(--ink-soft);background:#fffdfa}
+.cnote b{color:var(--ink)}
+.cnote code{font-size:12.8px}
+.cnote p{margin:0}
+.cnote p+p{margin-top:8px}
+.crow.hide{display:none}
+#nohits{display:none;background:var(--card);border:1.5px dashed var(--ink-faint);border-radius:14px;padding:18px 22px;margin:16px 0;color:var(--ink-soft);font-size:15px}
+#nohits.on{display:block}
+
+/* gotcha grid */
+.probs{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:14px;margin:20px 0}
+.prob{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.prob .head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prob .head .e{font-size:22px}
+.prob .head b{font-family:'Fraunces';font-size:16.5px}
+.prob p{margin:0;font-size:14.5px;color:var(--ink-soft)}
+.prob code{font-size:12.6px}
+.prob .fix{margin-top:10px;font-size:13px;color:var(--teal);font-weight:700;background:var(--teal-tint);border-radius:8px;padding:6px 10px;display:inline-block}
+
+/* roadmap */
+.road{display:grid;gap:10px;margin:18px 0 30px}
+.road a{display:grid;grid-template-columns:104px 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.road a:hover{transform:translateX(3px);border-color:var(--orange)}
+.road .cl{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--orange-deep)}
+.road b{font-size:15px}.road p{margin:2px 0 0;font-size:13px;color:var(--ink-faint)}
+.road .sk{font-family:'JetBrains Mono';font-size:10.5px;background:var(--teal-tint);color:var(--teal);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.road a.here{border-color:var(--orange);background:linear-gradient(180deg,#fff,#fff8f3)}
+@media(max-width:640px){.road a{grid-template-columns:1fr}.road .sk{justify-self:start}}
+
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.reveal.in{opacity:1;transform:none}
+footer{border-top:1px solid var(--line);padding:30px 0 60px;color:var(--ink-faint);font-family:'JetBrains Mono';font-size:12.5px}
+
+/* ===== part-1 page-specific ===== */
+h3[id]{scroll-margin-top:80px}
+#topnav{position:fixed;top:0;left:0;right:0;z-index:150;backdrop-filter:blur(10px);background:rgba(253,247,240,.92);border-bottom:1px solid var(--line);transform:translateY(-110%);transition:transform .3s}
+#topnav.show{transform:none}
+#topnav .wrap{display:flex;align-items:center;gap:6px;min-height:52px;padding-top:6px;padding-bottom:6px;overflow-x:auto}
+#topnav .brand{font-family:'Fraunces';font-weight:600;font-size:16px;white-space:nowrap;margin-right:10px}
+#topnav .brand b{color:var(--orange)}
+#topnav a{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--ink-soft);text-decoration:none;padding:6px 10px;border-radius:8px;white-space:nowrap}
+#topnav a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+.hero .try{padding:14px 16px;background:var(--code-bg);color:var(--code-ink)}
+.hero .try .btns{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.hero .try button{font-family:'JetBrains Mono';font-size:11.5px;font-weight:700;border:1px solid #4a3d33;background:#2e2620;color:#f2c97d;border-radius:8px;padding:6px 10px;cursor:pointer}
+.hero .try button.on,.hero .try button:hover{background:var(--orange);border-color:var(--orange);color:#fff}
+.hero .try pre{margin:0;font-family:'JetBrains Mono';font-size:12.5px;line-height:1.6;white-space:pre-wrap;min-height:150px}
+.hero .try .stat{font-family:'JetBrains Mono';font-size:12px;margin-bottom:6px}
+.chip-syn{display:inline-block;font-family:'JetBrains Mono';font-size:11.5px;font-weight:500;background:var(--gold-tint);color:#8a5a0c;border:1px solid #ecd49b;border-radius:100px;padding:3px 11px;margin:2px 6px 8px 0;text-decoration:none;line-height:1.5}
+.chip-syn:hover{background:var(--gold);color:#fff;border-color:var(--gold)}
+.whydiff{background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:24px 26px;margin:30px 0;box-shadow:6px 6px 0 var(--ink)}
+.whydiff .wtag{display:inline-block;font-family:'JetBrains Mono';font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);background:var(--orange-tint);border:1px solid #ffd2c5;padding:4px 11px;border-radius:6px;margin-bottom:10px}
+.whydiff h4{font-family:'Fraunces';font-weight:700;font-size:25px;line-height:1.15;letter-spacing:-.01em;margin:0 0 10px}
+.whydiff>p{font-size:16px;color:var(--ink-soft)}
+.whydiff .after{margin-top:16px}
+.whydiff .after p:last-child{margin-bottom:0}
+.wd-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0 4px}
+@media(max-width:800px){.wd-cols{grid-template-columns:1fr}}
+.wd{min-width:0;display:flex;flex-direction:column}
+.wd.js{border-right:1px solid #3a2f26}
+.wd .ct,.cmp-card .ct{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px}
+.wd.js .ct,.cmp-card.js .ct{background:var(--gold-tint);color:#a8761a}
+.wd.py .ct,.cmp-card.py .ct{background:var(--blue-tint);color:var(--blue)}
+.wd pre,.cmp-card pre{margin:0;padding:14px 16px;background:var(--code-bg);color:var(--code-ink);font-family:'JetBrains Mono';font-size:12.8px;line-height:1.7;overflow-x:auto;flex:1}
+.cmp-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+@media(max-width:800px){.cmp-pair{grid-template-columns:1fr}}
+.cmp-card{border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);min-width:0;display:flex;flex-direction:column}
+.decode{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 20px;margin:20px 0;box-shadow:var(--shadow)}
+.decode .dl{display:flex;gap:14px;align-items:flex-start;padding:11px 0;border-bottom:1px dashed var(--line);font-size:15.5px;color:var(--ink-soft)}
+.decode .dl:last-child{border-bottom:none}
+.decode .dl b{flex:none;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:'JetBrains Mono';font-size:12px;margin-top:1px}
+.decode .dl>div{min-width:0}
+.ships{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--teal-tint);border:1px solid #a9ddd2;border-radius:14px;padding:14px 18px;margin:30px 0 20px}
+.ships .lab{font-family:'JetBrains Mono';font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);width:100%}
+.ships .ep{background:#fff;border:1px solid #a9ddd2;border-radius:8px;padding:4px 10px;font-size:13px}
+.ships .ep code{background:none;padding:0;font-size:12.5px}
+.m{font-family:'JetBrains Mono';font-size:10.5px;padding:2px 6px;border-radius:5px;color:#fff}
+.m.get{background:var(--teal)}.m.post{background:var(--orange-deep)}.m.patch{background:var(--purple)}.m.delete{background:var(--pink)}
+.recap{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.recap span{background:var(--card);border:1px solid var(--line);border-radius:100px;padding:6px 14px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
+.takeaways{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--teal);border-radius:14px;padding:18px 24px;margin:22px 0;box-shadow:var(--shadow)}
+.takeaways .lab{font-family:'JetBrains Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:6px}
+.takeaways ul{margin:0;padding-left:20px}.takeaways li{margin:4px 0;font-size:15.5px;color:var(--ink-soft)}
+.eptable{width:100%;border-collapse:collapse;margin:18px 0;font-size:14.5px;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.eptable th{background:var(--paper-2);font-family:'JetBrains Mono';font-size:11px;letter-spacing:.1em;text-transform:uppercase;text-align:left;padding:9px 14px;color:var(--ink-faint)}
+.eptable td{padding:8px 14px;border-top:1px solid var(--line)}
+.eptable td code{background:none;padding:0}
+.wrapx{overflow-x:auto}
+#tracker{position:fixed;right:14px;bottom:16px;z-index:180;background:var(--ink);color:var(--paper);border-radius:12px;padding:9px 14px 10px;font-family:'JetBrains Mono';font-size:12px;font-weight:700;box-shadow:var(--shadow-lift);min-width:150px}
+#tracker .bar{height:4px;border-radius:3px;background:#4a3d33;margin-top:7px;overflow:hidden}
+#tracker .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .4s}
+#tracker b{color:#ffb39e}
+footer .wrap{padding-top:0}
+/* ===== contents sidebar ===== */
+#sbToggle{position:fixed;left:14px;bottom:16px;z-index:180;font-family:'Manrope';font-weight:700;font-size:13px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;cursor:pointer;box-shadow:var(--shadow-lift)}
+#sbToggle:hover{background:var(--orange-tint);color:var(--orange-deep);border-color:var(--orange)}
+#sbScrim{position:fixed;inset:0;z-index:155;background:rgba(28,23,20,.38);opacity:0;pointer-events:none;transition:opacity .25s}
+#sbScrim.on{opacity:1;pointer-events:auto}
+#sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;z-index:170;background:var(--paper-2);border-right:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain;padding:16px 0 70px;transform:translateX(-101%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#sidebar.open{transform:none;box-shadow:var(--shadow-lift)}
+#sidebar .sb-head{font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:4px 18px 10px}
+#sidebar a{display:block;text-decoration:none;color:var(--ink-soft);border-left:3px solid transparent}
+#sidebar a.sb-sec{font-weight:700;font-size:13.5px;padding:7px 16px 7px 15px;color:var(--ink);display:flex;gap:9px;align-items:baseline;line-height:1.3}
+#sidebar a.sb-sec .n{font-family:'JetBrains Mono';font-size:11px;color:var(--orange-deep);flex:none;min-width:14px}
+#sidebar a.sb-sub{font-size:12.5px;padding:4px 16px 4px 40px;font-family:'JetBrains Mono';color:var(--ink-faint);line-height:1.35}
+#sidebar a:hover{background:var(--orange-tint);color:var(--orange-deep)}
+#sidebar a.cur{border-left-color:var(--orange);background:#fff;color:var(--orange-deep)}
+@media(min-width:1400px){
+  #sidebar{transform:none;box-shadow:none}
+  #sbToggle,#sbScrim{display:none}
+  body{padding-left:250px}
+  #progress,#topnav{left:250px}
+}
+</style>
+<style>
+/* ===== db-design page-specific ===== */
+html,body{overflow-x:hidden}
+.kt{display:inline-block;font-family:'JetBrains Mono';font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;margin-left:4px;vertical-align:middle;color:#fff}
+.kt.pk{background:var(--orange-deep)}.kt.fk{background:var(--blue)}
+.eptable.cols td:first-child{white-space:nowrap}
+.eptable td,.eptable th{vertical-align:top}
+.eptable tr.tl td{background:var(--gold-tint);border-top:1px solid #ecd49b}
+.eptable td.c{white-space:nowrap}
+.wrapx{margin:18px 0}.wrapx .eptable{margin:0;min-width:560px}
+.erdbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:20px 0;box-shadow:var(--shadow)}
+svg.erd,svg.lc{width:100%;height:auto;display:block}
+.erd .eb{fill:#fff;stroke:var(--ink);stroke-width:2}
+.erd .eh{fill:var(--ink)}
+.erd .et{font-family:'Fraunces';font-weight:700;font-size:17px;fill:var(--paper)}
+.erd .el{stroke:var(--line);stroke-width:1}
+.erd .ec{font-family:'JetBrains Mono';font-size:13px;fill:var(--ink)}
+.erd .ety{font-family:'JetBrains Mono';font-size:12px;fill:var(--ink-faint)}
+.erd .ek{font-family:'JetBrains Mono';font-size:12px;font-weight:700}
+.erd .ek.pk{fill:var(--orange-deep)}.erd .ek.fk{fill:var(--blue)}
+.erd .rel path{fill:none;stroke:var(--ink-soft);stroke-width:2}
+.erd .rel path.dash{stroke-dasharray:6 5;stroke:var(--purple)}
+.erd .rl text{font-family:'JetBrains Mono';font-size:15px;font-weight:700;fill:var(--orange-deep)}
+.erd .rl text.lab{font-size:12px;font-weight:500;fill:var(--ink-soft)}
+.lc .bx{stroke:var(--ink);stroke-width:2}
+.lc .bx.d{fill:var(--gold-tint)}.lc .bx.s{fill:var(--blue-tint)}.lc .bx.a{fill:var(--teal-tint)}.lc .bx.r{fill:var(--pink-tint)}.lc .bx.c{fill:var(--paper-2)}
+.lc text{font-family:'JetBrains Mono';font-size:15px;font-weight:700;fill:var(--ink);text-anchor:middle}
+.lc text.sm{font-size:12px;font-weight:500;fill:var(--ink-soft)}
+.lc path{fill:none;stroke:var(--ink-soft);stroke-width:2}
+.lc .afill{fill:var(--ink-soft)}
+.erd .afill{fill:var(--ink-soft)}
+.numlist{counter-reset:n;list-style:none;margin:18px 0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:6px 20px}
+.numlist li{counter-increment:n;display:flex;gap:14px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line);font-size:15.5px;color:var(--ink-soft)}
+.numlist li:last-child{border-bottom:none}
+.numlist li:before{content:counter(n);flex:none;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:'JetBrains Mono';font-size:12px;margin-top:1px}
+.steps{margin:14px 0 18px;padding-left:22px;color:var(--ink-soft)}.steps li{margin:4px 0}
+.recap a{color:var(--orange-deep);font-weight:700;text-decoration:none}
+.recap a:hover{text-decoration:underline}
+.ids td:first-child{font-family:'JetBrains Mono';font-size:12.5px;white-space:nowrap}
+section.block{overflow-wrap:anywhere}
+.code pre,.cmp-card pre,.term pre{overflow-wrap:normal}
+@media(max-width:640px){.wrap{padding:0 16px}.sec-head{gap:12px}.sec-num{width:44px;height:44px;font-size:19px}#tracker{bottom:60px}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="sbToggle" aria-label="Contents">&#9776; Contents</button>
+<div id="sbScrim"></div>
+<aside id="sidebar"><div class="sb-head">Contents</div><nav class="sb-nav"></nav></aside>
+<div id="topnav"><div class="wrap"><span class="brand">Data <b>model</b></span><a href="#rules">Rules</a><a href="#erd">ERD</a><a href="#departments">departments</a><a href="#employees">employees</a><a href="#managers">Managers</a><a href="#balances">balances</a><a href="#requests">requests</a><a href="#lifecycle">Lifecycle</a><a href="#cardinality">Cardinality</a><a href="#keys">Keys</a><a href="#queries">Queries</a><a href="#decisions">Decisions</a><a href="#sqlite">SQLite</a><a href="#ddl">DDL</a><a href="#seed">Seed</a><a href="#limits">Limits</a><a href="#trace">Trace</a><a href="part-1-employees-api.html">Part 1</a><a href="part-2-auth-leave-tests.html">Part 2</a><a href="python-for-js-devs.html">Cheatsheet</a></div></div>
+<header class="hero"><div class="orb"></div><div class="wrap">
+  <div>
+    <span class="kicker"><span class="dot"></span> Design companion · 5 tables</span>
+    <h1 class="title">The <em>data model</em> behind the HR API, one table at a time.</h1>
+    <p class="lede">You were given a requirements brief and asked to design the tables yourself. This page is the answer key: five tables, every column, every key, and the reason each one exists. Compare it with your own design, then read the section on whichever table you got differently. It is SQL and diagrams only; the API code lives in the two tutorial parts.</p>
+    <div class="hero-meta"><span class="chip">🗄️ 5 tables · 21 keys, constraints and indexes</span><span class="chip">🧾 SQL only, no app code</span><span class="chip">🗺️ Hand-drawn ERD</span><span class="chip">🪶 SQLite dialect</span></div>
+    <div class="signature"><b>Used by</b>: <a class="link" href="part-1-employees-api.html">Part 1</a> builds <code>departments</code> and <code>employees</code>; <a class="link" href="part-2-auth-leave-tests.html">Part 2</a> adds the three leave tables.</div>
+  </div>
+  <div><div class="vmap"><div class="vbar">🗂️ pick a table <span class="live">try</span></div>
+    <div class="try"><div class="btns"><button data-k="departments">departments</button><button data-k="employees">employees</button><button data-k="leave_types">leave_types</button><button data-k="leave_balances">leave_balances</button><button data-k="leave_requests">leave_requests</button></div>
+    <div class="stat" id="tryStat"></div><pre id="tryOut"></pre></div>
+    <div class="vfoot">column lists match the schema section below</div></div></div>
+</div></header>
+
+<section class="block reveal" id="rules" data-shipped="0"><div class="wrap">
+<div class="sec-head accent"><div class="sec-num">1</div><div><div class="sec-time">The brief</div><h2>The requirements, <em>restated</em></h2></div></div>
+<p class="big-p">A schema is a set of promises. Before looking at any table, here are the twenty business rules those promises have to keep. The last section maps each one back to the column or constraint that keeps it.</p>
+<h3 id="rules-list">The twenty rules</h3>
+<ol class="numlist">
+<li>Departments have a name, and no two departments share a name.</li>
+<li>Every department has a description; it is never left blank.</li>
+<li>Every employee has a name, a work email, a job title, a date joined and a salary.</li>
+<li>Email identifies a person: no two employees share one.</li>
+<li>An employee belongs to at most one department.</li>
+<li>Most employees have a manager who is another employee. The top of the tree has none.</li>
+<li>Every employee has exactly one of three roles: employee, manager or HR admin.</li>
+<li>Employment status is one of active, on leave or terminated.</li>
+<li>Leave types are data, not code: annual, sick and unpaid to start, and HR can add more.</li>
+<li>Each employee has one allowance per leave type per year, with a count of days already used.</li>
+<li>A leave request covers a date range and carries a reason.</li>
+<li>A request moves draft, then submitted, then approved or rejected.</li>
+<li>A request can be cancelled at any point before a decision.</li>
+<li>Approving a request increases the employee's used count for that type and year.</li>
+<li>Nobody is approved past their remaining days.</li>
+<li>No two live requests for the same employee cover the same dates.</li>
+<li>Every decision records who made it.</li>
+<li>Only the employee's own manager or an HR admin may decide a request.</li>
+<li>Employees see themselves; managers also see their reports; HR admins see everyone.</li>
+<li>Salary is visible only to the person, their manager and HR admins.</li>
+</ol>
+<div class="note"><div class="ico">🧭</div><p><b>Where rules 18 to 20 live.</b> The last three rules are not in the schema at all. The API enforces them on every request, per caller, and the schema's only job is to make the check cheap: <code>manager_id</code> is the whole answer to "is this person my report". Rules 15 and 16 are similar in spirit: the schema stores the numbers and dates, and the application does the comparison.</p></div>
+</div></section>
+
+<section class="block reveal" id="erd" data-shipped="0"><div class="wrap">
+<div class="sec-head"><div class="sec-num">2</div><div><div class="sec-time">The whole picture</div><h2>The map: <em>five tables</em></h2></div></div>
+<p class="big-p">Everything hangs off <code>employees</code>. Departments describe where a person sits, <code>leave_types</code> is the short list of kinds of leave, and the two leave tables record what a person is allowed and what they have asked for.</p>
+<h3 id="erd-diagram">Entity relationship diagram</h3>
+<div class="erdbox"><svg class="erd" viewBox="0 0 1110 740" role="img" aria-labelledby="erdT erdD" xmlns="http://www.w3.org/2000/svg"><title id="erdT">Entity relationship diagram of the five HR tables</title><desc id="erdD">departments has many employees; employees has many employees through manager_id; employees has many leave_balances and many leave_requests; employees also has many leave_requests through approver_id; leave_types has many leave_balances and many leave_requests.</desc><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="afill"/></marker></defs><g><rect class="eb" x="30" y="60" width="250" height="106" rx="10"/><path class="eh" d="M30,94 v-24 a10,10 0 0 1 10,-10 h230 a10,10 0 0 1 10,10 v24 z"/><text class="et" x="42" y="83">departments</text><text class="ek pk" x="40" y="111">PK</text><text class="ec" x="68" y="111">id</text><text class="ety" x="268" y="111" text-anchor="end">INTEGER</text><line class="el" x1="30" y1="118" x2="280" y2="118"/><text class="ec" x="68" y="135">department_name</text><text class="ety" x="268" y="135" text-anchor="end">TEXT</text><line class="el" x1="30" y1="142" x2="280" y2="142"/><text class="ec" x="68" y="159">description</text><text class="ety" x="268" y="159" text-anchor="end">TEXT</text></g><g><rect class="eb" x="390" y="40" width="290" height="298" rx="10"/><path class="eh" d="M390,74 v-24 a10,10 0 0 1 10,-10 h270 a10,10 0 0 1 10,10 v24 z"/><text class="et" x="402" y="63">employees</text><text class="ek pk" x="400" y="91">PK</text><text class="ec" x="428" y="91">id</text><text class="ety" x="668" y="91" text-anchor="end">INTEGER</text><line class="el" x1="390" y1="98" x2="680" y2="98"/><text class="ec" x="428" y="115">name</text><text class="ety" x="668" y="115" text-anchor="end">TEXT</text><line class="el" x1="390" y1="122" x2="680" y2="122"/><text class="ec" x="428" y="139">work_email</text><text class="ety" x="668" y="139" text-anchor="end">TEXT</text><line class="el" x1="390" y1="146" x2="680" y2="146"/><text class="ec" x="428" y="163">job_title</text><text class="ety" x="668" y="163" text-anchor="end">TEXT</text><line class="el" x1="390" y1="170" x2="680" y2="170"/><text class="ec" x="428" y="187">date_joined</text><text class="ety" x="668" y="187" text-anchor="end">DATE</text><line class="el" x1="390" y1="194" x2="680" y2="194"/><text class="ec" x="428" y="211">salary</text><text class="ety" x="668" y="211" text-anchor="end">INTEGER</text><line class="el" x1="390" y1="218" x2="680" y2="218"/><text class="ec" x="428" y="235">role</text><text class="ety" x="668" y="235" text-anchor="end">TEXT</text><line class="el" x1="390" y1="242" x2="680" y2="242"/><text class="ec" x="428" y="259">emp_status</text><text class="ety" x="668" y="259" text-anchor="end">TEXT</text><line class="el" x1="390" y1="266" x2="680" y2="266"/><text class="ek fk" x="400" y="283">FK</text><text class="ec" x="428" y="283">department_id</text><text class="ety" x="668" y="283" text-anchor="end">INTEGER</text><line class="el" x1="390" y1="290" x2="680" y2="290"/><text class="ek fk" x="400" y="307">FK</text><text class="ec" x="428" y="307">manager_id</text><text class="ety" x="668" y="307" text-anchor="end">INTEGER</text><line class="el" x1="390" y1="314" x2="680" y2="314"/><text class="ec" x="428" y="331">password_hash</text><text class="ety" x="668" y="331" text-anchor="end">TEXT</text></g><g><rect class="eb" x="830" y="60" width="230" height="106" rx="10"/><path class="eh" d="M830,94 v-24 a10,10 0 0 1 10,-10 h210 a10,10 0 0 1 10,10 v24 z"/><text class="et" x="842" y="83">leave_types</text><text class="ek pk" x="840" y="111">PK</text><text class="ec" x="868" y="111">id</text><text class="ety" x="1048" y="111" text-anchor="end">INTEGER</text><line class="el" x1="830" y1="118" x2="1060" y2="118"/><text class="ec" x="868" y="135">type</text><text class="ety" x="1048" y="135" text-anchor="end">TEXT</text><line class="el" x1="830" y1="142" x2="1060" y2="142"/><text class="ec" x="868" y="159">days</text><text class="ety" x="1048" y="159" text-anchor="end">INTEGER</text></g><g><rect class="eb" x="30" y="420" width="310" height="178" rx="10"/><path class="eh" d="M30,454 v-24 a10,10 0 0 1 10,-10 h290 a10,10 0 0 1 10,10 v24 z"/><text class="et" x="42" y="443">leave_balances</text><text class="ek pk" x="40" y="471">PK</text><text class="ec" x="68" y="471">id</text><text class="ety" x="328" y="471" text-anchor="end">INTEGER</text><line class="el" x1="30" y1="478" x2="340" y2="478"/><text class="ek fk" x="40" y="495">FK</text><text class="ec" x="68" y="495">employee_id</text><text class="ety" x="328" y="495" text-anchor="end">INTEGER</text><line class="el" x1="30" y1="502" x2="340" y2="502"/><text class="ek fk" x="40" y="519">FK</text><text class="ec" x="68" y="519">leave_type_id</text><text class="ety" x="328" y="519" text-anchor="end">INTEGER</text><line class="el" x1="30" y1="526" x2="340" y2="526"/><text class="ec" x="68" y="543">entitled_days</text><text class="ety" x="328" y="543" text-anchor="end">INTEGER</text><line class="el" x1="30" y1="550" x2="340" y2="550"/><text class="ec" x="68" y="567">used_days</text><text class="ety" x="328" y="567" text-anchor="end">INTEGER</text><line class="el" x1="30" y1="574" x2="340" y2="574"/><text class="ec" x="68" y="591">consumed_year_in</text><text class="ety" x="328" y="591" text-anchor="end">INTEGER</text></g><g><rect class="eb" x="600" y="420" width="420" height="250" rx="10"/><path class="eh" d="M600,454 v-24 a10,10 0 0 1 10,-10 h400 a10,10 0 0 1 10,10 v24 z"/><text class="et" x="612" y="443">leave_requests</text><text class="ek pk" x="610" y="471">PK</text><text class="ec" x="638" y="471">id</text><text class="ety" x="1008" y="471" text-anchor="end">INTEGER</text><line class="el" x1="600" y1="478" x2="1020" y2="478"/><text class="ek fk" x="610" y="495">FK</text><text class="ec" x="638" y="495">employee_id</text><text class="ety" x="1008" y="495" text-anchor="end">INTEGER</text><line class="el" x1="600" y1="502" x2="1020" y2="502"/><text class="ek fk" x="610" y="519">FK</text><text class="ec" x="638" y="519">leave_type_id</text><text class="ety" x="1008" y="519" text-anchor="end">INTEGER</text><line class="el" x1="600" y1="526" x2="1020" y2="526"/><text class="ec" x="638" y="543">start_date</text><text class="ety" x="1008" y="543" text-anchor="end">DATE</text><line class="el" x1="600" y1="550" x2="1020" y2="550"/><text class="ec" x="638" y="567">end_date</text><text class="ety" x="1008" y="567" text-anchor="end">DATE</text><line class="el" x1="600" y1="574" x2="1020" y2="574"/><text class="ec" x="638" y="591">reason</text><text class="ety" x="1008" y="591" text-anchor="end">TEXT</text><line class="el" x1="600" y1="598" x2="1020" y2="598"/><text class="ec" x="638" y="615">no_of_days</text><text class="ety" x="1008" y="615" text-anchor="end">INTEGER</text><line class="el" x1="600" y1="622" x2="1020" y2="622"/><text class="ek fk" x="610" y="639">FK</text><text class="ec" x="638" y="639">approver_id</text><text class="ety" x="1008" y="639" text-anchor="end">INTEGER</text><line class="el" x1="600" y1="646" x2="1020" y2="646"/><text class="ec" x="638" y="663">request_status</text><text class="ety" x="1008" y="663" text-anchor="end">TEXT</text></g><g class="rel"><path d="M280,113 H335 V278 H390"/><path d="M680,86 H725 V302 H680"/><path d="M450,338 V389 H170 V420"/><path d="M640,338 V420"/><path class="dash" d="M680,320 H880 V420"/><path d="M1000,166 V420"/><path d="M170,598 V722 H1085 V113 H1060"/></g><g class="rl"><text x="286" y="104">1</text><text x="352" y="270">&#8734;</text><text x="328" y="196" class="lab" text-anchor="end">department_id</text><text x="686" y="78">1</text><text x="686" y="296">&#8734;</text><text x="735" y="200" class="lab">manager_id (self)</text><text x="458" y="356">1</text><text x="176" y="414">&#8734;</text><text x="222" y="382" class="lab">employee_id</text><text x="648" y="356">1</text><text x="648" y="414">&#8734;</text><text x="662" y="382" class="lab">employee_id</text><text x="690" y="338">1</text><text x="886" y="414">&#8734;</text><text x="870" y="312" class="lab" text-anchor="end">approver_id</text><text x="1006" y="186">1</text><text x="1006" y="414">&#8734;</text><text x="992" y="300" class="lab" text-anchor="end">leave_type_id</text><text x="1064" y="106">1</text><text x="180" y="616">&#8734;</text><text x="300" y="714" class="lab">leave_type_id</text></g></svg></div>
+<p><b>Reading key.</b> A solid line is a foreign key: the <code>1</code> end is the table being pointed at, the <code>&#8734;</code> end is the table holding the foreign key column. The dashed line is the second link between the same two tables, and the loop on the right of <code>employees</code> is the table pointing at itself. <code>leave_types</code> is pointed at by both leave tables, so it carries two lines.</p>
+</div></section>
+
+<section class="block reveal" id="departments" data-shipped="1"><div class="wrap">
+<div class="sec-head"><div class="sec-num">3</div><div><div class="sec-time">Table 1 of 5</div><h2><em>departments</em></h2></div></div>
+<p class="big-p">The smallest table, and the first one an employee row points at.</p>
+<h3 id="departments-columns">Columns</h3>
+<div class="wrapx"><table class="eptable cols"><tr><th>Column</th><th>Type</th><th>Null?</th><th>Constraints and default</th></tr><tr><td><code>id</code> <span class="kt pk">PK</span></td><td><code>INTEGER</code></td><td>&mdash;</td><td>PRIMARY KEY</td></tr><tr><td><code>department_name</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>UNIQUE</td></tr><tr><td><code>description</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>a department always says what it does</td></tr></table></div>
+<h3 id="departments-why">Why these constraints</h3>
+<p><code>department_name</code> is <code>UNIQUE</code> because rule 1 says two departments cannot share a name, and a rule that matters belongs in the database, where no code path can forget it. Without it, two requests creating "Engineering" at the same moment would both succeed.</p>
+<p><code>description</code> is <code>NOT NULL</code> by decision: every department states what it does, so a department cannot be created half-described. The cost is that a creator who has nothing to say must still write something.</p>
+<div class="note"><div class="ico">💡</div><p><b>Three columns is enough to earn a table.</b> The alternative is a department name repeated on 400 employee rows, with no single place to rename it. Here a rename is one <code>UPDATE</code> on one row, and every employee follows.</p></div>
+</div></section>
+
+<section class="block reveal" id="employees" data-shipped="2"><div class="wrap">
+<div class="sec-head"><div class="sec-num">4</div><div><div class="sec-time">Table 2 of 5</div><h2><em>employees</em></h2></div></div>
+<p class="big-p">The centre of the model: people, their role, their place in a department and their place in the reporting tree.</p>
+<h3 id="employees-columns">Columns</h3>
+<div class="wrapx"><table class="eptable cols"><tr><th>Column</th><th>Type</th><th>Null?</th><th>Constraints and default</th></tr><tr><td><code>id</code> <span class="kt pk">PK</span></td><td><code>INTEGER</code></td><td>&mdash;</td><td>PRIMARY KEY</td></tr><tr><td><code>name</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>&mdash;</td></tr><tr><td><code>work_email</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>UNIQUE (SQLite indexes it for you)</td></tr><tr><td><code>job_title</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>&mdash;</td></tr><tr><td><code>date_joined</code></td><td><code>DATE</code></td><td>NOT NULL</td><td>a date, no time of day</td></tr><tr><td><code>salary</code></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>&mdash;</td></tr><tr><td><code>role</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>one of employee / manager / hr_admin, checked by the application</td></tr><tr><td><code>emp_status</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>one of active / on_leave / terminated, checked by the application</td></tr><tr><td><code>department_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NULL</td><td>FK &rarr; departments.id, indexed</td></tr><tr><td><code>manager_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NULL</td><td>FK &rarr; employees.id (self-reference), indexed</td></tr><tr><td><code>password_hash</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>&mdash;</td></tr></table></div>
+<h3 id="employees-email">work_email: unique, and so already indexed</h3>
+<p>Uniqueness is the rule (rule 4). In SQLite a <code>UNIQUE</code> constraint builds an index behind the scenes, so the login lookup <code>WHERE work_email = :work_email</code> is already fast and the schema adds no second index on it. The indexes it does add are on <code>department_id</code> and <code>manager_id</code>, the two columns you filter by constantly.</p>
+<h3 id="employees-nulls">Why department_id is nullable</h3>
+<p>Someone can be between teams, and a department you want to delete should not force you to delete the people in it. A nullable foreign key lets the row stay valid with "no department" while the rest of the row is untouched. Contrast that with <code>manager_id</code>, which is also nullable but for a structural reason covered in the next section.</p>
+<h3 id="employees-text">role and emp_status are stored as text</h3>
+<p>Both columns hold the lowercase string value (<code>'hr_admin'</code>, <code>'on_leave'</code>), not an integer code and not the uppercase enum member name. A row reads correctly in a GUI or in <code>sqlite3</code> output without a join or a lookup table, and the API serialises the same string straight to JSON, so the React client can switch on it.</p>
+<h3 id="employees-salary">Salary is a whole number</h3>
+<div class="wow"><div class="star">💰</div><p><b>Never store money in a float.</b> Binary floating point cannot represent 0.1 exactly, so sums and comparisons drift by fractions of a cent and totals stop reconciling. <code>salary</code> is an <code>INTEGER</code> of whole currency units, which is exact, sums cleanly and sorts correctly. If you ever need cents, store cents as an integer, never a float.</p></div>
+</div></section>
+
+<section class="block reveal" id="managers" data-shipped="2"><div class="wrap">
+<div class="sec-head"><div class="sec-num">5</div><div><div class="sec-time">One table, two roles</div><h2>The self-reference: a manager is <em>an employee</em></h2></div></div>
+<p class="big-p">A manager is not a separate kind of record. It is an employee whose id appears in someone else's <code>manager_id</code>.</p>
+<h3 id="managers-fk">A foreign key to its own table</h3>
+<p><code>manager_id</code> points at <code>employees.id</code> in the same table. Arjun's row has <code>manager_id = NULL</code>, and that NULL is how you find the root of the tree: the person nobody manages. Priya's row has <code>manager_id = 2</code>, Arjun's id. A reporting line is a tree you walk by following the column, one row at a time. The recursive query that walks the whole subtree at any depth is query 2b in <a class="link" href="#queries">Seven questions, eight queries</a>.</p>
+<h3 id="managers-gap">What the foreign key does not stop</h3>
+<p>The constraint stops you pointing at an employee who does not exist. It does <strong>not</strong> stop a cycle: A manages B and B manages A satisfies every foreign key, and each row on its own looks fine. Nothing in the schema can say "this graph must be a tree". That is a gap the application has to check, by walking up from the proposed manager before saving and refusing if it meets the employee being edited.</p>
+<div class="def"><div class="lab">Also not stopped</div><p>An employee can be their own manager (<code>manager_id = id</code>), which is the shortest possible cycle. The same application check catches it.</p></div>
+</div></section>
+
+<section class="block reveal" id="balances" data-shipped="4"><div class="wrap">
+<div class="sec-head"><div class="sec-num">6</div><div><div class="sec-time">Tables 3 and 4 of 5</div><h2><em>leave_types</em> and <em>leave_balances</em></h2></div></div>
+<p class="big-p">First the short list of kinds of leave, then the table that gives each person an allowance of each kind.</p>
+<h3 id="balances-types">leave_types: kinds of leave are rows, not code</h3>
+<p>Annual, sick and unpaid are three rows in a lookup table. Adding parental leave is one <code>INSERT</code>; nobody edits code or redeploys. <code>days</code> is the default yearly entitlement for the type, and it is what a new balance row starts from.</p>
+<div class="wrapx"><table class="eptable cols"><tr><th>Column</th><th>Type</th><th>Null?</th><th>Constraints and default</th></tr><tr><td><code>id</code> <span class="kt pk">PK</span></td><td><code>INTEGER</code></td><td>&mdash;</td><td>PRIMARY KEY</td></tr><tr><td><code>type</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>UNIQUE; the name of the leave type, such as annual</td></tr><tr><td><code>days</code></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>the default yearly entitlement for this type</td></tr></table></div>
+<div class="wrapx"><table class="eptable ids"><tr><th>id</th><th>type</th><th>days</th></tr><tr><td>1</td><td>annual</td><td>20</td></tr><tr><td>2</td><td>sick</td><td>10</td></tr><tr><td>3</td><td>unpaid</td><td>0</td></tr></table></div>
+<p>The price is that the database can no longer hold a fixed list of allowed values in a column; it holds a foreign key to this table instead. Both trade-offs are weighed in <a class="link" href="#decisions">Decisions and trade-offs</a>.</p>
+<h3 id="balances-columns">leave_balances columns</h3>
+<p>One row is one allowance: this person, this leave type, this year.</p>
+<div class="wrapx"><table class="eptable cols"><tr><th>Column</th><th>Type</th><th>Null?</th><th>Constraints and default</th></tr><tr><td><code>id</code> <span class="kt pk">PK</span></td><td><code>INTEGER</code></td><td>&mdash;</td><td>PRIMARY KEY</td></tr><tr><td><code>employee_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>FK &rarr; employees.id, indexed</td></tr><tr><td><code>leave_type_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>FK &rarr; leave_types.id</td></tr><tr><td><code>entitled_days</code></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>this person's allowance for this type and year</td></tr><tr><td><code>used_days</code></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>default 0</td></tr><tr><td><code>consumed_year_in</code></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>the calendar year the allowance belongs to</td></tr><tr class="tl"><td colspan="4"><b>Table-level:</b> <code>UNIQUE (employee_id, leave_type_id, consumed_year_in)</code></td></tr></table></div>
+<h3 id="balances-unique">The composite unique is the heart of the page</h3>
+<p><code>UNIQUE (employee_id, leave_type_id, consumed_year_in)</code> is what makes "Priya's annual allowance for 2026" exactly one row. The database refuses a second row for the same triple, so no code path can create a duplicate that later disagrees with the first. <code>entitled_days</code> starts as a copy of <code>leave_types.days</code>; copying it means a balance already issued keeps its number even if the type's default changes later.</p>
+<h3 id="balances-wrong">The usual first attempt</h3>
+<p>The common mistake is to hang an <code>annual_days</code> column directly off <code>employees</code>. It fails three ways: a single column cannot hold a different number for sick and annual; it cannot hold last year's number next to this year's; and it has to be edited in place every January, destroying the history it overwrites.</p>
+<div class="cmp-pair"><div class="cmp-card js"><div class="ct">First attempt: columns on employees</div><pre>employees
+  id, name, ...,
+  annual_days_left   <span class="cm">-- one number, which year?</span>
+  sick_days_left     <span class="cm">-- a new column per type</span>
+  <span class="cm">-- last year? gone, overwritten in January</span></pre></div><div class="cmp-card py"><div class="ct">This design: one row per allowance</div><pre>leave_balances
+  employee_id | leave_type_id | consumed_year_in | entitled | used
+  <span class="nm">3</span>           | <span class="nm">1</span> (annual)    | <span class="nm">2026</span>             | <span class="nm">20</span>       | <span class="nm">4</span>
+  <span class="nm">3</span>           | <span class="nm">2</span> (sick)      | <span class="nm">2026</span>             | <span class="nm">10</span>       | <span class="nm">1</span>
+  <span class="nm">3</span>           | <span class="nm">1</span> (annual)    | <span class="nm">2025</span>             | <span class="nm">20</span>       | <span class="nm">18</span></pre></div></div>
+<div class="analogy teal"><div class="ico">🏦</div><div><b>Think of a bank statement, not a balance on a card</b><p>A row per employee, type and year is a statement per period. Last year's statement stays in the drawer; this year's starts fresh. Nothing is overwritten, and a new leave type is a new row in <code>leave_types</code>, not a schema change.</p></div></div>
+</div></section>
+
+<section class="block reveal" id="requests" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">7</div><div><div class="sec-time">Table 5 of 5</div><h2><em>leave_requests</em></h2></div></div>
+<p class="big-p">One row is one ask for time off, and it names the person who decided it.</p>
+<h3 id="requests-columns">Columns</h3>
+<div class="wrapx"><table class="eptable cols"><tr><th>Column</th><th>Type</th><th>Null?</th><th>Constraints and default</th></tr><tr><td><code>id</code> <span class="kt pk">PK</span></td><td><code>INTEGER</code></td><td>&mdash;</td><td>PRIMARY KEY</td></tr><tr><td><code>employee_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>FK &rarr; employees.id, indexed</td></tr><tr><td><code>leave_type_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>FK &rarr; leave_types.id</td></tr><tr><td><code>start_date</code></td><td><code>DATE</code></td><td>NOT NULL</td><td>&mdash;</td></tr><tr><td><code>end_date</code></td><td><code>DATE</code></td><td>NOT NULL</td><td>&mdash;</td></tr><tr><td><code>reason</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>every request states a reason</td></tr><tr><td><code>no_of_days</code></td><td><code>INTEGER</code></td><td>NOT NULL</td><td>days charged, fixed when the request is made</td></tr><tr><td><code>approver_id</code> <span class="kt fk">FK</span></td><td><code>INTEGER</code></td><td>NULL</td><td>FK &rarr; employees.id; unset until someone decides</td></tr><tr><td><code>request_status</code></td><td><code>TEXT</code></td><td>NOT NULL</td><td>indexed; one of draft / submitted / approved / rejected / cancelled, checked by the application</td></tr></table></div>
+<h3 id="requests-range">A date range, not a row per day</h3>
+<p>A request is stored as <code>start_date</code> and <code>end_date</code>, both plain <code>DATE</code> values: leave is taken in whole days, so there is no time of day to store. A row per day would turn a two-week holiday into ten rows that must all be approved, cancelled or rejected together, and a request would no longer be one thing you can point at. The range stays one row, and the overlap test in <a class="link" href="#queries">the queries section</a> works directly on the two dates.</p>
+<h3 id="requests-days">no_of_days is stored on the row</h3>
+<p>The number is decided when the request is made. Weekend and holiday rules change later, and if the count were recomputed from the dates every time, an old request would silently change its cost. A stored number keeps old requests truthful.</p>
+<h3 id="requests-decision">approver_id is empty until someone decides</h3>
+<p><code>approver_id</code> is NULL while the request is a draft or waiting, and holds the deciding employee's id afterwards. It is a second foreign key to <code>employees</code>, the dashed line on the diagram. The table keeps no timestamp for the decision: the schema records who decided, not when, and ordering by <code>id</code> is the stand-in for "oldest first".</p>
+<div class="note"><div class="ico">🔗</div><p><b>There is no foreign key to leave_balances.</b> The pair <code>(employee_id, leave_type_id)</code> plus the year taken from <code>start_date</code> locates the balance row. That is deliberate and it has a cost; see <a class="link" href="#decisions">Decisions and trade-offs</a>.</p></div>
+</div></section>
+
+<section class="block reveal" id="lifecycle" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">8</div><div><div class="sec-time">One column, five values</div><h2>The status <em>lifecycle</em></h2></div></div>
+<p class="big-p"><code>leave_requests.request_status</code> holds one of five values, and only some moves between them are legal.</p>
+<h3 id="lifecycle-diagram">Legal transitions</h3>
+<div class="erdbox"><svg class="lc" viewBox="0 0 900 260" role="img" aria-label="Status lifecycle: draft to submitted to approved or rejected; draft or submitted to cancelled" xmlns="http://www.w3.org/2000/svg"><defs><marker id="la" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="afill" style="stroke:none"/></marker></defs>
+<rect class="bx d" x="30" y="105" width="130" height="50" rx="10"/><text x="95" y="135">draft</text>
+<rect class="bx s" x="230" y="105" width="130" height="50" rx="10"/><text x="295" y="135">submitted</text>
+<rect class="bx a" x="470" y="45" width="130" height="50" rx="10"/><text x="535" y="75">approved</text>
+<rect class="bx r" x="470" y="165" width="130" height="50" rx="10"/><text x="535" y="195">rejected</text>
+<rect class="bx c" x="700" y="105" width="130" height="50" rx="10"/><text x="765" y="135">cancelled</text>
+<path d="M160,130 H228" marker-end="url(#la)"/>
+<path d="M360,118 L468,76" marker-end="url(#la)"/>
+<path d="M360,142 L468,184" marker-end="url(#la)"/>
+<path d="M360,130 H698" marker-end="url(#la)" style="stroke-dasharray:6 5"/>
+<path d="M95,155 V240 H765 V157" marker-end="url(#la)" style="stroke-dasharray:6 5"/>
+<text class="sm" x="530" y="123">cancel (before a decision)</text>
+<text class="sm" x="430" y="252">cancel from draft</text>
+</svg></div>
+<ol class="steps"><li>The employee creates a <strong>draft</strong> and edits it freely.</li><li>They <strong>submit</strong> it, and it now waits on their manager.</li><li>The manager or an HR admin <strong>approves</strong> (used days go up) or <strong>rejects</strong>.</li><li>Before any decision, the employee may <strong>cancel</strong>.</li></ol>
+<h3 id="lifecycle-history">Only the current status is stored</h3>
+<p>The schema keeps the current status and nothing else. If a request goes draft, submitted, approved, the earlier states are not recoverable, and the table has no timestamps to say when anything happened. If you needed that, you would add an append-only <code>leave_request_events</code> table with one row per transition. This design does not build it.</p>
+</div></section>
+
+<section class="block reveal" id="cardinality" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">9</div><div><div class="sec-time">Your own two questions</div><h2>Which side holds the <em>foreign key</em></h2></div></div>
+<p class="big-p">Two questions come up in every first schema. Here are the direct answers, and the answer to the second one is the best idea on this page.</p>
+<h3 id="cardinality-many">Does the "many" table always hold the foreign key?</h3>
+<p><strong>Yes.</strong> For a one-to-many relationship, the foreign key goes on the many side, always. The alternative fails: to put it on the "one" side, a single cell would have to hold a list of ids, and a relational column holds exactly one value. Walking the seven foreign keys on this page:</p>
+<div class="wrapx"><table class="eptable ids"><tr><th>Relationship</th><th>Reads as</th><th>Many side</th><th>Foreign key</th></tr>
+<tr><td>departments to employees</td><td>one department has many employees</td><td>employees</td><td>employees.department_id</td></tr>
+<tr><td>employees to employees</td><td>one manager has many reports</td><td>employees (the reports)</td><td>employees.manager_id</td></tr>
+<tr><td>employees to leave_balances</td><td>one employee has many allowances</td><td>leave_balances</td><td>leave_balances.employee_id</td></tr>
+<tr><td>leave_types to leave_balances</td><td>one leave type has many allowances</td><td>leave_balances</td><td>leave_balances.leave_type_id</td></tr>
+<tr><td>employees to leave_requests</td><td>one employee has many requests</td><td>leave_requests</td><td>leave_requests.employee_id</td></tr>
+<tr><td>leave_types to leave_requests</td><td>one leave type has many requests</td><td>leave_requests</td><td>leave_requests.leave_type_id</td></tr>
+<tr><td>employees to leave_requests</td><td>one approver has decided many requests</td><td>leave_requests</td><td>leave_requests.approver_id</td></tr>
+</table></div>
+<h3 id="cardinality-junction">The junction table</h3>
+<p>For many-to-many, the joining table is called a <strong>junction table</strong>. Join table, bridge table and associative table are the same thing under different names. It turns one many-to-many into two one-to-manys, with each foreign key on the junction side.</p>
+<div class="wow"><div class="star">✨</div><p><b><code>leave_balances</code> is a textbook junction table between <code>employees</code> and <code>leave_types</code>.</b> An employee has many leave types, and a leave type applies to many employees. <code>leave_balances</code> sits between them holding one foreign key to each, which is exactly the two one-to-manys a junction produces. And it carries its own data, <code>entitled_days</code>, <code>used_days</code> and <code>consumed_year_in</code>, which belong to neither side alone: they describe this person, with this type, in this year. A junction that carries its own columns is the usual sign you were right to make one, and it is why the composite unique over the two foreign keys plus the year is the page's key constraint.</p></div>
+<h3 id="cardinality-requests">Are leave requests and employees many-to-many?</h3>
+<p><strong>Not directly.</strong> A leave request belongs to exactly one employee, so employee to request is one-to-many and <code>employee_id</code> lives on <code>leave_requests</code>. Ask in both directions: one employee, many requests; one request, one employee.</p>
+<p>But <code>leave_requests</code> is itself a junction in two other relationships, because it holds two more foreign keys:</p>
+<ul>
+<li><strong>Employees to leave types.</strong> Through <code>leave_type_id</code>, an employee takes many types and a type is taken by many employees. This is the same pair that <code>leave_balances</code> joins, but here each row is an event (a dated request), not a standing allowance.</li>
+<li><strong>Employees to employees, twice.</strong> Directly, <code>manager_id</code> is a one-to-many tree inside <code>employees</code>. Through <code>leave_requests</code>, <code>employee_id</code> (the requester) and <code>approver_id</code> (the decider) are both employees, so many requesters are linked to many approvers with each request as the link.</li>
+</ul>
+<div class="industry"><div class="tag">Industry practice</div><h4>Ask the cardinality question in both directions</h4><p>For any two tables A and B, ask "how many B can one A have?" and then "how many A can one B have?". One and one is a one-to-one: merge the tables or put a unique foreign key on either. One and many is a one-to-many: the foreign key goes on the many side. Many and many is a many-to-many: add a junction table. Two quick questions replace most of the guesswork.</p></div>
+</div></section>
+
+<section class="block reveal" id="keys" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">10</div><div><div class="sec-time">The full inventory</div><h2>Every key, constraint and <em>index</em></h2></div></div>
+<p class="big-p">Twenty-one items in total: five primary keys, seven foreign keys, three unique constraints, one composite unique and five indexes.</p>
+<h3 id="keys-table">The inventory</h3>
+<div class="wrapx"><table class="eptable ids"><tr><th>#</th><th>Kind</th><th>Where</th><th>Why</th></tr>
+<tr><td>1</td><td>Primary key</td><td>departments.id</td><td>Identifies a department row.</td></tr>
+<tr><td>2</td><td>Primary key</td><td>employees.id</td><td>Identifies an employee row; target of four foreign keys.</td></tr>
+<tr><td>3</td><td>Primary key</td><td>leave_types.id</td><td>Identifies a leave type; target of two foreign keys.</td></tr>
+<tr><td>4</td><td>Primary key</td><td>leave_balances.id</td><td>Identifies an allowance row.</td></tr>
+<tr><td>5</td><td>Primary key</td><td>leave_requests.id</td><td>Identifies a request row.</td></tr>
+<tr><td>6</td><td>Foreign key</td><td>employees.department_id</td><td>Rule 5: at most one department; points nowhere if NULL.</td></tr>
+<tr><td>7</td><td>Foreign key</td><td>employees.manager_id</td><td>Rule 6: a manager is another employee.</td></tr>
+<tr><td>8</td><td>Foreign key</td><td>leave_balances.employee_id</td><td>Rule 10: an allowance belongs to a real employee.</td></tr>
+<tr><td>9</td><td>Foreign key</td><td>leave_balances.leave_type_id</td><td>Rules 9 and 10: an allowance is for a real leave type.</td></tr>
+<tr><td>10</td><td>Foreign key</td><td>leave_requests.employee_id</td><td>Rule 11: a request belongs to a real employee.</td></tr>
+<tr><td>11</td><td>Foreign key</td><td>leave_requests.leave_type_id</td><td>Rules 9 and 11: a request is for a real leave type.</td></tr>
+<tr><td>12</td><td>Foreign key</td><td>leave_requests.approver_id</td><td>Rule 17: the decider is a real employee; NULL until decided.</td></tr>
+<tr><td>13</td><td>Unique</td><td>departments.department_name</td><td>Rule 1: no duplicate department names.</td></tr>
+<tr><td>14</td><td>Unique</td><td>employees.work_email</td><td>Rule 4: email identifies a person.</td></tr>
+<tr><td>15</td><td>Unique</td><td>leave_types.type</td><td>Rule 9: each leave type exists once.</td></tr>
+<tr><td>16</td><td>Composite unique</td><td>leave_balances (employee_id, leave_type_id, consumed_year_in)</td><td>Rule 10: one allowance per person, type and year.</td></tr>
+<tr><td>17</td><td>Index</td><td>employees.department_id</td><td>Query 1: "everyone in this department".</td></tr>
+<tr><td>18</td><td>Index</td><td>employees.manager_id</td><td>Query 2: "this manager's reports".</td></tr>
+<tr><td>19</td><td>Index</td><td>leave_balances.employee_id</td><td>"All allowances for this person".</td></tr>
+<tr><td>20</td><td>Index</td><td>leave_requests.employee_id</td><td>"All requests for this person".</td></tr>
+<tr><td>21</td><td>Index</td><td>leave_requests.request_status</td><td>"Everything waiting on approval".</td></tr>
+</table></div>
+<p>The unique constraints (#13 to #16) each get an automatic index from SQLite, so <code>work_email</code> lookups and the "this person's balance for this type and year" lookup need no explicit index. The five explicit indexes cover the joins and filters the queries below use.</p>
+<h3 id="keys-delete">What happens on delete</h3>
+<p>The schema leaves <code>ON DELETE</code> at its default, <code>NO ACTION</code>. Deleting a department that still has employees, a manager who still has reports, or a leave type that any balance or request uses, fails at the foreign key. For departments and managers the application clears the children first by setting their column to NULL. A leave type in use should simply never be deleted. The alternative for the nullable columns is <code>ON DELETE SET NULL</code>, letting the database do the nulling itself.</p>
+</div></section>
+
+<section class="block reveal" id="queries" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">11</div><div><div class="sec-time">Does the design answer real questions?</div><h2>Seven questions, <em>eight queries</em></h2></div></div>
+<p class="big-p">A schema is good if the questions people actually ask are short queries. Named parameters (<code>:like_this</code>) are placeholders for values the caller supplies. Because leave types are rows now, every query that names a type joins to <code>leave_types</code> and filters on <code>lt.type</code> instead of comparing a string stored on the row.</p>
+<h3 id="queries-q1">1. Everyone in a department</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 1</span></div><pre><span class="kw">SELECT</span> id, name, job_title
+<span class="kw">FROM</span> employees
+<span class="kw">WHERE</span> department_id = <span class="nm">:department_id</span>
+<span class="kw">ORDER</span> <span class="kw">BY</span> name;</pre></div>
+<p>Uses <code>ix_employees_department_id</code>.</p>
+<h3 id="queries-q2">2. Reports of a manager</h3>
+<p>Direct reports first:</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 2a</span></div><pre><span class="kw">SELECT</span> id, name
+<span class="kw">FROM</span> employees
+<span class="kw">WHERE</span> manager_id = <span class="nm">:manager_id</span>;</pre></div>
+<p>Uses <code>ix_employees_manager_id</code>. Then the whole subtree at any depth, using a recursive common table expression. The <code>depth &lt; 20</code> guard stops the walk if a cycle ever got in (see <a class="link" href="#managers">the self-reference</a>).</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 2b</span></div><pre><span class="kw">WITH</span> <span class="kw">RECURSIVE</span> subtree(id, name, manager_id, depth) <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> id, name, manager_id, <span class="nm">0</span>
+    <span class="kw">FROM</span> employees
+    <span class="kw">WHERE</span> id = <span class="nm">:root_id</span>
+  <span class="kw">UNION</span> <span class="kw">ALL</span>
+    <span class="kw">SELECT</span> e.id, e.name, e.manager_id, s.depth + <span class="nm">1</span>
+    <span class="kw">FROM</span> employees e
+    <span class="kw">JOIN</span> subtree s <span class="kw">ON</span> e.manager_id = s.id
+    <span class="kw">WHERE</span> s.depth &lt; <span class="nm">20</span>
+)
+<span class="kw">SELECT</span> id, name, depth
+<span class="kw">FROM</span> subtree
+<span class="kw">WHERE</span> depth &gt; <span class="nm">0</span>
+<span class="kw">ORDER</span> <span class="kw">BY</span> depth, name;</pre></div>
+<p>Uses the primary key to start and the <code>manager_id</code> index at each level.</p>
+<h3 id="queries-q3">3. Remaining annual leave this year</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 3</span></div><pre><span class="kw">SELECT</span> lb.entitled_days - lb.used_days <span class="kw">AS</span> remaining
+<span class="kw">FROM</span> leave_balances lb
+<span class="kw">JOIN</span> leave_types lt <span class="kw">ON</span> lt.id = lb.leave_type_id
+<span class="kw">WHERE</span> lb.employee_id = <span class="nm">:employee_id</span>
+  <span class="kw">AND</span> lt.type = <span class="st">&#x27;annual&#x27;</span>
+  <span class="kw">AND</span> lb.consumed_year_in = <span class="kw">CAST</span>(<span class="fn">strftime</span>(<span class="st">&#x27;%Y&#x27;</span>, <span class="st">&#x27;now&#x27;</span>) <span class="kw">AS</span> <span class="kw">INTEGER</span>);</pre></div>
+<p>Joins <code>leave_balances</code> to <code>leave_types</code> so the question can say "annual" rather than a number. Uses the automatic index behind the composite unique, which begins with <code>employee_id</code>.</p>
+<h3 id="queries-q4">4. Requests waiting on a manager</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 4</span></div><pre><span class="kw">SELECT</span> r.id, e.name, lt.type, r.start_date, r.end_date
+<span class="kw">FROM</span> leave_requests r
+<span class="kw">JOIN</span> employees e <span class="kw">ON</span> e.id = r.employee_id
+<span class="kw">JOIN</span> leave_types lt <span class="kw">ON</span> lt.id = r.leave_type_id
+<span class="kw">WHERE</span> r.request_status = <span class="st">&#x27;submitted&#x27;</span>
+  <span class="kw">AND</span> e.manager_id = <span class="nm">:manager_id</span>
+<span class="kw">ORDER</span> <span class="kw">BY</span> r.id;</pre></div>
+<p>Uses the <code>request_status</code> index to find submitted rows, then the primary key to reach each employee and leave type. With no timestamp column, <code>id</code> orders the queue oldest first.</p>
+<h3 id="queries-q5">5. Who is on approved leave on a given day</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 5</span></div><pre><span class="kw">SELECT</span> e.id, e.name, lt.type
+<span class="kw">FROM</span> leave_requests r
+<span class="kw">JOIN</span> employees e <span class="kw">ON</span> e.id = r.employee_id
+<span class="kw">JOIN</span> leave_types lt <span class="kw">ON</span> lt.id = r.leave_type_id
+<span class="kw">WHERE</span> r.request_status = <span class="st">&#x27;approved&#x27;</span>
+  <span class="kw">AND</span> r.start_date &lt;= <span class="nm">:day</span>
+  <span class="kw">AND</span> r.end_date &gt;= <span class="nm">:day</span>;</pre></div>
+<p>Uses the <code>request_status</code> index; the date comparison then filters those rows.</p>
+<h3 id="queries-q6">6. One employee's leave history</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 6</span></div><pre><span class="kw">SELECT</span> r.id, lt.type, r.start_date, r.end_date, r.no_of_days, r.request_status
+<span class="kw">FROM</span> leave_requests r
+<span class="kw">JOIN</span> leave_types lt <span class="kw">ON</span> lt.id = r.leave_type_id
+<span class="kw">WHERE</span> r.employee_id = <span class="nm">:employee_id</span>
+<span class="kw">ORDER</span> <span class="kw">BY</span> r.start_date <span class="kw">DESC</span>;</pre></div>
+<p>Uses the <code>employee_id</code> index.</p>
+<h3 id="queries-q7">7. Total sick days company-wide last month</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>query 7</span></div><pre><span class="kw">SELECT</span> <span class="fn">COALESCE</span>(<span class="fn">SUM</span>(r.no_of_days), <span class="nm">0</span>) <span class="kw">AS</span> sick_days
+<span class="kw">FROM</span> leave_requests r
+<span class="kw">JOIN</span> leave_types lt <span class="kw">ON</span> lt.id = r.leave_type_id
+<span class="kw">WHERE</span> lt.type = <span class="st">&#x27;sick&#x27;</span>
+  <span class="kw">AND</span> r.request_status = <span class="st">&#x27;approved&#x27;</span>
+  <span class="kw">AND</span> r.start_date &gt;= <span class="fn">date</span>(<span class="st">&#x27;now&#x27;</span>, <span class="st">&#x27;start of month&#x27;</span>, <span class="st">&#x27;-1 month&#x27;</span>)
+  <span class="kw">AND</span> r.start_date &lt;  <span class="fn">date</span>(<span class="st">&#x27;now&#x27;</span>, <span class="st">&#x27;start of month&#x27;</span>);</pre></div>
+<p>Uses the <code>request_status</code> index. A request that straddles two months is counted in the month it starts; that is a reporting choice, not a schema limit.</p>
+<h3 id="queries-q8">8. The overlap check a new request must pass</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>overlap check</span></div><pre><span class="kw">SELECT</span> <span class="nm">1</span>
+<span class="kw">FROM</span> leave_requests
+<span class="kw">WHERE</span> employee_id = <span class="nm">:employee_id</span>
+  <span class="kw">AND</span> request_status <span class="kw">IN</span> (<span class="st">&#x27;submitted&#x27;</span>, <span class="st">&#x27;approved&#x27;</span>)
+  <span class="kw">AND</span> start_date &lt;= <span class="nm">:new_end</span>
+  <span class="kw">AND</span> end_date   &gt;= <span class="nm">:new_start</span>
+<span class="kw">LIMIT</span> <span class="nm">1</span>;</pre></div>
+<p>Any returned row means the new request collides with a live one, whatever its leave type, so this query needs no join. It uses the <code>employee_id</code> index.</p>
+<div class="def"><div class="lab">Why this predicate is right</div><p>Two date ranges overlap unless one ends before the other starts. So they do <em>not</em> overlap when <code>existing.end &lt; new.start</code> or <code>new.end &lt; existing.start</code>. Negate that with De Morgan and you get <code>existing.start &lt;= new.end AND existing.end &gt;= new.start</code>. Note the inclusive <code>&lt;=</code> and <code>&gt;=</code>: a request ending on Friday and another starting that same Friday do overlap. Most people write this one wrong by testing whether the new range's endpoints fall <em>inside</em> the old one, which misses the case where the new range swallows the old.</p></div>
+</div></section>
+
+<section class="block reveal" id="decisions" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">12</div><div><div class="sec-time">Every choice has a price</div><h2>Decisions and <em>trade-offs</em></h2></div></div>
+<p class="big-p">Each decision below is stated as the choice, what it costs, and what you would do instead.</p>
+<h3 id="decisions-used">used_days is stored, not summed</h3>
+<p><strong>Choice:</strong> keep a running <code>used_days</code> on the balance row. <strong>Gain:</strong> fast reads and a one-column remaining-days check. <strong>Cost:</strong> the number can drift out of step with the requests it summarises. <strong>Alternative:</strong> sum approved <code>no_of_days</code> on demand, which can never drift but costs a query per read. The atomic conditional <code>UPDATE</code> in Part 2 chapter 8 is what keeps the stored number honest.</p>
+<h3 id="decisions-wd">no_of_days is stored on the request</h3>
+<p><strong>Choice:</strong> save the count at request time. <strong>Cost:</strong> a number that could disagree with the dates if edited carelessly. <strong>Alternative:</strong> compute from the dates every time, at the price of old requests changing when the rules do.</p>
+<h3 id="decisions-nofk">No foreign key from requests to balances</h3>
+<p><strong>Choice:</strong> locate the balance by <code>(employee_id, leave_type_id)</code> plus the year of <code>start_date</code>. <strong>Gain:</strong> a request can be drafted before its balance row exists, and the two tables stay independent. <strong>Cost:</strong> the database cannot tell you that a request has no matching balance, and a request spanning New Year has to pick one year. <strong>Alternative:</strong> a <code>balance_id</code> column on the request.</p>
+<h3 id="decisions-lookup">Leave types as a lookup table, not an enum</h3>
+<p><strong>Choice:</strong> leave types live in <code>leave_types</code>, and both leave tables hold a <code>leave_type_id</code> foreign key. You chose this over an enum.</p>
+<div class="cmp-pair"><div class="cmp-card py"><div class="ct">Lookup table (chosen)</div><pre><span class="cm">-- adding a type is data, not a deploy</span>
+<span class="kw">INSERT</span> <span class="kw">INTO</span> leave_types (type, days)
+<span class="kw">VALUES</span> (<span class="st">'parental'</span>, <span class="nm">90</span>);
+
+<span class="cm">-- the database refuses a type that</span>
+<span class="cm">-- is not a row (foreign key)</span></pre></div><div class="cmp-card js"><div class="ct">Enum in a column</div><pre><span class="cm">-- values fixed in the application</span>
+leave_type  <span class="st">'annual'</span> | <span class="st">'sick'</span> | <span class="st">'unpaid'</span>
+
+<span class="cm">-- a new type needs a code change,</span>
+<span class="cm">-- a release, and sometimes a migration</span></pre></div></div>
+<p><strong>For the lookup table:</strong> adding a type is an <code>INSERT</code> by an HR admin with no release; the default allowance lives next to the name; a typo like <code>'anual'</code> cannot get in because the foreign key rejects an id that does not exist; and the type can be renamed in one place. <strong>For the enum:</strong> the code and the data cannot disagree, because the code is the list; there is no join, so balance and request queries are shorter and cheaper; and a type that the application knows about at compile time can be handled specially without a lookup. <strong>The cost you accepted:</strong> the database can no longer constrain the value itself, only that it is some row of <code>leave_types</code>, so a rule like "unpaid never has a balance" is application logic; and every balance and request query that names a type needs a <code>JOIN</code> to <code>leave_types</code>, as every query above shows. <strong>Alternative:</strong> keep a text column with a <code>CHECK (leave_type IN (...))</code>, which gets database enforcement back but is a schema change to extend.</p>
+<h3 id="decisions-text">Enum values as text</h3>
+<p><strong>Choice:</strong> lowercase strings in <code>role</code>, <code>emp_status</code> and <code>request_status</code>. Leave type is not in this list any more; it became a table, see the next decision. <strong>Cost:</strong> no database-level check that the value is one of the allowed set; the application enforces it. <strong>Alternative:</strong> a <code>CHECK</code> constraint or a lookup table with a foreign key.</p>
+<h3 id="decisions-terminated">terminated is a status, not a delete</h3>
+<p><strong>Choice:</strong> keep the row and set <code>emp_status = 'terminated'</code>. <strong>Why:</strong> requests, decisions and balances still point at that person, and deleting the row would either fail at the foreign key or orphan history. <strong>Cost:</strong> every "active people" query must filter on the status.</p>
+<h3 id="decisions-weekends">Weekends are the application's problem</h3>
+<p><strong>Choice:</strong> the schema stores a count; the application decides which days count. <strong>Why:</strong> weekend and holiday rules are policy, and policy changes faster than table definitions.</p>
+<h3 id="decisions-dept">One department per employee</h3>
+<p><strong>Choice:</strong> a nullable <code>department_id</code> on the employee. <strong>Cost:</strong> nobody can belong to two departments. <strong>Alternative:</strong> a junction table <code>employee_departments</code>, which is correct the day the first person genuinely sits in two.</p>
+</div></section>
+
+<section class="block reveal" id="sqlite" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">13</div><div><div class="sec-time">The engine under the schema</div><h2>What <em>SQLite</em> does differently</h2></div></div>
+<p class="big-p">SQLite is a database in a single file. It is excellent for a tutorial and a few surprises follow from that.</p>
+<h3 id="sqlite-types">Types are hints, not rules</h3>
+<p>SQLite uses dynamic type affinity. A <code>VARCHAR(100)</code> does <strong>not</strong> enforce 100 characters; the length lives in the application. There is also no native <code>DATE</code>, <code>DATETIME</code> or <code>BOOLEAN</code> type: dates are stored as ISO-8601 text (<code>'2026-03-15'</code>), which sorts and compares correctly as a string. That is why the overlap check can use plain <code>&lt;=</code> on dates.</p>
+<h3 id="sqlite-pk">INTEGER PRIMARY KEY is the rowid</h3>
+<p>A column declared exactly <code>INTEGER PRIMARY KEY</code> is an alias for SQLite's internal row id and fills itself in with the next number when you insert without one.</p>
+<h3 id="sqlite-fk">Foreign keys are off until you turn them on</h3>
+<div class="note"><div class="ico">⚠️</div><p><b>Foreign keys are not enforced unless you set <code>PRAGMA foreign_keys=ON</code> on every connection.</b> Without it, every <code>REFERENCES</code> on this page is documentation only. Part 1 chapter 5 turns it on for every connection.</p></div>
+<h3 id="sqlite-wal">WAL, and one writer at a time</h3>
+<p>WAL mode lets a GUI read the file while the server writes it. SQLite still allows one writer at a time, and the read-then-write race on a leave balance is what makes the fix in Part 2 chapter 8 worth teaching.</p>
+<h3 id="sqlite-alter">ALTER TABLE is limited</h3>
+<p><code>ALTER TABLE</code> can add a column but cannot drop or retype one. A real change to an existing column is a table rebuild: create the new table, copy the rows, drop the old one, rename.</p>
+<div class="industry"><div class="tag">What Postgres gives you instead</div><h4>Real types and real concurrency</h4><p>Postgres has genuine <code>DATE</code>, <code>TIMESTAMPTZ</code>, <code>BOOLEAN</code> and enum types, and enforces <code>VARCHAR(100)</code>. It has a <code>daterange</code> column type with an <em>exclusion constraint</em>, which would enforce the no-overlap rule (rule 16) inside the database instead of in a query the application must remember to run. <code>SELECT ... FOR UPDATE</code> locks a row for the length of a transaction, and writers run truly concurrently.</p><div class="cos"><span>daterange</span><span>EXCLUDE</span><span>FOR UPDATE</span><span>MVCC</span></div></div>
+</div></section>
+
+<section class="block reveal" id="ddl" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">14</div><div><div class="sec-time">Copy, paste, run</div><h2>The whole schema <em>in SQL</em></h2></div></div>
+<p class="big-p">All five tables in dependency order: a table appears only after every table it references. This is the same script as <code>HRMS.sql</code>.</p>
+<h3 id="ddl-script">schema.sql</h3>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>schema.sql</span></div><pre><span class="kw">PRAGMA</span> foreign_keys = <span class="kw">ON</span>;<span class="cm">   -- SQLite does not enforce FKs unless you ask, per connection</span>
+<span class="kw">PRAGMA</span> journal_mode = <span class="nm">WAL</span>;<span class="cm">  -- readers (a GUI) don&#x27;t block the writer</span>
+
+<span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> `departments` (
+	`id` <span class="kw">INTEGER</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,
+	`department_name` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">UNIQUE</span>,
+	`description` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>
+);
+
+<span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> `employees` (
+	`id` <span class="kw">INTEGER</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,
+	`name` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`work_email` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">UNIQUE</span>,
+	`job_title` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`date_joined` <span class="kw">DATE</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`salary` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`role` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`emp_status` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`department_id` <span class="kw">INTEGER</span>,
+	`manager_id` <span class="kw">INTEGER</span>,
+	`password_hash` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`department_id`) <span class="kw">REFERENCES</span> `departments`(`id`),
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`manager_id`) <span class="kw">REFERENCES</span> `employees`(`id`)
+);
+
+<span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> `leave_types` (
+	`id` <span class="kw">INTEGER</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,
+	`type` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">UNIQUE</span>,
+	`days` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span><span class="cm">                   -- default yearly entitlement for this type</span>
+);
+
+<span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> `leave_balances` (
+	`id` <span class="kw">INTEGER</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,
+	`employee_id` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`leave_type_id` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`entitled_days` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`used_days` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span> <span class="kw">DEFAULT</span> <span class="nm">0</span>,
+	`consumed_year_in` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`employee_id`) <span class="kw">REFERENCES</span> `employees`(`id`),
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`leave_type_id`) <span class="kw">REFERENCES</span> `leave_types`(`id`),
+
+	<span class="kw">UNIQUE</span> (`employee_id`, `leave_type_id`, `consumed_year_in`)
+);
+
+<span class="kw">CREATE</span> <span class="kw">TABLE</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> `leave_requests` (
+	`id` <span class="kw">INTEGER</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,
+	`employee_id` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`leave_type_id` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`start_date` <span class="kw">DATE</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`end_date` <span class="kw">DATE</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`reason` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`no_of_days` <span class="kw">INTEGER</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	`approver_id` <span class="kw">INTEGER</span>,
+	`request_status` <span class="kw">TEXT</span> <span class="kw">NOT</span> <span class="kw">NULL</span>,
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`employee_id`) <span class="kw">REFERENCES</span> `employees`(`id`),
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`leave_type_id`) <span class="kw">REFERENCES</span> `leave_types`(`id`),
+	<span class="kw">FOREIGN</span> <span class="kw">KEY</span> (`approver_id`) <span class="kw">REFERENCES</span> `employees`(`id`)
+);
+
+
+<span class="kw">CREATE</span> <span class="kw">INDEX</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> ix_employees_department_id   <span class="kw">ON</span> `employees` (`department_id`);
+<span class="kw">CREATE</span> <span class="kw">INDEX</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> ix_employees_manager_id      <span class="kw">ON</span> `employees` (`manager_id`);
+<span class="kw">CREATE</span> <span class="kw">INDEX</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> ix_leave_balances_employee   <span class="kw">ON</span> `leave_balances` (`employee_id`);
+<span class="kw">CREATE</span> <span class="kw">INDEX</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> ix_leave_requests_employee   <span class="kw">ON</span> `leave_requests` (`employee_id`);
+<span class="kw">CREATE</span> <span class="kw">INDEX</span> <span class="kw">IF</span> <span class="kw">NOT</span> <span class="kw">EXISTS</span> ix_leave_requests_status     <span class="kw">ON</span> `leave_requests` (`request_status`);</pre></div>
+<p>The allowed values for <code>role</code>, <code>emp_status</code> and <code>request_status</code> are enforced by the application, not by <code>CHECK</code> constraints, exactly as in the tables above. Leave types need no such rule: they are rows in <code>leave_types</code>, and the foreign keys keep every balance and request pointing at a real one.</p>
+</div></section>
+
+<section class="block reveal" id="seed" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">15</div><div><div class="sec-time">Known data to test against</div><h2>The <em>seed</em> data</h2></div></div>
+<p class="big-p">Three departments, five people and three leave types, the same rows the seed script in Part 1 inserts.</p>
+<h3 id="seed-departments">Departments</h3>
+<div class="wrapx"><table class="eptable ids"><tr><th>id</th><th>department_name</th><th>description</th></tr>
+<tr><td>1</td><td>Engineering</td><td>Builds the product</td></tr>
+<tr><td>2</td><td>People Ops</td><td>Hiring, leave and payroll</td></tr>
+<tr><td>3</td><td>Design</td><td>Product and brand design</td></tr></table></div>
+<h3 id="seed-employees">Employees</h3>
+<div class="wrapx"><table class="eptable ids" style="min-width:860px"><tr><th>id</th><th>name</th><th>work_email</th><th>role</th><th>job_title</th><th>date_joined</th><th>salary</th><th>emp_status</th><th>department_id</th><th>manager_id</th></tr>
+<tr><td>1</td><td>Maya Chen</td><td>maya@acme.test</td><td>hr_admin</td><td>Head of People</td><td>2019-02-11</td><td>120000</td><td>active</td><td>2</td><td>NULL</td></tr>
+<tr><td>2</td><td>Arjun Rao</td><td>arjun@acme.test</td><td>manager</td><td>Engineering Manager</td><td>2020-06-01</td><td>140000</td><td>active</td><td>1</td><td>NULL</td></tr>
+<tr><td>3</td><td>Priya Nair</td><td>priya@acme.test</td><td>employee</td><td>Senior Engineer</td><td>2021-03-15</td><td>118000</td><td>active</td><td>1</td><td>2</td></tr>
+<tr><td>4</td><td>Tomas Weber</td><td>tomas@acme.test</td><td>employee</td><td>Frontend Engineer</td><td>2022-09-05</td><td>98000</td><td>active</td><td>1</td><td>2</td></tr>
+<tr><td>5</td><td>Lena Park</td><td>lena@acme.test</td><td>employee</td><td>Product Designer</td><td>2023-01-16</td><td>92000</td><td>on_leave</td><td>3</td><td>1</td></tr></table></div>
+<h3 id="seed-leave-types">Leave types</h3>
+<div class="wrapx"><table class="eptable ids"><tr><th>id</th><th>type</th><th>days</th></tr>
+<tr><td>1</td><td>annual</td><td>20</td></tr><tr><td>2</td><td>sick</td><td>10</td></tr><tr><td>3</td><td>unpaid</td><td>0</td></tr></table></div>
+<p>Managers are inserted before their reports so the self-referencing foreign key always has a target. Leave types go in before any balance or request, since both point at them. Leave balances are seeded in Part 2, and <code>password_hash</code> is a placeholder until then.</p>
+</div></section>
+
+<section class="block reveal" id="limits" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">16</div><div><div class="sec-time">Honest boundaries</div><h2>What this design deliberately <em>does not do</em></h2></div></div>
+<p class="big-p">Each gap below is a conscious omission, with the shape of its fix.</p>
+<h3 id="limits-policy">leave_types.days has no year on it</h3>
+<p>A <code>leave_types</code> table now exists, so leave kinds and their default allowance are data. The gap that remains is that <code>days</code> is a single global number: annual is 20, for everyone, with no year attached. Change it to 22 next January and the default for 2026 is overwritten, so last year's entitlement can no longer be read from the types table, and nothing lets the allowance differ by office or by seniority either. Balances already issued keep their own <code>entitled_days</code>, which is why the history is not wiped from them, but the rule that produced those numbers is gone. The shape of a fix: key the allowance by year, either a <code>year</code> column on a policy table or a separate <code>leave_policies</code> table with employees assigned to a policy, and generate each January's balances from it. It would sit beside the five tables, not change them.</p>
+<h3 id="limits-list">The rest</h3>
+<ul>
+<li><strong>No public holidays table.</strong> The application cannot know a holiday that is not in its code.</li>
+<li><strong>No history of changes to title, salary or department.</strong> "What was Priya's title last June" is unanswerable.</li>
+<li><strong>No audit log and no timestamps.</strong> Who changed what, and when, is not recorded; the rows carry no created or decided time.</li>
+<li><strong>No half-days.</strong> <code>no_of_days</code> is an integer.</li>
+<li><strong>No attachments.</strong> A sick note has nowhere to live.</li>
+<li><strong>One company, one currency, one timezone.</strong> No tenant column, no currency code.</li>
+</ul>
+<div class="note"><div class="ico">🧱</div><p><b>Each of these is a table, not a rewrite.</b> The five tables stay.</p></div>
+</div></section>
+
+<section class="block reveal" id="trace" data-shipped="5"><div class="wrap">
+<div class="sec-head"><div class="sec-num">17</div><div><div class="sec-time">Closing the loop</div><h2>Requirement <em>to schema</em></h2></div></div>
+<p class="big-p">Every numbered rule from the first section, mapped to what implements it. "Application" means the schema cannot.</p>
+<h3 id="trace-table">The mapping</h3>
+<div class="wrapx"><table class="eptable ids"><tr><th>Rule</th><th>Implemented by</th></tr>
+<tr><td>1</td><td>departments.department_name NOT NULL, UNIQUE</td></tr>
+<tr><td>2</td><td>departments.description NOT NULL</td></tr>
+<tr><td>3</td><td>employees.name, work_email, job_title, date_joined, salary all NOT NULL</td></tr>
+<tr><td>4</td><td>employees.work_email UNIQUE</td></tr>
+<tr><td>5</td><td>employees.department_id, a single nullable foreign key</td></tr>
+<tr><td>6</td><td>employees.manager_id, self-referencing; NULL at the top</td></tr>
+<tr><td>7</td><td>employees.role NOT NULL; allowed values by application</td></tr>
+<tr><td>8</td><td>employees.emp_status NOT NULL; allowed values by application</td></tr>
+<tr><td>9</td><td>leave_types rows (type UNIQUE, days); leave_balances.leave_type_id and leave_requests.leave_type_id point at them</td></tr>
+<tr><td>10</td><td>leave_balances UNIQUE (employee_id, leave_type_id, consumed_year_in), with used_days default 0</td></tr>
+<tr><td>11</td><td>leave_requests.start_date, end_date, reason (all NOT NULL)</td></tr>
+<tr><td>12</td><td>leave_requests.request_status (indexed); legal transitions by application</td></tr>
+<tr><td>13</td><td>request_status value 'cancelled'; "before a decision" by application</td></tr>
+<tr><td>14</td><td>leave_balances.used_days; the increment by application</td></tr>
+<tr><td>15</td><td>Application (compares entitled_days and used_days)</td></tr>
+<tr><td>16</td><td>Application (overlap check, query 8)</td></tr>
+<tr><td>17</td><td>leave_requests.approver_id (NULL until decided)</td></tr>
+<tr><td>18</td><td>Application (uses employees.manager_id and employees.role)</td></tr>
+<tr><td>19</td><td>Application (uses employees.manager_id and employees.role)</td></tr>
+<tr><td>20</td><td>Application (uses employees.manager_id and employees.role)</td></tr>
+</table></div>
+<div class="takeaways"><div class="lab">Takeaways</div><ul>
+<li>Five tables: departments, employees, leave_types, leave_balances, leave_requests.</li>
+<li>For one-to-many, the foreign key always lives on the many side.</li>
+<li><code>leave_balances</code> is the junction between employees and leave types, carrying <code>entitled_days</code>, <code>used_days</code> and <code>consumed_year_in</code>; its composite unique is the page's key idea.</li><li>Leave types are rows, so adding one is an <code>INSERT</code>; the price is a <code>JOIN</code> in every query that names a type.</li>
+<li>A self-referencing foreign key models a tree but cannot forbid a cycle.</li>
+<li>Store money as integers, dates as ISO text (DATE columns) in SQLite, and turn foreign keys on per connection.</li>
+<li>Whatever the schema cannot enforce, the application must; know which rules are which.</li>
+</ul></div>
+<div class="recap"><span>Now go read:</span><span><a href="part-1-employees-api.html#ch3">Part 1, chapter 3</a></span><span><a href="part-2-auth-leave-tests.html#ch7">Part 2, chapter 7</a></span></div>
+</div></section>
+<div id="tracker"><span id="trackTxt"></span><div class="bar"><i id="trackFill"></i></div></div>
+<footer><div class="wrap">FastAPI HR build · data model · back to <a class="link" href="part-1-employees-api.html">Part 1</a> or <a class="link" href="part-2-auth-leave-tests.html">Part 2</a> · syntax lookups live in the <a class="link" href="python-for-js-devs.html">cheatsheet</a>.</div></footer>
+<script>
+const prog=document.getElementById('progress'),topnav=document.getElementById('topnav');
+addEventListener('scroll',()=>{const h=document.documentElement,sc=h.scrollTop,max=h.scrollHeight-h.clientHeight;prog.style.width=(max>0?sc/max*100:0)+'%';topnav.classList.toggle('show',sc>620);});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -6% 0px'});
+
+/* ---------- contents sidebar ---------- */
+(function(){
+  const sb=document.getElementById('sidebar'),nav=sb.querySelector('.sb-nav'),
+        tog=document.getElementById('sbToggle'),scrim=document.getElementById('sbScrim');
+  const targets=[];
+  document.querySelectorAll('section.block[id]').forEach(sec=>{
+    const h2=sec.querySelector('h2'); if(!h2)return;
+    const badge=sec.querySelector('.sec-num');
+    const a=document.createElement('a');
+    a.className='sb-sec'; a.href='#'+sec.id;
+    a.innerHTML='<span class="n">'+(badge?badge.textContent.trim():'')+'</span><span>'+h2.textContent.trim()+'</span>';
+    nav.appendChild(a); targets.push({a,el:sec});
+    sec.querySelectorAll('h3[id]').forEach(sub=>{
+      const b=document.createElement('a');
+      b.className='sb-sub'; b.href='#'+sub.id;
+      b.textContent=sub.textContent.trim().replace(/\s+/g,' ');
+      nav.appendChild(b); targets.push({a:b,el:sub});
+    });
+  });
+  function close(){sb.classList.remove('open');scrim.classList.remove('on');}
+  tog.addEventListener('click',()=>{const o=sb.classList.toggle('open');scrim.classList.toggle('on',o);});
+  scrim.addEventListener('click',close);
+  nav.addEventListener('click',e=>{if(e.target.closest('a')&&innerWidth<1400)close();});
+  addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  const spy=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const hit=targets.find(t=>t.el===e.target); if(!hit)return;
+      targets.forEach(t=>t.a.classList.remove('cur'));
+      hit.a.classList.add('cur');
+      const top=hit.a.offsetTop;
+      if(top<sb.scrollTop||top>sb.scrollTop+sb.clientHeight-50)sb.scrollTop=top-120;
+    });
+  },{rootMargin:'-18% 0px -70% 0px'});
+  targets.forEach(t=>spy.observe(t.el));
+})();
+
+/* ---------- hero table picker ---------- */
+(function(){
+  const T={"departments": ["id               INTEGER  PRIMARY KEY", "department_name  TEXT     NOT NULL UNIQUE", "description      TEXT     NOT NULL"], "employees": ["id               INTEGER  PRIMARY KEY", "name             TEXT     NOT NULL", "work_email       TEXT     NOT NULL UNIQUE", "job_title        TEXT     NOT NULL", "date_joined      DATE     NOT NULL", "salary           INTEGER  NOT NULL", "role             TEXT     NOT NULL", "emp_status       TEXT     NOT NULL", "department_id    INTEGER  NULL  -> departments.id", "manager_id       INTEGER  NULL  -> employees.id", "password_hash    TEXT     NOT NULL"], "leave_types": ["id               INTEGER  PRIMARY KEY", "type             TEXT     NOT NULL UNIQUE", "days             INTEGER  NOT NULL"], "leave_balances": ["id               INTEGER  PRIMARY KEY", "employee_id      INTEGER  NOT NULL -> employees.id", "leave_type_id    INTEGER  NOT NULL -> leave_types.id", "entitled_days    INTEGER  NOT NULL", "used_days        INTEGER  NOT NULL DEFAULT 0", "consumed_year_in INTEGER  NOT NULL"], "leave_requests": ["id               INTEGER  PRIMARY KEY", "employee_id      INTEGER  NOT NULL -> employees.id", "leave_type_id    INTEGER  NOT NULL -> leave_types.id", "start_date       DATE     NOT NULL", "end_date         DATE     NOT NULL", "reason           TEXT     NOT NULL", "no_of_days       INTEGER  NOT NULL", "approver_id      INTEGER  NULL  -> employees.id", "request_status   TEXT     NOT NULL"]};
+  const out=document.getElementById('tryOut'),st=document.getElementById('tryStat'),bs=document.querySelectorAll('.try button');
+  function show(k){bs.forEach(b=>b.classList.toggle('on',b.dataset.k===k));st.textContent=k+'  ('+T[k].length+' columns)';out.textContent=T[k].join('\n')+(k==='leave_balances'?'\nUNIQUE (employee_id, leave_type_id, consumed_year_in)':'');}
+  bs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.k)));show('departments');
+})();
+
+/* ---------- table tracker ---------- */
+(function(){
+  const pill=document.getElementById('trackTxt'),fill=document.getElementById('trackFill');
+  function set(n){pill.innerHTML='<b>'+n+'</b> of 5 tables';fill.style.width=(n/5*100)+'%';}
+  set(0);
+  const secs=[...document.querySelectorAll('section.block[data-shipped]')];
+  const t=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)set(+e.target.dataset.shipped);}),{rootMargin:'-30% 0px -60% 0px'});
+  secs.forEach(s=>t.observe(s));
+  addEventListener('scroll',()=>{if(scrollY<300)set(0);});
+})();
+</script>
+</body>
+</html>
