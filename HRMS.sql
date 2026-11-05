@@ -21,9 +21,17 @@ CREATE TABLE IF NOT EXISTS `employees` (
 	`emp_status` TEXT NOT NULL,
 	`department_id` INTEGER,                  -- [CHANGED] now nullable
 	`manager_id` INTEGER,
-	`password_hash` TEXT NOT NULL,            -- [ADDED] required by Part 2 auth
 	FOREIGN KEY (`department_id`) REFERENCES `departments`(`id`),
 	FOREIGN KEY (`manager_id`) REFERENCES `employees`(`id`)
+);
+
+-- [REV3] Credentials live in their own table, not on the HR record.
+-- employee_id is BOTH primary key and foreign key: that is what makes it a true 1:1.
+-- No row = this person has no login yet (replaces the "!unset" sentinel).
+CREATE TABLE IF NOT EXISTS `employee_credentials` (
+	`employee_id` INTEGER PRIMARY KEY,
+	`password_hash` TEXT NOT NULL,
+	FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `leave_types` (    -- [CHANGED] was `leave`

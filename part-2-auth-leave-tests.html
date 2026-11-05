@@ -420,11 +420,27 @@ JWT_SECRET=replace-me-with-64-hex-chars</pre></div>
     <li><b><code>sub</code> and <code>exp</code>.</b> Two registered claims are all we need: who the token is about, and when it dies. PyJWT checks <code>exp</code> for you inside <code>decode</code>.</li>
     <li><b>Always pass <code>algorithms=[...]</code> on decode.</b> It is a list on purpose; accepting whatever the token header claims is a classic vulnerability.</li>
   </ul>
-  <p><a class="chip-syn" href="python-for-js-devs.html#imports"># new: from x import y &rarr; cheatsheet</a> <a class="chip-syn" href="python-for-js-devs.html#functions"># new: def + return type &rarr; cheatsheet</a> Seed users need passwords too. In <code>seed.py</code>, add one line inside the loop that creates employees so every seeded person can log in with the same dev password:</p>
+  <p><a class="chip-syn" href="python-for-js-devs.html#imports"># new: from x import y &rarr; cheatsheet</a> <a class="chip-syn" href="python-for-js-devs.html#functions"># new: def + return type &rarr; cheatsheet</a> Passwords do not live on the <code>employees</code> row. They get their own table, so first the model:</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/models/credential.py</span></div><pre><span class="kw">from</span> sqlalchemy <span class="kw">import</span> <span class="nm">ForeignKey</span>, <span class="nm">String</span>
+<span class="kw">from</span> sqlalchemy.orm <span class="kw">import</span> <span class="nm">Mapped</span>, <span class="nm">mapped_column</span>
+
+<span class="kw">from</span> app.models.base <span class="kw">import</span> <span class="nm">Base</span>
+
+
+<span class="kw">class</span> <span class="fn">EmployeeCredential</span>(<span class="nm">Base</span>):
+    __tablename__ = <span class="st">"employee_credentials"</span>
+
+    <span class="cm"># the primary key IS the foreign key: one employee can have at most one row</span>
+    employee_id: <span class="nm">Mapped</span>[int] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>, ondelete=<span class="st">"CASCADE"</span>), primary_key=<span class="kw">True</span>)
+    password_hash: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>))</pre></div>
+<p>Export it from <code>app/models/__init__.py</code> so <code>Base.metadata</code> sees it, and add the other half of the link to <code>Employee</code> in <code>models/employee.py</code> (<code>from app.models.credential import EmployeeCredential</code> at the top):</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/models/employee.py (added to Employee)</span></div><pre>    credential: <span class="nm">Mapped</span>[<span class="nm">EmployeeCredential</span> | <span class="kw">None</span>] = <span class="fn">relationship</span>(uselist=<span class="kw">False</span>, lazy=<span class="st">"joined"</span>)   <span class="cm"># 1:1; joined because async code cannot lazy-load</span></pre></div>
+<div class="note"><b>Why a separate table?</b> The HR record and the login have different lifecycles: someone can be hired before they have a password, and a password can be reset without touching their HR data. <code>SELECT * FROM employees</code> can no longer leak a hash, and making <code>employee_id</code> both primary key and foreign key is what turns this into a real 1:1, because a second credential row for the same person is impossible. An employee with no row simply has no login yet. Compare the shapes in <a class="link" href="db-design.html#cardinality">1:1 vs 1:N vs N:M</a> and read the trade-off in <a class="link" href="db-design.html#decisions">the design decisions</a>.</div>
+<p>Seed users need passwords too. In <code>seed.py</code>, after each employee is added and flushed, insert a credential row so every seeded person can log in with the same dev password:</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/seed.py</span></div><pre><span class="kw">from</span> app.core.security <span class="kw">import</span> hash_password
 
-<span class="cm"># ...inside the code that builds each Employee(...):</span>
-<span class="cm">#     password_hash=hash_password("password123"),</span></pre></div>
+<span class="cm"># ...after db.add(employee) and await db.flush() for each Employee(...):</span>
+<span class="cm">#     db.add(EmployeeCredential(employee_id=employee.id, password_hash=hash_password("password123")))</span></pre></div>
 
   <h3 id="c6-schemas">Auth schemas</h3>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/app/schemas/auth.py</span></div><pre><span class="kw">from</span> pydantic <span class="kw">import</span> <span class="nm">BaseModel</span>, <span class="nm">EmailStr</span>, <span class="nm">Field</span>
@@ -467,6 +483,7 @@ JWT_SECRET=replace-me-with-64-hex-chars</pre></div>
 
 <span class="kw">from</span> app.core.security <span class="kw">import</span> create_access_token, hash_password, verify_password
 <span class="kw">from</span> app.deps <span class="kw">import</span> <span class="nm">CurrentUser</span>, <span class="nm">DbSession</span>
+<span class="kw">from</span> app.models.credential <span class="kw">import</span> <span class="nm">EmployeeCredential</span>
 <span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">Employee</span>, <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
 <span class="kw">from</span> app.schemas.auth <span class="kw">import</span> <span class="nm">RegisterRequest</span>, <span class="nm">Token</span>
 <span class="kw">from</span> app.schemas.employee <span class="kw">import</span> <span class="nm">EmployeeRead</span>, <span class="nm">EmployeeReadWithSalary</span>
@@ -483,7 +500,6 @@ me_router = <span class="fn">APIRouter</span>(tags=[<span class="st">"me"</span>
     employee = <span class="fn">Employee</span>(
         name=body.name,
         work_email=body.work_email,
-        password_hash=<span class="fn">hash_password</span>(body.password),
         role=<span class="nm">Role</span>.<span class="nm">EMPLOYEE</span>,                      <span class="cm"># never client-controlled</span>
         job_title=<span class="st">"New hire"</span>,
         date_joined=date.<span class="fn">today</span>(),
@@ -491,10 +507,12 @@ me_router = <span class="fn">APIRouter</span>(tags=[<span class="st">"me"</span>
         emp_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>,
     )
     db.<span class="fn">add</span>(employee)
-    <span class="kw">await</span> db.<span class="fn">commit</span>()
+    <span class="kw">await</span> db.<span class="fn">flush</span>()                             <span class="cm"># INSERTs the employee so employee.id exists; nothing is committed yet</span>
+    db.<span class="fn">add</span>(<span class="fn">EmployeeCredential</span>(employee_id=employee.id, password_hash=<span class="fn">hash_password</span>(body.password)))
+    <span class="kw">await</span> db.<span class="fn">commit</span>()                            <span class="cm"># one transaction: both rows land, or neither does</span>
     <span class="kw">await</span> db.<span class="fn">refresh</span>(employee)
     <span class="kw">return</span> employee</pre></div>
-  <p>The return annotation is <code>Employee</code> (the ORM row) while <code>response_model</code> is <code>EmployeeRead</code>. The handler returns the row; FastAPI filters it through the schema, so <code>password_hash</code> cannot leave. More on that in a moment.</p>
+  <p>The return annotation is <code>Employee</code> (the ORM row) while <code>response_model</code> is <code>EmployeeRead</code>. The handler returns the row; FastAPI filters it through the schema, and the hash is not even a column on that row. More on that in a moment.</p>
 
   <h3 id="c6-login">POST /auth/login &mdash; the one form-encoded endpoint</h3>
   <div class="cmp-pair">
@@ -521,15 +539,17 @@ me_router = <span class="fn">APIRouter</span>(tags=[<span class="st">"me"</span>
     db: <span class="nm">DbSession</span>,
 ) -&gt; <span class="nm">Token</span>:
     employee = <span class="kw">await</span> db.<span class="fn">scalar</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == form.username))
-    <span class="kw">if</span> employee <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> <span class="kw">not</span> <span class="fn">verify_password</span>(form.password, employee.password_hash):
-        <span class="cm"># one message for both cases: do not reveal which emails exist</span>
+    <span class="cm"># Employee.credential is joined in, so this is one JOIN query; None means no credential row</span>
+    password_hash = employee.credential.password_hash <span class="kw">if</span> employee <span class="kw">and</span> employee.credential <span class="kw">else</span> <span class="kw">None</span>
+    <span class="kw">if</span> password_hash <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> <span class="kw">not</span> <span class="fn">verify_password</span>(form.password, password_hash):
+        <span class="cm"># unknown email, no credential row, wrong password: identical 401, nothing to tell them apart</span>
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(
             status_code=<span class="nm">401</span>,
             detail=<span class="st">"Incorrect email or password"</span>,
             headers={<span class="st">"WWW-Authenticate"</span>: <span class="st">"Bearer"</span>},
         )
     <span class="kw">return</span> <span class="fn">Token</span>(access_token=<span class="fn">create_access_token</span>(employee.id))</pre></div>
-  <p><a class="chip-syn" href="python-for-js-devs.html#kwargs"># new: keyword args &rarr; cheatsheet</a> <code>Depends()</code> with no argument means &ldquo;build the class in the annotation from the request&rdquo;. FastAPI reads the form fields and hands you an <code>OAuth2PasswordRequestForm</code> instance.</p>
+  <p><a class="chip-syn" href="python-for-js-devs.html#kwargs"># new: keyword args &rarr; cheatsheet</a> An employee with no credential row fails login exactly like a wrong password, with the same status and message, so the response never reveals whether a person exists or merely has no password. <code>Depends()</code> with no argument means &ldquo;build the class in the annotation from the request&rdquo;. FastAPI reads the form fields and hands you an <code>OAuth2PasswordRequestForm</code> instance.</p>
 
   <h3 id="c6-current-user">Reading the token: <code>get_current_user</code></h3>
   <p>In Express this is the middleware that verifies the header and assigns <code>req.user</code>. Here it is a function whose <em>return value</em> is the user. Add to <code>deps.py</code>:</p>
@@ -687,10 +707,10 @@ async def delete_employee(
       <div class="col fa"><div class="ct">FastAPI</div><pre>@router.get("/{employee_id}",
             response_model=EmployeeRead)
 async def get_employee(...) -&gt; Employee:
-    return employee   # the ORM row, with
-                      # password_hash on it</pre></div>
+    return employee   # the ORM row; the hash is
+                      # in another table</pre></div>
     </div>
-    <p>In Express, a field leaks the moment someone adds it to the object and forgets to strip it by hand. In FastAPI the handler returns whatever it likes and the <strong>response schema decides what leaves the building</strong>: it keeps only the declared fields. <code>password_hash</code> is on the <code>Employee</code> row but not on any read schema, so no future edit to a query can leak it. The same mechanism is why the salary rule above is a one-line schema choice, not a scattered <code>delete obj.salary</code>.</p>
+    <p>In Express, a field leaks the moment someone adds it to the object and forgets to strip it by hand. In FastAPI the handler returns whatever it likes and the <strong>response schema decides what leaves the building</strong>: it keeps only the declared fields. The stronger guarantee is structural: <code>password_hash</code> lives in <code>employee_credentials</code>, so it is not in the table being serialised at all, and neither <code>SELECT * FROM employees</code> nor a careless schema edit can leak it. The same mechanism is why the salary rule above is a one-line schema choice, not a scattered <code>delete obj.salary</code>.</p>
   </div>
 
   <div class="takeaways"><div class="lab">Chapter 6 in four lines</div><ul>
@@ -1622,6 +1642,7 @@ testpaths = tests</pre></div>
 <span class="kw">from</span> app.deps <span class="kw">import</span> get_db
 <span class="kw">from</span> app.main <span class="kw">import</span> app
 <span class="kw">from</span> app.models.base <span class="kw">import</span> <span class="nm">Base</span>
+<span class="kw">from</span> app.models.credential <span class="kw">import</span> <span class="nm">EmployeeCredential</span>
 <span class="kw">from</span> app.models.employee <span class="kw">import</span> <span class="nm">Employee</span>, <span class="nm">EmploymentStatus</span>, <span class="nm">Role</span>
 <span class="kw">from</span> app.models.leave <span class="kw">import</span> <span class="nm">LeaveBalance</span>, <span class="nm">LeaveType</span>
 
@@ -1658,11 +1679,13 @@ testpaths = tests</pre></div>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>hr-api/tests/conftest.py</span></div><pre><span class="kw">async</span> <span class="kw">def</span> <span class="fn">make_client</span>(session_factory, *, name: str, role: <span class="nm">Role</span>, manager_id: int | <span class="kw">None</span> = <span class="kw">None</span>):
     <span class="kw">async</span> <span class="kw">with</span> <span class="fn">session_factory</span>() <span class="kw">as</span> db:
         person = <span class="fn">Employee</span>(
-            name=name, work_email=<span class="st">f"{name.lower()}@test.dev"</span>, password_hash=<span class="fn">hash_password</span>(<span class="nm">PASSWORD</span>),
+            name=name, work_email=<span class="st">f"{name.lower()}@test.dev"</span>,
             role=role, job_title=<span class="st">"Tester"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2020</span>, <span class="nm">1</span>, <span class="nm">1</span>), salary=50_000,
             emp_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ACTIVE</span>, manager_id=manager_id,
         )
         db.<span class="fn">add</span>(person)
+        <span class="kw">await</span> db.<span class="fn">flush</span>()
+        db.<span class="fn">add</span>(<span class="fn">EmployeeCredential</span>(employee_id=person.id, password_hash=<span class="fn">hash_password</span>(<span class="nm">PASSWORD</span>)))
         <span class="kw">await</span> db.<span class="fn">commit</span>()
         <span class="kw">await</span> db.<span class="fn">refresh</span>(person)
 

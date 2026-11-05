@@ -1,179 +1,198 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1560 1070" width="1560" height="1070">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1860 1070" width="1860" height="1070">
 <title>HR system ERD</title>
-<rect x="0" y="0" width="1560" height="1070" fill="#fdf7f0"/>
-<text x="40" y="44" font-size="22" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">HR system schema (SQLite) - 5 tables</text>
-<text x="40" y="66" font-size="13" text-anchor="start" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Rendered from HRMS.sql, revision 2</text>
-<text x="720" y="100" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">PK = primary key  ·  FK = foreign key  ·  NULL = column allows NULL</text>
-<text x="720" y="124" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Crow's foot = many side of the relationship</text>
-<text x="720" y="148" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Bar = one side  ·  Circle = optional (FK may be NULL)</text>
-<text x="720" y="172" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">leave_balances is the junction between employees and leave_types</text>
-<rect class="box" id="departments" x="240" y="70" width="300" height="118" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
-<rect x="240" y="70" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
-<text x="252" y="93" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">departments</text>
-<rect x="248" y="109" width="26" height="18" rx="3" fill="#ff5b35"/>
-<text x="261" y="122" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
-<text x="284" y="123" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
-<text x="530" y="123" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="241" y="132" width="298" height="28" fill="#fbf2e8"/>
-<text x="284" y="151" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">department_name</text>
-<text x="530" y="151" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT UNIQUE</text>
-<text x="284" y="179" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">description</text>
-<text x="530" y="179" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<rect class="box" id="employees" x="240" y="270" width="300" height="342" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
-<rect x="240" y="270" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
-<text x="252" y="293" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">employees</text>
-<rect x="248" y="309" width="26" height="18" rx="3" fill="#ff5b35"/>
-<text x="261" y="322" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
-<text x="284" y="323" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
-<text x="530" y="323" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="241" y="332" width="298" height="28" fill="#fbf2e8"/>
-<text x="284" y="351" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">name</text>
-<text x="530" y="351" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<text x="284" y="379" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">work_email</text>
-<text x="530" y="379" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT UNIQUE</text>
-<rect x="241" y="388" width="298" height="28" fill="#fbf2e8"/>
-<text x="284" y="407" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">job_title</text>
-<text x="530" y="407" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<text x="284" y="435" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">date_joined</text>
-<text x="530" y="435" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">DATE</text>
-<rect x="241" y="444" width="298" height="28" fill="#fbf2e8"/>
-<text x="284" y="463" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">salary</text>
-<text x="530" y="463" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<text x="284" y="491" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">role</text>
-<text x="530" y="491" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<rect x="241" y="500" width="298" height="28" fill="#fbf2e8"/>
-<text x="284" y="519" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">emp_status</text>
-<text x="530" y="519" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<rect x="248" y="533" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="261" y="546" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="284" y="547" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">department_id</text>
-<text x="530" y="547" font-size="12" text-anchor="end" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="italic" data-fam="s">INTEGER NULL</text>
-<rect x="241" y="556" width="298" height="28" fill="#fbf2e8"/>
-<rect x="248" y="561" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="261" y="574" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="284" y="575" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">manager_id</text>
-<text x="530" y="575" font-size="12" text-anchor="end" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="italic" data-fam="s">INTEGER NULL</text>
-<text x="284" y="603" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">password_hash</text>
-<text x="530" y="603" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<rect class="box" id="leave_balances" x="720" y="270" width="300" height="272" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
-<rect x="720" y="270" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
-<text x="732" y="293" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">leave_balances</text>
-<text x="1008" y="292" font-size="12" text-anchor="end" fill="#ffffff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">JUNCTION</text>
-<rect x="728" y="309" width="26" height="18" rx="3" fill="#ff5b35"/>
-<text x="741" y="322" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
-<text x="764" y="323" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
-<text x="1010" y="323" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="332" width="298" height="28" fill="#fbf2e8"/>
-<rect x="728" y="337" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="741" y="350" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="764" y="351" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
-<text x="1010" y="351" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="728" y="365" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="741" y="378" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="764" y="379" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
-<text x="1010" y="379" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="388" width="298" height="28" fill="#fbf2e8"/>
-<text x="764" y="407" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">entitled_days</text>
-<text x="1010" y="407" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<text x="764" y="435" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">used_days</text>
-<text x="1010" y="435" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="444" width="298" height="28" fill="#fbf2e8"/>
-<text x="764" y="463" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">consumed_year_in</text>
-<text x="1010" y="463" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="472" width="298" height="69" fill="#fff0d9"/>
-<line x1="720" y1="472" x2="1020" y2="472" stroke="#211c18" stroke-width="1.5"/>
-<text x="734" y="494" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">UNIQUE (employee_id,</text>
-<text x="734" y="512" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">       leave_type_id,</text>
-<text x="734" y="530" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">       consumed_year_in)</text>
-<rect class="box" id="leave_types" x="1200" y="270" width="300" height="118" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
-<rect x="1200" y="270" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
-<text x="1212" y="293" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">leave_types</text>
-<rect x="1208" y="309" width="26" height="18" rx="3" fill="#ff5b35"/>
-<text x="1221" y="322" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
-<text x="1244" y="323" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
-<text x="1490" y="323" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="1201" y="332" width="298" height="28" fill="#fbf2e8"/>
-<text x="1244" y="351" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">type</text>
-<text x="1490" y="351" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT UNIQUE</text>
-<text x="1244" y="379" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">days</text>
-<text x="1490" y="379" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect class="box" id="leave_requests" x="720" y="720" width="300" height="286" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
-<rect x="720" y="720" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
-<text x="732" y="743" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">leave_requests</text>
-<rect x="728" y="759" width="26" height="18" rx="3" fill="#ff5b35"/>
-<text x="741" y="772" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
-<text x="764" y="773" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
-<text x="1010" y="773" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="782" width="298" height="28" fill="#fbf2e8"/>
-<rect x="728" y="787" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="741" y="800" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="764" y="801" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
-<text x="1010" y="801" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="728" y="815" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="741" y="828" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="764" y="829" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
-<text x="1010" y="829" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="838" width="298" height="28" fill="#fbf2e8"/>
-<text x="764" y="857" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">start_date</text>
-<text x="1010" y="857" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">DATE</text>
-<text x="764" y="885" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">end_date</text>
-<text x="1010" y="885" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">DATE</text>
-<rect x="721" y="894" width="298" height="28" fill="#fbf2e8"/>
-<text x="764" y="913" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">reason</text>
-<text x="1010" y="913" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<text x="764" y="941" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">no_of_days</text>
-<text x="1010" y="941" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
-<rect x="721" y="950" width="298" height="28" fill="#fbf2e8"/>
-<rect x="728" y="955" width="26" height="18" rx="3" fill="#211c18"/>
-<text x="741" y="968" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
-<text x="764" y="969" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">approver_id</text>
-<text x="1010" y="969" font-size="12" text-anchor="end" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="italic" data-fam="s">INTEGER NULL</text>
-<text x="764" y="997" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">request_status</text>
-<text x="1010" y="997" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
-<polyline class="rel" points="480,270 480,188" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="480" y1="254" x2="472" y2="270" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="480" y1="254" x2="488" y2="270" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="480" y1="254" x2="480" y2="270" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="472" y1="197" x2="488" y2="197" stroke="#ff5b35" stroke-width="2.5"/>
-<circle cx="480" cy="208" r="5" fill="#fdf7f0" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="492" y="236" font-size="12" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">department_id (optional)</text>
-<polyline class="rel" points="240,570.0 190,570.0 190,318.0 240,318.0" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="224" y1="570.0" x2="240" y2="578.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="224" y1="570.0" x2="240" y2="562.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="224" y1="570.0" x2="240" y2="570.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="231" y1="310.0" x2="231" y2="326.0" stroke="#ff5b35" stroke-width="2.5"/>
-<circle cx="220" cy="318.0" r="5" fill="#fdf7f0" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="182" y="440" font-size="12" text-anchor="end" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">manager_id</text>
-<text x="182" y="458" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">(self, optional)</text>
-<polyline class="rel" points="720,346.0 600,346.0 600,318.0 540,318.0" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="704" y1="346.0" x2="720" y2="354.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="704" y1="346.0" x2="720" y2="338.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="704" y1="346.0" x2="720" y2="346.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="549" y1="326.0" x2="549" y2="310.0" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="660" y="338.0" font-size="12" text-anchor="middle" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
-<polyline class="rel" points="1020,374.0 1140,374.0 1140,318.0 1200,318.0" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="1036" y1="374.0" x2="1020" y2="366.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="1036" y1="374.0" x2="1020" y2="382.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="1036" y1="374.0" x2="1020" y2="374.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="1191" y1="310.0" x2="1191" y2="326.0" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="1080" y="396.0" font-size="12" text-anchor="middle" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
-<polyline class="rel" points="720,796.0 380,796.0 380,612" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="704" y1="796.0" x2="720" y2="804.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="704" y1="796.0" x2="720" y2="788.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="704" y1="796.0" x2="720" y2="796.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="372" y1="621" x2="388" y2="621" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="694" y="786.0" font-size="12" text-anchor="end" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
-<polyline class="rel" points="720,964.0 300,964.0 300,612" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="704" y1="964.0" x2="720" y2="972.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="704" y1="964.0" x2="720" y2="956.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="704" y1="964.0" x2="720" y2="964.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="292" y1="621" x2="308" y2="621" stroke="#ff5b35" stroke-width="2.5"/>
-<circle cx="300" cy="632" r="5" fill="#fdf7f0" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="694" y="954.0" font-size="12" text-anchor="end" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">approver_id (optional)</text>
-<polyline class="rel" points="1020,824.0 1350,824.0 1350,388" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
-<line x1="1036" y1="824.0" x2="1020" y2="816.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="1036" y1="824.0" x2="1020" y2="832.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="1036" y1="824.0" x2="1020" y2="824.0" stroke="#ff5b35" stroke-width="2.5"/>
-<line x1="1342" y1="397" x2="1358" y2="397" stroke="#ff5b35" stroke-width="2.5"/>
-<text x="1046" y="814.0" font-size="12" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
+<rect x="0" y="0" width="1860" height="1070" fill="#fdf7f0"/>
+<text x="40" y="44" font-size="22" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">HR system schema (SQLite) - 6 tables</text>
+<text x="40" y="66" font-size="13" text-anchor="start" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Rendered from HRMS.sql, revision 3</text>
+<text x="1020" y="100" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">PK = primary key · FK = foreign key · NULL = column allows NULL</text>
+<text x="1020" y="124" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Crow's foot = many side of the relationship</text>
+<text x="1020" y="148" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Bar = one side · Circle = optional (FK may be NULL)</text>
+<text x="1020" y="172" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">Bar + bar = one-to-one (employee_credentials only)</text>
+<text x="1020" y="196" font-size="13" text-anchor="start" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">leave_balances is the junction between employees and leave_types</text>
+<rect class="box" id="departments" x="540" y="70" width="300" height="118" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
+<rect x="540" y="70" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
+<text x="552" y="93" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">departments</text>
+<rect x="548" y="109" width="26" height="18" rx="3" fill="#ff5b35"/>
+<text x="561" y="122" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
+<text x="584" y="123" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
+<text x="830" y="123" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="541" y="132" width="298" height="28" fill="#fbf2e8"/>
+<text x="584" y="151" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">department_name</text>
+<text x="830" y="151" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT UNIQUE</text>
+<text x="584" y="179" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">description</text>
+<text x="830" y="179" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<rect class="box" id="employees" x="540" y="270" width="300" height="314" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
+<rect x="540" y="270" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
+<text x="552" y="293" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">employees</text>
+<rect x="548" y="309" width="26" height="18" rx="3" fill="#ff5b35"/>
+<text x="561" y="322" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
+<text x="584" y="323" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
+<text x="830" y="323" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="541" y="332" width="298" height="28" fill="#fbf2e8"/>
+<text x="584" y="351" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">name</text>
+<text x="830" y="351" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<text x="584" y="379" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">work_email</text>
+<text x="830" y="379" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT UNIQUE</text>
+<rect x="541" y="388" width="298" height="28" fill="#fbf2e8"/>
+<text x="584" y="407" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">job_title</text>
+<text x="830" y="407" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<text x="584" y="435" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">date_joined</text>
+<text x="830" y="435" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">DATE</text>
+<rect x="541" y="444" width="298" height="28" fill="#fbf2e8"/>
+<text x="584" y="463" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">salary</text>
+<text x="830" y="463" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<text x="584" y="491" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">role</text>
+<text x="830" y="491" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<rect x="541" y="500" width="298" height="28" fill="#fbf2e8"/>
+<text x="584" y="519" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">emp_status</text>
+<text x="830" y="519" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<rect x="548" y="533" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="561" y="546" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="584" y="547" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">department_id</text>
+<text x="830" y="547" font-size="12" text-anchor="end" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="italic" data-fam="s">INTEGER NULL</text>
+<rect x="541" y="556" width="298" height="28" fill="#fbf2e8"/>
+<rect x="548" y="561" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="561" y="574" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="584" y="575" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">manager_id</text>
+<text x="830" y="575" font-size="12" text-anchor="end" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="italic" data-fam="s">INTEGER NULL</text>
+<rect class="box" id="employee_credentials" x="40" y="640" width="300" height="122" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
+<rect x="40" y="640" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
+<text x="52" y="663" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">employee_credentials</text>
+<text x="328" y="662" font-size="12" text-anchor="end" fill="#ffffff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">1:1</text>
+<rect x="48" y="679" width="26" height="18" rx="3" fill="#ff5b35"/>
+<text x="61" y="692" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
+<rect x="78" y="679" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="91" y="692" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="114" y="693" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">employee_id</text>
+<text x="330" y="693" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="41" y="702" width="298" height="28" fill="#fbf2e8"/>
+<text x="84" y="721" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">password_hash</text>
+<text x="330" y="721" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<rect x="41" y="730" width="298" height="31" fill="#fff0d9"/>
+<line x1="40" y1="730" x2="340" y2="730" stroke="#211c18" stroke-width="1.5"/>
+<text x="54" y="752" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">ON DELETE CASCADE</text>
+<rect class="box" id="leave_balances" x="1020" y="270" width="300" height="272" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
+<rect x="1020" y="270" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
+<text x="1032" y="293" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">leave_balances</text>
+<text x="1308" y="292" font-size="12" text-anchor="end" fill="#ffffff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">JUNCTION</text>
+<rect x="1028" y="309" width="26" height="18" rx="3" fill="#ff5b35"/>
+<text x="1041" y="322" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
+<text x="1064" y="323" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
+<text x="1310" y="323" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="332" width="298" height="28" fill="#fbf2e8"/>
+<rect x="1028" y="337" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="1041" y="350" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="1064" y="351" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
+<text x="1310" y="351" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1028" y="365" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="1041" y="378" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="1064" y="379" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
+<text x="1310" y="379" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="388" width="298" height="28" fill="#fbf2e8"/>
+<text x="1064" y="407" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">entitled_days</text>
+<text x="1310" y="407" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<text x="1064" y="435" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">used_days</text>
+<text x="1310" y="435" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="444" width="298" height="28" fill="#fbf2e8"/>
+<text x="1064" y="463" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">consumed_year_in</text>
+<text x="1310" y="463" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="472" width="298" height="69" fill="#fff0d9"/>
+<line x1="1020" y1="472" x2="1320" y2="472" stroke="#211c18" stroke-width="1.5"/>
+<text x="1034" y="494" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">UNIQUE (employee_id,</text>
+<text x="1034" y="512" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">       leave_type_id,</text>
+<text x="1034" y="530" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">       consumed_year_in)</text>
+<rect class="box" id="leave_types" x="1500" y="270" width="300" height="118" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
+<rect x="1500" y="270" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
+<text x="1512" y="293" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">leave_types</text>
+<rect x="1508" y="309" width="26" height="18" rx="3" fill="#ff5b35"/>
+<text x="1521" y="322" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
+<text x="1544" y="323" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
+<text x="1790" y="323" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1501" y="332" width="298" height="28" fill="#fbf2e8"/>
+<text x="1544" y="351" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">type</text>
+<text x="1790" y="351" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT UNIQUE</text>
+<text x="1544" y="379" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">days</text>
+<text x="1790" y="379" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect class="box" id="leave_requests" x="1020" y="720" width="300" height="286" fill="#fffdfa" stroke="#211c18" stroke-width="1.5"/>
+<rect x="1020" y="720" width="300" height="34" fill="#ff5b35" stroke="#211c18" stroke-width="1.5"/>
+<text x="1032" y="743" font-size="17" text-anchor="start" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">leave_requests</text>
+<rect x="1028" y="759" width="26" height="18" rx="3" fill="#ff5b35"/>
+<text x="1041" y="772" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">PK</text>
+<text x="1064" y="773" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="bold" font-style="normal" data-fam="m">id</text>
+<text x="1310" y="773" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="782" width="298" height="28" fill="#fbf2e8"/>
+<rect x="1028" y="787" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="1041" y="800" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="1064" y="801" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
+<text x="1310" y="801" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1028" y="815" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="1041" y="828" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="1064" y="829" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
+<text x="1310" y="829" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="838" width="298" height="28" fill="#fbf2e8"/>
+<text x="1064" y="857" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">start_date</text>
+<text x="1310" y="857" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">DATE</text>
+<text x="1064" y="885" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">end_date</text>
+<text x="1310" y="885" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">DATE</text>
+<rect x="1021" y="894" width="298" height="28" fill="#fbf2e8"/>
+<text x="1064" y="913" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">reason</text>
+<text x="1310" y="913" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<text x="1064" y="941" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">no_of_days</text>
+<text x="1310" y="941" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">INTEGER</text>
+<rect x="1021" y="950" width="298" height="28" fill="#fbf2e8"/>
+<rect x="1028" y="955" width="26" height="18" rx="3" fill="#211c18"/>
+<text x="1041" y="968" font-size="12" text-anchor="middle" fill="#fff" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="bold" font-style="normal" data-fam="s">FK</text>
+<text x="1064" y="969" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">approver_id</text>
+<text x="1310" y="969" font-size="12" text-anchor="end" fill="#7a6e64" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="italic" data-fam="s">INTEGER NULL</text>
+<text x="1064" y="997" font-size="13" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">request_status</text>
+<text x="1310" y="997" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">TEXT</text>
+<polyline class="rel" points="780,270 780,188" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="780" y1="254" x2="772" y2="270" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="780" y1="254" x2="788" y2="270" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="780" y1="254" x2="780" y2="270" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="772" y1="197" x2="788" y2="197" stroke="#ff5b35" stroke-width="2.5"/>
+<circle cx="780" cy="208" r="5" fill="#fdf7f0" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="792" y="236" font-size="12" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">department_id (optional)</text>
+<polyline class="rel" points="540,570.0 490,570.0 490,318.0 540,318.0" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="524" y1="570.0" x2="540" y2="578.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="524" y1="570.0" x2="540" y2="562.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="524" y1="570.0" x2="540" y2="570.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="531" y1="310.0" x2="531" y2="326.0" stroke="#ff5b35" stroke-width="2.5"/>
+<circle cx="520" cy="318.0" r="5" fill="#fdf7f0" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="482" y="440" font-size="12" text-anchor="end" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">manager_id</text>
+<text x="482" y="458" font-size="12" text-anchor="end" fill="#211c18" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-weight="normal" font-style="normal" data-fam="s">(self, optional)</text>
+<polyline class="rel" points="1020,346.0 900,346.0 900,318.0 840,318.0" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="1004" y1="346.0" x2="1020" y2="354.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1004" y1="346.0" x2="1020" y2="338.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1004" y1="346.0" x2="1020" y2="346.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="849" y1="326.0" x2="849" y2="310.0" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="960" y="338.0" font-size="12" text-anchor="middle" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
+<polyline class="rel" points="1320,374.0 1440,374.0 1440,318.0 1500,318.0" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="1336" y1="374.0" x2="1320" y2="366.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1336" y1="374.0" x2="1320" y2="382.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1336" y1="374.0" x2="1320" y2="374.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1491" y1="310.0" x2="1491" y2="326.0" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="1380" y="396.0" font-size="12" text-anchor="middle" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
+<polyline class="rel" points="1020,796.0 680,796.0 680,584" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="1004" y1="796.0" x2="1020" y2="804.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1004" y1="796.0" x2="1020" y2="788.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1004" y1="796.0" x2="1020" y2="796.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="672" y1="593" x2="688" y2="593" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="994" y="786.0" font-size="12" text-anchor="end" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id</text>
+<polyline class="rel" points="1020,964.0 600,964.0 600,584" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="1004" y1="964.0" x2="1020" y2="972.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1004" y1="964.0" x2="1020" y2="956.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1004" y1="964.0" x2="1020" y2="964.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="592" y1="593" x2="608" y2="593" stroke="#ff5b35" stroke-width="2.5"/>
+<circle cx="600" cy="604" r="5" fill="#fdf7f0" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="994" y="954.0" font-size="12" text-anchor="end" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">approver_id (optional)</text>
+<polyline class="rel" points="1320,824.0 1650,824.0 1650,388" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="1336" y1="824.0" x2="1320" y2="816.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1336" y1="824.0" x2="1320" y2="832.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1336" y1="824.0" x2="1320" y2="824.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="1642" y1="397" x2="1658" y2="397" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="1346" y="814.0" font-size="12" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">leave_type_id</text>
+<polyline class="rel" points="340,688.0 560,688.0 560,584" fill="none" stroke="#ff5b35" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="349" y1="696.0" x2="349" y2="680.0" stroke="#ff5b35" stroke-width="2.5"/>
+<line x1="552" y1="593" x2="568" y2="593" stroke="#ff5b35" stroke-width="2.5"/>
+<text x="354" y="678.0" font-size="12" text-anchor="start" fill="#211c18" font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="normal" font-style="normal" data-fam="m">employee_id (PK = FK, 1:1)</text>
 </svg>

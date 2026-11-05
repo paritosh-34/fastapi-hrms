@@ -17,6 +17,18 @@ As of 2026-11-04:
 
 ## The data-model companion
 
+> **Revision 3: credentials split out of `employees`.** Six tables now. `password_hash` no
+> longer sits on the HR record; it lives in `employee_credentials`, where `employee_id` is
+> **both the primary key and the foreign key** — the PK constraint is what enforces a true
+> 1:1, and `ON DELETE CASCADE` drops the credential with the employee. An employee with no
+> row there simply has no login yet, which removed the `password_hash="!unset"` sentinel
+> that Part 1 had needed in seven places. Login is now a join, and a **missing credential
+> row must fail exactly like a wrong password** — same 401, same message — or the split
+> hands you a user-enumeration oracle. Known limit: the response is identical but bcrypt is
+> skipped when there is no credential, so a timing difference remains; the production fix is
+> to verify against a dummy hash.
+
+
 > **Revision 2 (2026-11-05): the schema changed.** The design is now the user's own, corrected.
 > `HRMS.sql` in the repo root is the authoritative DDL; `hr-erd.svg` / `hr-erd.png` are the
 > rendered ERD. The biggest change: **leave types are a `leave_types` TABLE, not a Python enum**,

@@ -286,22 +286,49 @@ footer .wrap{padding-top:0}
 <div class="sec-head accent"><div class="sec-num">0</div><div><div class="sec-time">Chapter 0 · ~10 minutes</div><h2>A <em>running</em> server</h2></div></div>
 <p class="big-p">Goal for the next ten minutes: a server that answers <code>GET /health</code>, and a browser tab that documents it. No database, no models. If you can run <code>node server.js</code> you can do this.</p>
 <h3 id="ch0-env">Environment, in half a screen</h3>
-<p>Python projects live inside a virtual environment, which is a per-project <code>node_modules</code> that also owns the interpreter. <a class="chip-syn" href="python-for-js-devs.html#venv"># new: venv + pip &rarr; cheatsheet</a></p>
+<p>Python projects live inside a virtual environment, which is a per-project <code>node_modules</code> that also owns the interpreter. Create one and activate it before you install anything. <a class="chip-syn" href="python-for-js-devs.html#venv"># new: venv + pip &rarr; cheatsheet</a></p>
 <div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> mkdir hr-api &amp;&amp; cd hr-api
 <span class="pr">$</span> python3 -m venv .venv
-<span class="pr">$</span> source .venv/bin/activate        # Windows: .venv\Scripts\activate
-<span class="pr">$</span> pip install -r requirements.txt
+<span class="pr">$</span> source .venv/bin/activate        <span class="cmt"># Windows: .venv\Scripts\activate</span>
 <span class="cmt"># prompt now starts with (.venv); deactivate with: deactivate</span></pre></div>
-<p>Create <code>requirements.txt</code> first. Versions are pinned exactly so that what you install matches what every snippet on this page assumes. <code>requirements.txt</code> is your <code>package.json</code> and lockfile in one flat file.</p>
-<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>requirements.txt</span></div><pre>fastapi==0.115.6
-uvicorn[standard]==0.34.0
+<p>Now install, one package at a time, exactly the way you would reach for <code>npm install</code>. <code>pip install</code> is the whole command; <code>==</code> pins a version, and leaving it off gets you the newest release.</p>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> pip install <span class="st">"fastapi[standard]==0.115.6"</span>
+<span class="pr">$</span> pip install <span class="st">"pydantic==2.10.4"</span> <span class="st">"pydantic-settings==2.7.0"</span>
+<span class="pr">$</span> pip install <span class="st">"sqlalchemy==2.0.36"</span> <span class="st">"aiosqlite==0.20.0"</span></pre></div>
+<div class="wow"><div class="star">&#9888;&#65039;</div><p><b>Quote the square brackets.</b> In zsh &mdash; the default shell on macOS &mdash; <code>[</code> and <code>]</code> are glob characters, so <code>pip install fastapi[standard]</code> fails with <code>zsh: no matches found</code>. The quotes are not optional. Bash tolerates it; quote anyway and the command works in both.</p></div>
+<p><code>fastapi[standard]</code> is an <b>extra</b>: the bracketed name pulls in an optional bundle rather than just the core library. That one line installs the server (<code>uvicorn</code>), the HTTP client the tests will use (<code>httpx</code>), <code>email-validator</code> for Pydantic&rsquo;s <code>EmailStr</code>, <code>python-multipart</code> for form bodies, and the <code>fastapi</code> CLI. It is why the install list above is five lines rather than nine.</p>
+<p>With the packages in place, freeze what you actually got:</p>
+<div class="term"><div class="tbar"><i></i><i></i><i></i>&nbsp;terminal</div><pre><span class="pr">$</span> pip freeze &gt; requirements.txt
+<span class="pr">$</span> wc -l requirements.txt
+<span class="cmt">      44 requirements.txt</span></pre></div>
+<p>Forty-four lines from five installs. <code>pip freeze</code> writes out the <em>entire</em> resolved tree, transitive dependencies and all, each pinned to the exact version sitting in your <code>.venv</code> right now:</p>
+<div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>requirements.txt &mdash; generated, not hand-written</span></div><pre>aiosqlite==0.20.0
+annotated-types==0.8.0
+anyio==4.16.0
+certifi==2026.10.23
+click==8.5.0
+email-validator==2.3.0
+fastapi==0.115.6
+fastapi-cli==0.0.32
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+jinja2==3.1.6
+<span class="cmt">... 18 more you never asked for ...</span>
 pydantic==2.10.4
-email-validator==2.2.0
 pydantic-settings==2.7.0
+pydantic_core==2.27.2
+python-multipart==0.0.33
 sqlalchemy==2.0.36
-aiosqlite==0.20.0</pre></div>
-<div class="note"><div class="ico">📌</div><p><b>Part 2 adds more pins.</b> When we get to auth, leave requests and tests you will append <code>pyjwt==2.10.1</code>, <code>bcrypt==4.2.1</code>, <code>python-multipart==0.0.20</code>, <code>pytest==8.3.4</code>, <code>pytest-asyncio==0.25.0</code> and <code>httpx==0.28.1</code>. Nothing to install for those yet.</p></div>
-<div class="analogy teal"><div class="ico">⚡</div><div><b>Box: <code>uv</code>, the faster alternative</b><p><code>uv</code> is a Rust-built replacement for venv plus pip, the way pnpm relates to npm. <code>uv venv &amp;&amp; uv pip install -r requirements.txt</code> does the same job in a fraction of the time, and the rest of this tutorial works identically. Use whichever you like; the pins are the same.</p></div></div>
+starlette==0.41.3
+typing_extensions==4.16.0
+uvicorn==0.54.0
+uvloop==0.23.0
+watchfiles==1.3.0</pre></div>
+<div class="def"><div class="lab">the npm mapping</div><p><code>pip install x</code> is <code>npm install x</code> &mdash; except nothing writes it down for you. Python has no <code>package.json</code> that updates itself, so the five packages you chose and the thirty-nine that came along are indistinguishable once frozen. <code>requirements.txt</code> from <code>pip freeze</code> is a <b>lockfile</b>, closer to <code>package-lock.json</code> than to the <code>dependencies</code> block. Rebuild the environment anywhere with <code>pip install -r requirements.txt</code>.</p></div>
+<div class="note"><div class="ico">&#128204;</div><p><b>Re-freeze after every install.</b> Install a package and forget the freeze, and your <code>requirements.txt</code> silently stops describing your environment &mdash; the failure mode a self-updating <code>package.json</code> protects you from. <b>Part 2</b> adds only <code>pyjwt==2.10.1</code>, <code>bcrypt==4.2.1</code>, <code>pytest==8.3.4</code> and <code>pytest-asyncio==0.25.0</code>; <code>httpx</code> and <code>python-multipart</code> already arrived with <code>[standard]</code>. Nothing to install for those yet.</p></div>
+<div class="analogy teal"><div class="ico">&#9889;</div><div><b>Box: <code>uv</code>, the faster alternative</b><p><code>uv</code> is a Rust-built replacement for venv plus pip, the way pnpm relates to npm. <code>uv venv</code> then <code>uv pip install "fastapi[standard]==0.115.6"</code> does the same job in a fraction of the time, and <code>uv pip freeze</code> writes the same file. The rest of this tutorial works identically; the pins are the same.</p></div></div>
 <h3 id="ch0-main">The whole server in twelve lines</h3>
 <p>Create <code>app/main.py</code> (and an empty <code>app/__init__.py</code> beside it, so <code>app</code> is an importable package). <a class="chip-syn" href="python-for-js-devs.html#decorators"># new: decorator &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#asyncawait"># new: async def &rarr; cheatsheet</a></p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">from</span> fastapi <span class="kw">import</span> <span class="nm">FastAPI</span>
@@ -386,24 +413,19 @@ app = <span class="fn">FastAPI</span>(
 <span class="nm">EMPLOYEES</span>: list[dict] = [
     {<span class="st">"id"</span>: <span class="nm">1</span>, <span class="st">"name"</span>: <span class="st">"Maya Chen"</span>, <span class="st">"work_email"</span>: <span class="st">"maya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"hr_admin"</span>,
      <span class="st">"job_title"</span>: <span class="st">"Head of People"</span>, <span class="st">"date_joined"</span>: <span class="st">"2019-02-11"</span>, <span class="st">"salary"</span>: <span class="nm">120000</span>,
-     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">2</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
-     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">2</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>},
     {<span class="st">"id"</span>: <span class="nm">2</span>, <span class="st">"name"</span>: <span class="st">"Arjun Rao"</span>, <span class="st">"work_email"</span>: <span class="st">"arjun@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"manager"</span>,
      <span class="st">"job_title"</span>: <span class="st">"Engineering Manager"</span>, <span class="st">"date_joined"</span>: <span class="st">"2020-06-01"</span>, <span class="st">"salary"</span>: <span class="nm">140000</span>,
-     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>,
-     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="kw">None</span>},
     {<span class="st">"id"</span>: <span class="nm">3</span>, <span class="st">"name"</span>: <span class="st">"Priya Nair"</span>, <span class="st">"work_email"</span>: <span class="st">"priya@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
      <span class="st">"job_title"</span>: <span class="st">"Senior Engineer"</span>, <span class="st">"date_joined"</span>: <span class="st">"2021-03-15"</span>, <span class="st">"salary"</span>: <span class="nm">118000</span>,
-     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
-     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>},
     {<span class="st">"id"</span>: <span class="nm">4</span>, <span class="st">"name"</span>: <span class="st">"Tomas Weber"</span>, <span class="st">"work_email"</span>: <span class="st">"tomas@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
      <span class="st">"job_title"</span>: <span class="st">"Frontend Engineer"</span>, <span class="st">"date_joined"</span>: <span class="st">"2022-09-05"</span>, <span class="st">"salary"</span>: <span class="nm">98000</span>,
-     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>,
-     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+     <span class="st">"emp_status"</span>: <span class="st">"active"</span>, <span class="st">"department_id"</span>: <span class="nm">1</span>, <span class="st">"manager_id"</span>: <span class="nm">2</span>},
     {<span class="st">"id"</span>: <span class="nm">5</span>, <span class="st">"name"</span>: <span class="st">"Lena Park"</span>, <span class="st">"work_email"</span>: <span class="st">"lena@acme.test"</span>, <span class="st">"role"</span>: <span class="st">"employee"</span>,
      <span class="st">"job_title"</span>: <span class="st">"Product Designer"</span>, <span class="st">"date_joined"</span>: <span class="st">"2023-01-16"</span>, <span class="st">"salary"</span>: <span class="nm">92000</span>,
-     <span class="st">"emp_status"</span>: <span class="st">"on_leave"</span>, <span class="st">"department_id"</span>: <span class="nm">3</span>, <span class="st">"manager_id"</span>: <span class="nm">1</span>,
-     <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>},
+     <span class="st">"emp_status"</span>: <span class="st">"on_leave"</span>, <span class="st">"department_id"</span>: <span class="nm">3</span>, <span class="st">"manager_id"</span>: <span class="nm">1</span>},
 ]
 
 
@@ -418,7 +440,7 @@ app = <span class="fn">FastAPI</span>(
     rows = [e <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span> <span class="kw">if</span> role <span class="kw">is</span> <span class="kw">None</span> <span class="kw">or</span> e[<span class="st">"role"</span>] == role]
     <span class="kw">return</span> rows[:limit]</pre></div>
 <p>Two things to notice. <code>role</code> and <code>limit</code> are not in the path, so FastAPI treats them as query parameters: <code>/employees?role=manager&amp;limit=2</code>. The <code>= None</code> and <code>= 50</code> defaults make them optional; a parameter with no default is required. And <code>role: Role | None</code> means "one of the three enum values, or absent". <a class="chip-syn" href="python-for-js-devs.html#comprehensions"># new: list comprehension &rarr; cheatsheet</a></p>
-<div class="note"><div class="ico">⚠️</div><p><b>Look at the output honestly.</b> This endpoint currently returns <code>salary</code> and <code>password_hash</code> to anyone who asks. That is deliberate: Chapter 2 fixes it, and it is the clearest motivation for what <code>response_model</code> does.</p></div>
+<div class="note"><div class="ico">⚠️</div><p><b>Look at the output honestly.</b> This endpoint currently returns <code>salary</code> to anyone who asks. That is deliberate: Chapter 2 fixes it, and it is the clearest motivation for what <code>response_model</code> does.</p></div>
 <h3 id="ch1-one">One employee, and what a bad id does</h3>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees/{employee_id}"</span>, summary=<span class="st">"Get one employee"</span>)
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">get_employee</span>(employee_id: int) -&gt; dict:
@@ -500,7 +522,7 @@ app.<span class="fn">get</span>(<span class="st">"/employees/:id"</span>, (req, 
 
 
 <span class="kw">class</span> <span class="fn">EmployeeRead</span>(<span class="nm">BaseModel</span>):
-    <span class="st">""</span><span class="st">"What the API returns. Note: no salary, no password_hash."</span><span class="st">""</span>
+    <span class="st">""</span><span class="st">"What the API returns. Note: no salary."</span><span class="st">""</span>
     id: int
     name: str
     work_email: <span class="nm">EmailStr</span>
@@ -547,11 +569,10 @@ app.<span class="fn">post</span>(<span class="st">"/employees"</span>, (req, res
         <span class="st">"id"</span>: <span class="fn">max</span>(e[<span class="st">"id"</span>] <span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>) + <span class="nm">1</span>,
         **payload.<span class="fn">model_dump</span>(),
         <span class="st">"emp_status"</span>: <span class="st">"active"</span>,
-        <span class="st">"password_hash"</span>: <span class="st">"!unset"</span>,   <span class="cm"># Part 2 (ch 6) sets this for real</span>
     }
     <span class="nm">EMPLOYEES</span>.<span class="fn">append</span>(new)
     <span class="kw">return</span> new</pre></div>
-<div class="decode"><div class="dl"><b>1</b><div><code>payload: EmployeeCreate</code> is a Pydantic model, so FastAPI reads the JSON body into it, like <code>req.body</code> but parsed and checked first.</div></div><div class="dl"><b>2</b><div><code>model_dump()</code> turns the validated model into a plain dict. <code>{**a, "k": v}</code> is object spread.</div></div><div class="dl"><b>3</b><div><code>status_code=201</code> sets the success code; Express would be <code>res.status(201)</code>.</div></div><div class="dl"><b>4</b><div><code>response_model=EmployeeRead</code> is the output filter. We return the full dict including <code>salary</code> and <code>password_hash</code>; FastAPI validates it against <code>EmployeeRead</code> and keeps <strong>only</strong> its fields. The secrets cannot leak even if a later edit returns the whole record.</div></div><div class="dl"><b>5</b><div>The <code>"password_hash"</code> key exists from now on but is never returned. Part 2, chapter 6, starts setting it properly.</div></div></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>payload: EmployeeCreate</code> is a Pydantic model, so FastAPI reads the JSON body into it, like <code>req.body</code> but parsed and checked first.</div></div><div class="dl"><b>2</b><div><code>model_dump()</code> turns the validated model into a plain dict. <code>{**a, "k": v}</code> is object spread.</div></div><div class="dl"><b>3</b><div><code>status_code=201</code> sets the success code; Express would be <code>res.status(201)</code>.</div></div><div class="dl"><b>4</b><div><code>response_model=EmployeeRead</code> is the output filter. We return the full dict including <code>salary</code>; FastAPI validates it against <code>EmployeeRead</code> and keeps <strong>only</strong> its fields. The salary cannot leak even if a later edit returns the whole record.</div></div><div class="dl"><b>5</b><div>There is no credential on this record at all. Credentials live in their own <code>employee_credentials</code> table, which Part 2 builds; an employee with no row there simply has no login yet.</div></div></div>
 <div class="analogy blue"><div class="ico">🔒</div><div><b>Fail-closed by default</b><p>Because the response is filtered through a schema, adding a new column to the record cannot accidentally expose it. Someone has to add it to <code>EmployeeRead</code> on purpose. Apply the same instinct to every future endpoint.</p></div></div>
 <p>Re-run <code>GET /employees</code> and <code>GET /employees/{id}</code> after adding <code>response_model=list[EmployeeRead]</code> and <code>response_model=EmployeeRead</code> to those decorators; the leak from Chapter 1 is closed. (Chapter 3 rewrites both anyway, with this already in place.)</p>
 <h3 id="ch2-422">A rejected request, in full</h3>
@@ -729,7 +750,6 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
     )
     department_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"departments.id"</span>))
     manager_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>))
-    password_hash: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>))   <span class="cm"># set for real in Part 2</span>
 
     department: <span class="nm">Mapped</span>[<span class="nm">Department</span> | <span class="kw">None</span>] = <span class="fn">relationship</span>(back_populates=<span class="st">"employees"</span>)
     <span class="cm"># Self-referential: the "one" side. remote_side says which end is the parent.</span>
@@ -771,7 +791,7 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
 
 
 <span class="kw">class</span> <span class="fn">EmployeeRead</span>(<span class="nm">BaseModel</span>):
-    <span class="st">""</span><span class="st">"What the API returns. No salary, no password_hash."</span><span class="st">""</span>
+    <span class="st">""</span><span class="st">"What the API returns. No salary."</span><span class="st">""</span>
     model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
 
     id: int
@@ -801,7 +821,7 @@ app.<span class="fn">get</span>(<span class="st">"/employees"</span>, <span clas
     id: int
     department_name: str
     description: str</pre></div>
-<p>Part 2 adds three more tables (<code>leave_types</code>, <code>leave_balances</code>, <code>leave_requests</code>); leave types are rows in <code>leave_types</code>, not a Python enum.</p>
+<p>Part 2 adds three more tables (<code>leave_types</code>, <code>leave_balances</code>, <code>leave_requests</code>); leave types are rows in <code>leave_types</code>, not a Python enum. The <code>Employee</code> row holds no credential: that is a separate 1:1 <code>employee_credentials</code> table, built in Part 2.</p>
 <h3 id="ch3-main">The endpoints on SQLAlchemy</h3>
 <p><a class="chip-syn" href="python-for-js-devs.html#annotated"># new: Annotated alias &rarr; cheatsheet</a><a class="chip-syn" href="python-for-js-devs.html#dicts"># new: dict .items() &rarr; cheatsheet</a> The shape of every query is the same: build a <code>select()</code>, <code>await db.scalars(...)</code>, then <code>.all()</code> for a list or <code>.one_or_none()</code> for zero-or-one rows. Reads never need a commit; writes call <code>await db.commit()</code>.</p>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py</span></div><pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
@@ -885,7 +905,7 @@ app = <span class="fn">FastAPI</span>(
     dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == payload.work_email))
     <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
-    emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>(), password_hash=<span class="st">"!unset"</span>)   <span class="cm"># Part 2, ch 6</span>
+    emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>())
     db.<span class="fn">add</span>(emp)
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(emp)        <span class="cm"># loads the generated id and defaults</span>
@@ -1060,7 +1080,7 @@ app.<span class="fn">get</span>(<span class="st">"/slow"</span>, (req, res) =&gt
     stmt = base.<span class="fn">order_by</span>(ordering, <span class="nm">Employee</span>.id).<span class="fn">offset</span>(f.offset).<span class="fn">limit</span>(f.limit)
     items = (<span class="kw">await</span> db.<span class="fn">scalars</span>(stmt)).<span class="fn">all</span>()
     <span class="kw">return</span> {<span class="st">"items"</span>: items, <span class="st">"total"</span>: total <span class="kw">or</span> <span class="nm">0</span>, <span class="st">"limit"</span>: f.limit, <span class="st">"offset"</span>: f.offset}</pre></div>
-<div class="decode"><div class="dl"><b>1</b><div><code>Literal["name", "date_joined", "salary"]</code> is a union of string literals, like TS. A client sending <code>sort_by=password_hash</code> gets a 422 listing the allowed values, so the sort key can never be used to probe a column you did not list. It also becomes an <code>enum</code> in OpenAPI.</div></div><div class="dl"><b>2</b><div><code>Query(ge=1, le=100)</code> adds constraints to a query param, the same way <code>Field</code> does for bodies. A client cannot ask for <code>limit=100000</code>.</div></div><div class="dl"><b>3</b><div><code>or_(name.ilike(...), work_email.ilike(...))</code> is SQL <code>name LIKE ? OR work_email LIKE ?</code>, case-insensitive. The <code>%</code> wildcards are added around the term.</div></div><div class="dl"><b>4</b><div>The total comes from a <code>count(*)</code> over the <em>filtered</em> query wrapped as a subquery, before limit and offset are applied. That is what the pager needs.</div></div><div class="dl"><b>5</b><div>The sort column is looked up in a dict whose keys are the only values <code>Literal</code> lets through, never interpolated from user text.</div></div></div>
+<div class="decode"><div class="dl"><b>1</b><div><code>Literal["name", "date_joined", "salary"]</code> is a union of string literals, like TS. A client sending <code>sort_by=manager_id</code> gets a 422 listing the allowed values, so the sort key can never be used to probe a column you did not list. It also becomes an <code>enum</code> in OpenAPI.</div></div><div class="dl"><b>2</b><div><code>Query(ge=1, le=100)</code> adds constraints to a query param, the same way <code>Field</code> does for bodies. A client cannot ask for <code>limit=100000</code>.</div></div><div class="dl"><b>3</b><div><code>or_(name.ilike(...), work_email.ilike(...))</code> is SQL <code>name LIKE ? OR work_email LIKE ?</code>, case-insensitive. The <code>%</code> wildcards are added around the term.</div></div><div class="dl"><b>4</b><div>The total comes from a <code>count(*)</code> over the <em>filtered</em> query wrapped as a subquery, before limit and offset are applied. That is what the pager needs.</div></div><div class="dl"><b>5</b><div>The sort column is looked up in a dict whose keys are the only values <code>Literal</code> lets through, never interpolated from user text.</div></div></div>
 <div class="note"><div class="ico">🔐</div><p><b>Forward note.</b> Sorting and filtering on <code>salary</code> leaks ordering information even though the value is hidden by <code>EmployeeRead</code>. Part 2 restricts this to callers allowed to see salary.</p></div>
 <h3 id="ch4-endpoints">The list endpoint and the two relationship endpoints</h3>
 <div class="code"><div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>app/main.py  (replaces GET /employees; adds two endpoints)</span></div><pre><span class="fn">@app</span>.<span class="fn">get</span>(<span class="st">"/employees"</span>, response_model=<span class="nm">Page</span>[<span class="nm">EmployeeRead</span>], summary=<span class="st">"List employees"</span>)
@@ -1289,7 +1309,6 @@ engine = <span class="fn">create_async_engine</span>(<span class="fn">get_settin
     )
     department_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"departments.id"</span>))
     manager_id: <span class="nm">Mapped</span>[int | <span class="kw">None</span>] = <span class="fn">mapped_column</span>(<span class="fn">ForeignKey</span>(<span class="st">"employees.id"</span>))
-    password_hash: <span class="nm">Mapped</span>[str] = <span class="fn">mapped_column</span>(<span class="fn">String</span>(<span class="nm">255</span>))
 
     department: <span class="nm">Mapped</span>[<span class="nm">Department</span> | <span class="kw">None</span>] = <span class="fn">relationship</span>(back_populates=<span class="st">"employees"</span>)
     manager: <span class="nm">Mapped</span>[<span class="st">"Employee | None"</span>] = <span class="fn">relationship</span>(
@@ -1347,7 +1366,7 @@ __all__ = [<span class="st">"Base"</span>, <span class="st">"Department"</span>,
 
 
 <span class="kw">class</span> <span class="fn">EmployeeRead</span>(<span class="nm">BaseModel</span>):
-    <span class="st">""</span><span class="st">"What the API returns. No salary, no password_hash."</span><span class="st">""</span>
+    <span class="st">""</span><span class="st">"What the API returns. No salary."</span><span class="st">""</span>
     model_config = <span class="fn">ConfigDict</span>(from_attributes=<span class="kw">True</span>)
 
     id: int
@@ -1476,7 +1495,7 @@ router = <span class="fn">APIRouter</span>(prefix=<span class="st">"/employees"<
     dup = <span class="kw">await</span> db.<span class="fn">scalars</span>(<span class="fn">select</span>(<span class="nm">Employee</span>).<span class="fn">where</span>(<span class="nm">Employee</span>.work_email == payload.work_email))
     <span class="kw">if</span> dup.<span class="fn">one_or_none</span>() <span class="kw">is</span> <span class="kw">not</span> <span class="kw">None</span>:
         <span class="kw">raise</span> <span class="fn">HTTPException</span>(status_code=<span class="nm">409</span>, detail=<span class="st">"Email already in use"</span>)
-    emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>(), password_hash=<span class="st">"!unset"</span>)   <span class="cm"># Part 2, ch 6</span>
+    emp = <span class="fn">Employee</span>(**payload.<span class="fn">model_dump</span>())
     db.<span class="fn">add</span>(emp)
     <span class="kw">await</span> db.<span class="fn">commit</span>()
     <span class="kw">await</span> db.<span class="fn">refresh</span>(emp)
@@ -1675,8 +1694,6 @@ app.<span class="fn">include_router</span>(departments.router)</pre></div>
              job_title=<span class="st">"Product Designer"</span>, date_joined=<span class="fn">date</span>(<span class="nm">2023</span>, <span class="nm">1</span>, <span class="nm">16</span>), salary=<span class="nm">92000</span>,
              emp_status=<span class="nm">EmploymentStatus</span>.<span class="nm">ON_LEAVE</span>, department_id=<span class="nm">3</span>, manager_id=<span class="nm">1</span>),
 ]
-<span class="kw">for</span> e <span class="kw">in</span> <span class="nm">EMPLOYEES</span>:
-    e.password_hash = <span class="st">"!unset"</span>    <span class="cm"># Part 2 (ch 6) seeds real hashes</span>
 
 
 <span class="kw">async</span> <span class="kw">def</span> <span class="fn">main</span>() -&gt; <span class="kw">None</span>:
