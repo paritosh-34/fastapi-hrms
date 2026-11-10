@@ -32,3 +32,6 @@ FROM subtree
 WHERE depth > 0
 ORDER BY depth, name;
 ```
+
+what is the difference between path variable. and query params in api
+Database connection pool
