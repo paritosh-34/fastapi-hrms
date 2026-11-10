@@ -12,6 +12,37 @@ from app.schemas import (
     EmployeeCreate, EmployeeRead, EmployeeUpdate,
 )
 
+from typing import Literal
+
+from fastapi import Query
+from sqlalchemy import Select, func, or_
+
+from app.models import EmploymentStatus
+from app.schemas import Page
+
+class EmployeeFilters:
+    def __init__(
+        self,
+        department_id: int | None = None,
+        role: Role | None = None,
+        emp_status: EmploymentStatus | None = None,
+        q: Annotated[str | None, Query(description="Search name or work email", max_length=100)] = None,
+        sort_by: Literal["name", "date_joined", "salary"] = "name",
+        order: Literal["asc", "desc"] = "asc",
+        limit: Annotated[int, Query(ge=1, le=100)] = 20,
+        offset: Annotated[int, Query(ge=0)] = 0,
+    ) -> None:
+        self.department_id = department_id
+        self.role = role
+        self.emp_status = emp_status
+        self.q = q
+        self.sort_by = sort_by
+        self.order = order
+        self.limit = limit
+        self.offset = offset
+
+
+Filters = Annotated[EmployeeFilters, Depends()]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,16 +86,22 @@ async def health() -> dict[str, str]:
 
 # ---------- employees ----------
 
-@app.get("/employees", response_model=list[EmployeeRead], summary="List employees")
-async def list_employees(
-    db: DbSession, role: Role | None = None, limit: int = 50
-):
-    """List employees, optionally filtered by role."""
-    stmt = select(Employee).order_by(Employee.id).limit(limit)
-    if role is not None:
-        stmt = stmt.where(Employee.role == role)
-    result = await db.scalars(stmt)
-    return result.all()
+@app.get("/employees", response_model=Page[EmployeeRead], summary="List employees")
+async def list_employees(db: DbSession, f: Filters):
+    """Search, filter, sort and paginate employees."""
+    return await page_of_employees(db, f, select(Employee))
+
+
+@app.get(
+    "/employees/{employee_id}/reports",
+    response_model=Page[EmployeeRead],
+    summary="List an employee's direct reports",
+)
+async def list_reports(employee_id: int, db: DbSession, f: Filters):
+    """Employees whose manager is the given employee."""
+    await get_employee_or_404(db, employee_id)       # 404 if the manager is unknown
+    base = select(Employee).where(Employee.manager_id == employee_id)
+    return await page_of_employees(db, f, base)
 
 
 @app.get("/employees/{employee_id}", response_model=EmployeeRead, summary="Get one employee")
@@ -146,3 +183,40 @@ async def update_department(department_id: int, payload: DepartmentUpdate, db: D
     await db.commit()
     await db.refresh(dept)
     return dept
+
+
+@app.get(
+    "/departments/{department_id}/employees",
+    response_model=Page[EmployeeRead],
+    summary="List employees in a department",
+)
+async def list_department_employees(department_id: int, db: DbSession, f: Filters):
+    """Everyone in one department, with the same filters as /employees."""
+    await get_department_or_404(db, department_id)
+    f.department_id = department_id                   # path wins over the query string
+    return await page_of_employees(db, f, select(Employee))
+
+
+# ---------- employee page filters ----------
+
+def apply_filters(stmt: Select, f: EmployeeFilters) -> Select:
+    if f.department_id is not None:
+        stmt = stmt.where(Employee.department_id == f.department_id)
+    if f.role is not None:
+        stmt = stmt.where(Employee.role == f.role)
+    if f.emp_status is not None:
+        stmt = stmt.where(Employee.emp_status == f.emp_status)
+    if f.q:
+        like = f"%{f.q}%"
+        stmt = stmt.where(or_(Employee.name.ilike(like), Employee.work_email.ilike(like)))
+    return stmt
+
+
+async def page_of_employees(db: AsyncSession, f: EmployeeFilters, base: Select) -> dict:
+    base = apply_filters(base, f)
+    total = await db.scalar(select(func.count()).select_from(base.subquery()))
+    sort_col = {"name": Employee.name, "date_joined": Employee.date_joined, "salary": Employee.salary}[f.sort_by]
+    ordering = sort_col.asc() if f.order == "asc" else sort_col.desc()
+    stmt = base.order_by(ordering, Employee.id).offset(f.offset).limit(f.limit)
+    items = (await db.scalars(stmt)).all()
+    return {"items": items, "total": total or 0, "limit": f.limit, "offset": f.offset}

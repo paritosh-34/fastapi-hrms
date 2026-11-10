@@ -4,6 +4,18 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models import EmploymentStatus, Role
 
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+
+
+class Page(BaseModel, Generic[T]):
+    """Standard envelope for every list endpoint."""
+    items: list[T]
+    total: int = Field(description="Rows matching the filters, ignoring limit/offset")
+    limit: int
+    offset: int
+
 
 class EmployeeCreate(BaseModel):
     """Body for creating an employee."""
