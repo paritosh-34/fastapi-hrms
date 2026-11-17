@@ -5,7 +5,8 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db import Base
+from app.models.base import Base
+from app.models.department import Department
 
 
 class Role(str, Enum):
@@ -21,17 +22,7 @@ class EmploymentStatus(str, Enum):
 
 
 def _values(e: type[Enum]) -> list[str]:
-    return [m.value for m in e]   # store "hr_admin", not "HR_ADMIN"
-
-
-class Department(Base):
-    __tablename__ = "departments"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    department_name: Mapped[str] = mapped_column(String(100), unique=True)
-    description: Mapped[str] = mapped_column(String(500))
-
-    employees: Mapped[list["Employee"]] = relationship(back_populates="department")
+    return [m.value for m in e]
 
 
 class Employee(Base):
@@ -54,7 +45,6 @@ class Employee(Base):
     manager_id: Mapped[int | None] = mapped_column(ForeignKey("employees.id"))
 
     department: Mapped[Department | None] = relationship(back_populates="employees")
-    # Self-referential: the "one" side. remote_side says which end is the parent.
     manager: Mapped["Employee | None"] = relationship(
         remote_side="Employee.id", back_populates="reports"
     )

@@ -1,24 +1,12 @@
 from datetime import date
 
+from app.models.employee import EmploymentStatus, Role
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
-from app.models import EmploymentStatus, Role
-
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
-
-
-class Page(BaseModel, Generic[T]):
-    """Standard envelope for every list endpoint."""
-    items: list[T]
-    total: int = Field(description="Rows matching the filters, ignoring limit/offset")
-    limit: int
-    offset: int
 
 
 class EmployeeCreate(BaseModel):
     """Body for creating an employee."""
+
     name: str = Field(min_length=2, max_length=100)
     work_email: EmailStr
     role: Role = Role.EMPLOYEE
@@ -31,6 +19,7 @@ class EmployeeCreate(BaseModel):
 
 class EmployeeUpdate(BaseModel):
     """Partial update: send only the fields you want to change."""
+
     name: str | None = Field(default=None, min_length=2, max_length=100)
     role: Role | None = None
     job_title: str | None = Field(default=None, min_length=1, max_length=100)
@@ -42,6 +31,7 @@ class EmployeeUpdate(BaseModel):
 
 class EmployeeRead(BaseModel):
     """What the API returns. No salary."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -53,21 +43,3 @@ class EmployeeRead(BaseModel):
     emp_status: EmploymentStatus
     department_id: int | None
     manager_id: int | None
-
-
-class DepartmentCreate(BaseModel):
-    department_name: str = Field(min_length=2, max_length=100)
-    description: str = Field(min_length=1, max_length=500)
-
-
-class DepartmentUpdate(BaseModel):
-    department_name: str | None = Field(default=None, min_length=2, max_length=100)
-    description: str | None = Field(default=None, max_length=500)
-
-
-class DepartmentRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    department_name: str
-    description: str
